@@ -54,8 +54,13 @@ engine 处理的「操作」分四层，彼此不共享枚举：**演员发出�
 6. `rollDueChecks` —— 骰子在这里掷，此时难度早已在动作开始时定好
 7. 一次 World Action Engine 会话
 8. anchor 子系统 + 脚本事件
-9. 单次 Applier flush
-10. 提交动作生命周期，发 `TickReport`
+9. 天气判断：读 buffer 里的 `weather.transition` 事件，晴天走空判断，否则调用天气 engine，把结果并入同一次 flush（见 §2.1）
+10. 单次 Applier flush
+11. 提交动作生命周期，发 `TickReport`
+
+### 2.1 天气 engine：第二个会话，另一个触发源
+
+天气子系统只跑状态机和数值。区域的天气类型或强度一变（子系统每 120 分钟一次的转换、初始化、脚本 `weather.set`），它在 buffer 里放一条 `weather.transition` 事件；orchestrator 在脚本事件之后读到它，调用 `engine/weather/weatherEngine.ts`：输入是该区域所有户外地点的 prose、候选通道（两端都在户外，id 形如 `weather:<a>|<b>`）和新天气，输出「关哪些通道、哪些地点挂什么条件」。代码做记账：模型给完整集合，和 `WeatherRegionState.judgedBlockIds` 做差，多出的设、少掉的撤；条件按 `featureId: "weather"` 整体替换，技能减值由代码按类型和强度挂上。晴天不调模型，直接撤掉上次的封锁和条件。失败（模型报错或一轮修补后仍不合法）只打警告，封锁和条件保持上次的。
 
 ---
 
@@ -87,7 +92,7 @@ engine 处理的「操作」分四层，彼此不共享枚举：**演员发出�
 | `timingReason` | 为什么是这个时长 |
 | `check` | `{requiredLevel: regular\|hard\|extreme, basis}` —— **在任何骰子存在之前**定下的难度，写一次即不可改 |
 | `opposedBy[]` | `{characterId, skillId}`，主动抵抗；两边由代码掷骰比等级，平手防守方赢 |
-| `movement` | `{route: string[], vehicleId?}` —— **演员自己说出的**路线，逐段拓扑相邻。Engine 从不替他补一段没说过的腿：没说怎么走的人就没有选择走法，话说到哪里脚就停在哪里 |
+| `movement` | `{route: string[], vehicleId?, passBlocked?}` —— **演员自己说出的**路线，逐段拓扑相邻。Engine 从不替他补一段没说过的腿。`passBlocked: true` 是"这个人过得去、但障碍还在"的放行：runtime 只对这一次行走跳过封锁检查，通道对其他人照旧是封的；障碍被清除则用 `connectionBlock {blocked:false}` |
 
 ### 4.2 `ending[]` —— 本 tick 结束的动作（`RawActionEnd`）
 
@@ -158,6 +163,8 @@ engine 处理的「操作」分四层，彼此不共享枚举：**演员发出�
 
 **由 WorldDelta 映射而来**：`character.hp` `character.san` `character.fatigue` `character.addCondition` `character.removeCondition` `character.position` `character.spot` · `scene.addCondition` `scene.removeCondition` `scene.setDescription` `connection.setBlock` `connection.setHidden` `environment.contribute` `environment.hazard` · `item.create` `item.move` `item.destroy` `item.set`
 
+`connection.setBlock` 是一条边一个标志：天气 engine、脚本事件、WAE 三个来源各写各的，最后写的人说了算，任何一个都可以清掉别人设的。没有投票表、没有引用计数。
+
 **只有代码能发（LLM 无对应 operation）**：
 
 | kind | 谁发 / 做什么 |
@@ -174,7 +181,7 @@ engine 处理的「操作」分四层，彼此不共享枚举：**演员发出�
 
 **注册的子系统**（`registerDefaults.ts:createDefaultSubsystemRegistry`，anchor 按 priority 升序跑）：
 
-`weather` · `sun` · `stamina` · `itemDamage` · `characterConditionExpiry` · `sceneConditionExpiry`
+`weather`（只管状态机与数值贡献；封锁和条件由天气 engine 写） · `sun` · `stamina` · `itemDamage` · `characterConditionExpiry` · `sceneConditionExpiry`
 
 > `subsystem/movement.ts` **不是**注册的子系统，它是纯路线库（`planMovementRoute` / `interpolateMovementPosition`），被 `actions/movementRuntime.ts` 调用。
 

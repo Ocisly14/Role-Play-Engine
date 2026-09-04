@@ -94,6 +94,23 @@ export interface ReadContextOptions {
   callerScope?: FeatureStateScope;
 }
 
+/** Every region id in the world. A region is a `parentLocationId`, and the
+ *  outdoors is the implicit one: a top-level scene or a road with no parent
+ *  belongs to "OUTDOOR" — the convention getOutdoorLocationIdsInRegion reads
+ *  and the weather presets name. Scanning scenes alone never produced it, so
+ *  no weather region was ever anchored. */
+export function implicitRegionIds(dgsm: DynamicGameStateManager): string[] {
+  const state = dgsm.getState();
+  const out = new Set<string>();
+  for (const scene of state.scenes.values()) {
+    out.add(scene.parentLocationId ?? "OUTDOOR");
+  }
+  for (const road of (state.roads ?? new Map()).values()) {
+    out.add(road.parentLocationId ?? "OUTDOOR");
+  }
+  return Array.from(out).sort();
+}
+
 export function makeDGSMFeatureReadContext(
   dgsm: DynamicGameStateManager,
   opts: ReadContextOptions
@@ -127,14 +144,7 @@ export function makeDGSMFeatureReadContext(
     getRegionId: (sceneId) => dgsm.getRegionIdForScene(sceneId),
     getSceneConditions: (sceneId) => dgsm.getSceneConditions(sceneId),
 
-    getAllRegionIds: () => {
-      const out = new Set<string>();
-      for (const sceneId of dgsm.getAllSceneIds()) {
-        const rid = dgsm.getRegionIdForScene(sceneId);
-        if (rid) out.add(rid);
-      }
-      return Array.from(out).sort();
-    },
+    getAllRegionIds: () => implicitRegionIds(dgsm),
 
     getFeatureState<T>(key: string) {
       return dgsm.getScopedFeatureState<T>(opts.callerFeatureId, scope, key);

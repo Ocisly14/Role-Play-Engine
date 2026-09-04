@@ -202,3 +202,34 @@ describe("route-of-waypoints movement", () => {
     });
   });
 });
+
+describe("passBlocked", () => {
+  // A blocked passage is a world fact the runtime enforces at the step that
+  // reaches it. The Engine may let ONE walk through — the character climbs
+  // the fallen tree, wades the ford — without opening the passage for anyone
+  // else: that is `passBlocked` on this movement, and only this movement.
+  it("stops at a blocked passage unless the Engine let this walk through", () => {
+    const dgsm = makeDgsm();
+    dgsm.__positions.set("npc_1", { type: "scene", sceneId: "S_HOME" });
+    dgsm.__blocked.set(["S_HOME", "J_A"].sort().join("::"), "snowdrifts");
+
+    const stopped = initMovementRuntime(dgsm, "npc_1", ["J_A"]);
+    expect(stopped.ok).toBe(true);
+    if (!stopped.ok) return;
+    expect(advanceMovement(dgsm, "npc_1", stopped.state)).toMatchObject({
+      status: "blocked",
+      blockedReason: "blocked: snowdrifts",
+    });
+
+    const through = initMovementRuntime(dgsm, "npc_1", ["J_A"], undefined, true);
+    expect(through.ok).toBe(true);
+    if (!through.ok) return;
+    expect(through.state.passBlocked).toBe(true);
+    const advanced = advanceMovement(dgsm, "npc_1", through.state);
+    expect(advanced.status).toBe("arrived");
+    expect(advanced.stateChanges.at(-1)).toMatchObject({
+      kind: "character.position",
+      position: { type: "scene", sceneId: "J_A" },
+    });
+  });
+});

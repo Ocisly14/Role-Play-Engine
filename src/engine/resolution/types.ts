@@ -291,7 +291,10 @@ export type WorldActionEngineResult =
       ok: true;
       resolution: TickResolution;
       /** Movement-leg runtime annotations per actionId. */
-      movementInits: Record<string, { route: string[]; vehicleId?: string }>;
+      movementInits: Record<
+        string,
+        { route: string[]; vehicleId?: string; passBlocked?: boolean }
+      >;
       /** The bar the Engine set for an action as it starts, per actionId. */
       checkInits: Record<
         string,

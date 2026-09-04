@@ -348,6 +348,7 @@ describe("weather.set — a script easing the storm it raised", () => {
       intensity,
       minutesInState: 40,
       affectedSceneIds: ["SCN_ridge", "SCN_hollow"],
+      judgedBlockIds: ["weather:SCN_hollow|SCN_ridge"],
     } as never);
     return dgsm;
   }
@@ -366,7 +367,7 @@ describe("weather.set — a script easing the storm it raised", () => {
     ],
   };
 
-  it("reopens the roads the blizzard closed, and rewrites the condition", () => {
+  it("re-clocks the region and asks the weather engine to judge it", () => {
     const dgsm = makeWeatherDgsm(5);
     const out = run(
       new ScriptedEventRunner([eases]),
@@ -379,30 +380,35 @@ describe("weather.set — a script easing the storm it raised", () => {
     expect(set).toMatchObject({
       featureId: "weather",
       key: "OUTDOOR",
-      state: { weatherType: "snow", intensity: 2, minutesInState: 0 },
+      state: {
+        weatherType: "snow",
+        intensity: 2,
+        minutesInState: 0,
+        judgedBlockIds: ["weather:SCN_hollow|SCN_ridge"],
+      },
     });
-    // Every block it casts is a withdrawal: intensity 2 is under the
-    // blocking threshold, so the same vote that shut the road lifts it.
-    const blocks = out.filter((c) => c.kind === "connection.setBlock");
-    expect(blocks.length).toBeGreaterThan(0);
-    expect(blocks.every((b) => (b as { blocked: boolean }).blocked)).toBe(
-      false
-    );
-    // The stale "[Weather] 暴雪" line goes before the new one lands.
-    expect(out.filter((c) => c.kind === "scene.removeCondition")).toHaveLength(
-      2
-    );
-    expect(
-      out.filter(
-        (c) =>
-          c.kind === "scene.addCondition" &&
-          (c as { condition: { featureId: string } }).condition.featureId ===
-            "weather"
-      )
-    ).toHaveLength(2);
+    // Blocks and conditions are the weather engine's to write once the
+    // orchestrator hears this event; the subsystem casts neither.
+    expect(out.filter((c) => c.kind === "connection.setBlock")).toHaveLength(0);
+    expect(out.filter((c) => c.kind === "scene.addCondition")).toHaveLength(0);
+    const events = out.filter((c) => c.kind === "event.emit");
+    expect(events).toHaveLength(1);
+    expect(events[0]).toMatchObject({
+      event: {
+        type: "weather.transition",
+        data: {
+          regionId: "OUTDOOR",
+          state: {
+            weatherType: "snow",
+            intensity: 2,
+            judgedBlockIds: ["weather:SCN_hollow|SCN_ridge"],
+          },
+        },
+      },
+    });
   });
 
-  it("closes them again when a script sets the snow back over the threshold", () => {
+  it("carries the heavier snow into the event when a script raises it", () => {
     const dgsm = makeWeatherDgsm(1);
     const heavier: ScriptedEvent = {
       ...eases,
@@ -421,9 +427,11 @@ describe("weather.set — a script easing the storm it raised", () => {
       1,
       "2038-12-06T19:00:00"
     );
-    const blocks = out.filter((c) => c.kind === "connection.setBlock");
-    expect(blocks.length).toBeGreaterThan(0);
-    expect(blocks.every((b) => (b as { blocked: boolean }).blocked)).toBe(true);
+    const events = out.filter((c) => c.kind === "event.emit");
+    expect(events).toHaveLength(1);
+    expect(events[0]).toMatchObject({
+      event: { data: { state: { weatherType: "snow", intensity: 5 } } },
+    });
   });
 
   it("does nothing for a region no preset created", () => {
@@ -447,5 +455,6 @@ describe("weather.set — a script easing the storm it raised", () => {
     );
     expect(out.filter((c) => c.kind === "feature.setState")).toHaveLength(0);
     expect(out.filter((c) => c.kind === "connection.setBlock")).toHaveLength(0);
+    expect(out.filter((c) => c.kind === "event.emit")).toHaveLength(0);
   });
 });

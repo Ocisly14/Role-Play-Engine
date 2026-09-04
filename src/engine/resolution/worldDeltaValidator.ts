@@ -401,6 +401,12 @@ function validateStart(entry: RawActionStart, lookup: Lookup): string[] {
         `movement.vehicleId "${entry.movement.vehicleId}" is not a vehicle in this world`
       );
     }
+    if (
+      entry.movement.passBlocked !== undefined &&
+      typeof entry.movement.passBlocked !== "boolean"
+    ) {
+      errs.push("movement.passBlocked must be true or false");
+    }
   }
   // Duration is conditionally required: a non-travel action must say how
   // long it takes; a travel action must NOT be clocked by hand — code derives
@@ -1655,7 +1661,10 @@ function patchOccurrences(
 export interface FinalizedResolution {
   resolution: TickResolution;
   /** Movement-leg annotations per action (Engine-owned runtime init). */
-  movementInits: Record<string, { route: string[]; vehicleId?: string }>;
+  movementInits: Record<
+    string,
+    { route: string[]; vehicleId?: string; passBlocked?: boolean }
+  >;
   /** The bar set for an action as it starts, per actionId. Written onto the
    *  action once and never revised — code rolls against it later. */
   checkInits: Record<
@@ -1753,8 +1762,10 @@ export function finalizeResolution(
 ): FinalizedResolution {
   const lookup = buildLookup(context);
   const transitions: ActionTransition[] = [];
-  const movementInits: Record<string, { route: string[]; vehicleId?: string }> =
-    {};
+  const movementInits: Record<
+    string,
+    { route: string[]; vehicleId?: string; passBlocked?: boolean }
+  > = {};
   const checkInits: FinalizedResolution["checkInits"] = {};
   const tickMinutes = context.tick.durationMinutes;
 
@@ -1771,6 +1782,7 @@ export function finalizeResolution(
         ...(entry.movement.vehicleId !== undefined
           ? { vehicleId: entry.movement.vehicleId }
           : {}),
+        ...(entry.movement.passBlocked === true ? { passBlocked: true } : {}),
       };
     }
     if (entry.check) {

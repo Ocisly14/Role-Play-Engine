@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 The package is **`role-play-engine`** ("LLM World Engine"); the checkout directory is still `CoC-AI-agent` for historical reasons. Call of Cthulhu IP references were scrubbed — don't reintroduce named-setting terminology. A few `CoC` mentions survive as leftovers (file-header comments in `src/models/*`, the `allowedHosts` entry in `vitest.config.ts`); treat them as vestigial, not as a naming convention.
 
-**`src/planning/README.md` is stale.** It still describes the pre-refactor design (`ActionStep` with `engine: "llm" | "code"` routing, per-skill schemas, a "task processor"). None of that exists any more — see *The two LLM seams* below for what actually runs. The root `README.md` was rewritten against the current code.
+**`src/planning/README.md` is stale.** It still describes the pre-refactor design (`ActionStep` with `engine: "llm" | "code"` routing, per-skill schemas, a "task processor"). None of that exists any more — see *The LLM seams* below for what actually runs. The root `README.md` was rewritten against the current code.
 
 ## Commands
 
@@ -74,13 +74,17 @@ SimulationRunner
 
 There is **no central scheduler** and **no planning agent**. The pipeline is `perception → NPC agent → trust boundary → command inbox → engine`. Don't introduce a top-level scheduler that owns NPC actions, and don't reintroduce daily-plan generation.
 
-### The two LLM seams
+### The LLM seams
 
 **World Action Engine** (`engine/resolution/worldActionEngine.ts`) — one agentic session per triggered tick, over the full world context. Output is validated in code (`worldDeltaValidator.ts`), gets up to `MAX_REPAIR_ROUNDS` (3) corrective rounds via `repair_resolution`, and anything still invalid is dropped with its action failed. There are **no action types and no per-action prompts** — one rule document (`engine/rules/world-action-resolution.md`) governs everything, with `engine/rules/session-protocol.md` as the session contract.
 
 The session's economics are part of its design: every turn re-sends the whole request, so **a turn costs about what the resolution costs**. Hence exactly **one** code tool — `damageRoll` (`engine/tools/diceTools.ts`, registered flat by name in `registerDefaults.ts`) — because a roll must never be the model's. Pathfinding, movement cost and inventory lookups were deliberately removed: the request already carries the graph, the places and the items, so the model reads rather than queries. The turn budget is a code constant *and* a prompt sentence (`FORCE_SUBMIT_AFTER` / `MAX_ITERATIONS` templated into the protocol); after the force point the tools are withdrawn and a submission is demanded. Every session must end with exactly one `submit_resolution` call, alone in its turn.
 
 **RoleSimAgent** (`roleSim/llmAgent.ts`) — per-NPC persona loop. Tools: `act` and `continue` are terminal (consume the tick, return to the controller); `writeMemory` is an instant tool dispatched by `toolDispatcher.ts` and rides along in the same turn. There is no recall tool — see Memory below.
+
+**Weather engine** (`engine/weather/weatherEngine.ts`) — one small session per region per weather change. The weather subsystem keeps the state machine and the numbers; on a change it raises a `weather.transition` event, and the orchestrator (Phase 8b, after scripted events) asks this engine which passages the weather closes and what each outdoor place is like, from the places' own prose. Code diffs the answer against the last one (`judgedBlockIds`), attaches the skill penalties, and folds it into the same flush. Clear weather is deterministic; a failed judgement leaves passages and conditions as they were.
+
+Connection blocks are one flag per edge with a reason. Three writers — the weather engine, scripted events and the World Action Engine — and the last write wins; any of them may clear what another set. There is no refcount. A character getting past an obstacle that stays is `movement.passBlocked` on that one walk, not a cleared block.
 
 ### Trust boundary
 
@@ -104,7 +108,7 @@ The 57 CoC skills were consolidated into **17 broad ability domains** (`engine/r
 
 ### Source layout (`src/`)
 
-- `engine/` — tick runtime. `core/` (tickEngine/tickOrchestrator/applier/eventBus/scriptedEventRunner), `actions/` (ActionCommand intake, command validator/builder, EngineAction store, skill adjudication, movement runtime), `resolution/` (World Action Engine + context builder + WorldDelta schema/validator), `tools/` (the code-tool registry and `damageRoll`), `subsystem/` (weather, sun, stamina, item damage, condition expiry), `scriptedEvents/`, `rules/`, `shared/` (dice, pathfinding, impact propagation, topology helpers, JSON parsing). Owns all world-state transitions. No interpreter, no per-action definitions.
+- `engine/` — tick runtime. `core/` (tickEngine/tickOrchestrator/applier/eventBus/scriptedEventRunner), `actions/` (ActionCommand intake, command validator/builder, EngineAction store, skill adjudication, movement runtime), `resolution/` (World Action Engine + context builder + WorldDelta schema/validator), `weather/` (the weather engine: request/validation/changes + the LLM call), `tools/` (the code-tool registry and `damageRoll`), `subsystem/` (weather, sun, stamina, item damage, condition expiry), `scriptedEvents/`, `rules/`, `shared/` (dice, pathfinding, impact propagation, topology helpers, JSON parsing). Owns all world-state transitions. No interpreter, no per-action definitions.
 - `roleSim/` — LLM persona layer: `llmAgent`, `agent` (contracts), `npcActionController`, `renderer/`, `systemPrompt`, `userPromptBuilder`, `profileFormatter`, `memoryFormatter`, `perceptionCompactor`, `promptBudget`, `seedIntents`, `toolDispatcher`, `tools/` (`act`, `continue`, `writeMemory`, `schemas`).
 - `simulation/` — `SimulationRunner`, `SimulationEventEmitter`, `runtimePersistence`, `characterInjection`. The driver layer between API and engine.
 - `state/` — `DynamicGameState` + `DynamicGameStateLoader`, `moduleLoader`/`moduleImporter`/`moduleSchemaV2`, `gameClock`, `perceivableDirectory`, `perceivedLocation`, `connectionRegistry`, `blockedConnections`, `characterSpot`, `topologyTypes`.

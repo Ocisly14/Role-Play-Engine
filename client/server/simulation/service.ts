@@ -161,10 +161,6 @@ export async function getRunner(
     | {
         queue: unknown[];
         dexByActor: Record<string, number>;
-        connectionVotes: Record<
-          string,
-          { featureId: string; reason: string }[]
-        >;
       }
     | undefined;
   const gameState = DynamicGameStateManager.deserialize(runtime.gameState);

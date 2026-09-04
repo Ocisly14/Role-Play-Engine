@@ -26,6 +26,33 @@ ordered list of waypoints and its last entry is the stated destination.
 Time passing is not displacement. An outcome or occurrence must not place a
 character's hands on an entity their applied position cannot reach.
 
+## Blocked passages
+
+A blocked passage is a world fact with a reason. Three writers set and clear
+it: the weather engine closes passages the weather makes impassable, a
+scripted event floods a ford, and you close a door someone barricades. One
+flag per passage; the last write wins, and any writer may clear what another
+set.
+
+Code stops a walker at a blocked passage the moment their route reaches it
+and hands you the interruption. Never pre-judge a stated route against the
+blocked list. The actor learns the passage is shut, and their next command is
+where the judgement happens:
+
+- The act REMOVES the obstacle (the barricade broken down, the tree dragged
+  aside): emit `sceneChanges connectionBlock {blocked:false}` and no
+  `passBlocked`. The passage is open for everyone.
+- The act GETS THIS PERSON THROUGH while the obstacle stays (climbing the
+  tree, wading the ford, pushing on through the blizzard): set
+  `movement.passBlocked: true` on that movement. The passage stays blocked
+  for everyone else; the runtime lets only this walk through. Judge it from
+  the act, the obstacle's reason and the character's condition.
+- The obstacle stops them: neither. The runtime interrupts the walk again and
+  the actor is told why.
+
+Never both for one passage in one resolution. `passBlocked` grants a route
+the actor stated; it never invents one.
+
 ## Non-travel displacement
 
 Use `character.position` only when a body changes scenes without following a

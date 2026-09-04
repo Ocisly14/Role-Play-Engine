@@ -50,6 +50,11 @@ export interface MovementRuntimeState {
   /** Driving: the vehicle this movement advances. The actor sits in its
    *  interior scene and never changes position; only the vehicle moves. */
   vehicleId?: string;
+  /** The Engine judged that THIS walk gets past whatever blocks its way —
+   *  the fallen tree climbed, the ford waded — while the passage stays
+   *  blocked for everyone else. The runtime skips its block checks for this
+   *  movement and no other. Absent = the runtime stops at a blocked edge. */
+  passBlocked?: boolean;
   /** The actor's stated waypoints (place ids, adjacent hops); the last one
    *  is the destination. Legs are planned lazily on arrival at each
    *  waypoint, so a mid-route block interrupts exactly where it stands. */
@@ -195,7 +200,8 @@ export function initMovementRuntime(
   dgsm: DynamicGameStateManager,
   actorId: string,
   routeInput: string[],
-  vehicleId?: string
+  vehicleId?: string,
+  passBlocked = false
 ): MovementInitResult {
   let route = routeInput;
   if (route.length === 0) {
@@ -282,6 +288,7 @@ export function initMovementRuntime(
     ok: true,
     state: {
       ...(vehicleId !== undefined ? { vehicleId } : {}),
+      ...(passBlocked ? { passBlocked: true } : {}),
       route: [...route],
       currentLegIndex: 0,
       destinationId: route[route.length - 1],
@@ -370,7 +377,11 @@ export function advanceMovement(
   const stepEntry = state.routeSnapshot[state.currentStepIndex];
   if (!stepEntry) return { stateChanges, status: "arrived" };
 
-  if (state.minutesIntoStep === 0 && stepEntry.blockCheck) {
+  if (
+    state.minutesIntoStep === 0 &&
+    stepEntry.blockCheck &&
+    !state.passBlocked
+  ) {
     const reason = dgsm.getConnectionBlockReason(
       stepEntry.blockCheck.fromId,
       stepEntry.blockCheck.toId
@@ -423,7 +434,7 @@ function drainImmediate(
     const entry = state.routeSnapshot[state.currentStepIndex];
     if (!entry || entry.durationMinutes > 0) return undefined;
 
-    if (entry.blockCheck) {
+    if (entry.blockCheck && !state.passBlocked) {
       const reason = dgsm.getConnectionBlockReason(
         entry.blockCheck.fromId,
         entry.blockCheck.toId

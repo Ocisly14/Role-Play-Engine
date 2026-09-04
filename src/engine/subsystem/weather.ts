@@ -1,17 +1,19 @@
 // src/engine/subsystem/weather.ts
 //
-// Phase I port of weatherFeature → AnchorSubsystem (anchorKind="region").
-// All constants, types, and helpers are copied verbatim from
-// src/engine/features/weatherFeature.ts — no logic changes.
-// Task 11 will delete the original; until then both files coexist.
+// Regional weather: the state machine (type, intensity, the 120-minute
+// transition check) and the numbers it contributes to the environment
+// (temperature, an illumination cap). What the weather DOES to a region —
+// which passages it closes, what each outdoor place is like under it — is
+// not a rule here: on every change this subsystem emits a
+// `weather.transition` event, and the orchestrator asks the weather engine
+// (src/engine/weather/) to judge it from the places' own prose.
 
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
-import { makeFeatureEdgeId } from "../../state/blockedConnections.js";
 import {
   type FeatureReadContext,
   makeDGSMFeatureReadContext,
 } from "../core/featureReadContext.js";
-import type { SceneCondition, StateChange } from "../core/types.js";
+import type { StateChange } from "../core/types.js";
 import type { AnchorSubsystem } from "./types.js";
 
 // ===== Types =====
@@ -30,6 +32,10 @@ export interface WeatherRegionState {
   intensity: number;
   minutesInState: number;
   affectedSceneIds: string[];
+  /** The weather-edge ids the weather engine closed at its last judgement
+   *  for this region — the diff base for the next one: a passage it does not
+   *  close again reopens. Absent before any judgement. */
+  judgedBlockIds?: string[];
 }
 
 export interface WeatherInitConfigEntry {
@@ -38,18 +44,21 @@ export interface WeatherInitConfigEntry {
   intensity: number;
 }
 
+export interface WeatherTransitionEventData {
+  regionId: string;
+  state: WeatherRegionState;
+}
+
 // ===== Constants =====
 
-const FEATURE_ID = "weather";
+export const WEATHER_FEATURE_ID = "weather";
+const FEATURE_ID = WEATHER_FEATURE_ID;
 /** Region-scoped state, so a read context for this subsystem must say so. */
 const ANCHOR_KIND = "region" as const;
 const TRANSITION_CHECK_INTERVAL_MINUTES = 120;
 const MAX_INTENSITY = 5;
-const BLOCKING_INTENSITY_THRESHOLD = 4;
-// Stable vote id for Applier's connection.setBlock refcount table.
-// A single logical vote per connection per feature — additions and withdrawals
-// across weather transitions must match via identical (featureId, reason).
-const WEATHER_BLOCK_REASON = "weather-block";
+/** The tick's word to the orchestrator that a region's weather changed. */
+export const WEATHER_TRANSITION_EVENT = "weather.transition";
 
 export const WEATHER_TYPES: readonly WeatherType[] = [
   "clear",
@@ -223,31 +232,26 @@ export function evolveIntensity(current: number): number {
 // ===== Internal emit helpers =====
 
 /**
- * Stable, order-independent connection vote id for a scene pair. Minted by the
- * shared helper the Applier's resolver reads, so the two cannot drift apart
- * again — reason strings are still attached so the applier can deduplicate
- * votes by (featureId, reason).
+ * The orchestrator's cue that this region's weather changed and the weather
+ * engine must judge what it does. A subsystem returns StateChanges and
+ * nothing else, so the cue rides as a FeatureEvent: impact 0 and no scene or
+ * character, which is what keeps the perception shim from routing it to
+ * anyone.
  */
-function connectionIdFor(a: string, b: string): string {
-  return makeFeatureEdgeId(FEATURE_ID, a, b);
-}
-
-function buildWeatherSceneCondition(
-  sceneId: string,
+function transitionEvent(
+  regionId: string,
   state: WeatherRegionState
 ): StateChange {
-  const label = getWeatherLabel(state.weatherType, state.intensity);
-  const penaltyArr = computeSkillPenalties(state.weatherType, state.intensity);
-  const skillPenalty: Record<string, number> = {};
-  for (const { skill, delta } of penaltyArr) {
-    skillPenalty[skill] = (skillPenalty[skill] ?? 0) + delta;
-  }
-  const condition: SceneCondition = {
-    featureId: FEATURE_ID,
-    description: `[Weather] ${label}`,
-    mechanicalEffect: penaltyArr.length > 0 ? { skillPenalty } : undefined,
+  const data: WeatherTransitionEventData = { regionId, state };
+  return {
+    kind: "event.emit",
+    event: {
+      type: WEATHER_TRANSITION_EVENT,
+      impact: 0,
+      description: `weather in ${regionId}: ${getWeatherLabel(state.weatherType, state.intensity)}`,
+      data: data as unknown as Record<string, unknown>,
+    },
   };
-  return { kind: "scene.addCondition", sceneId, condition };
 }
 
 /**
@@ -300,45 +304,6 @@ function emitEnvContributions(state: WeatherRegionState): StateChange[] {
   return out;
 }
 
-/**
- * Emit connection.setBlock StateChanges for outdoor↔outdoor connections in a
- * region, given the current weather state. Needs ctx for neighbor iteration,
- * so this lives outside emitEnvContributions.
- */
-function emitConnectionBlocks(
-  state: WeatherRegionState,
-  ctx: FeatureReadContext
-): StateChange[] {
-  const { weatherType, intensity, affectedSceneIds } = state;
-  const shouldBlock =
-    (weatherType === "storm" || weatherType === "snow") &&
-    intensity >= BLOCKING_INTENSITY_THRESHOLD;
-  const out: StateChange[] = [];
-  // Constant reason so Applier's (featureId, reason) refcount table
-  // matches additions and withdrawals across weather transitions.
-  // Human-readable diagnostics can come from other channels (featureEvents
-  // or scene conditions); this field is for vote dedup only.
-  const reason = WEATHER_BLOCK_REASON;
-
-  for (const sceneId of affectedSceneIds) {
-    const scene = ctx.getScene(sceneId);
-    if (!scene) continue;
-    for (const conn of scene.connections ?? []) {
-      const other = ctx.getScene(conn.targetId);
-      // Only outdoor↔outdoor edges are weather-blockable.
-      if (!other || other.indoor) continue;
-      out.push({
-        kind: "connection.setBlock",
-        connectionId: connectionIdFor(sceneId, conn.targetId),
-        blocked: shouldBlock,
-        sourceFeatureId: FEATURE_ID,
-        reason,
-      });
-    }
-  }
-  return out;
-}
-
 function makeRegionState(
   preset: WeatherInitConfigEntry,
   affectedSceneIds: string[]
@@ -360,8 +325,8 @@ function makeRegionState(
  * would leave it. Exported for the scripted-event effect `weather.set`.
  *
  * Setting the state bucket alone is not enough, and that is the whole reason
- * this exists: `onTick` refreshes the `[Weather]` scene conditions and re-casts
- * the connection votes ONLY when it decides a transition happened, and its
+ * this exists: `onTick` emits the transition event that has the weather engine
+ * re-judge the region ONLY when it decides a transition happened, and its
  * transition check runs every 120 in-world minutes. A script that wrote the
  * bucket by itself would leave "[Weather] 暴雪" hanging over a light snowfall,
  * and every road it had closed still closed, for up to two hours.
@@ -390,7 +355,11 @@ export function buildWeatherSetChanges(
     weatherType === "clear"
       ? 0
       : Math.max(1, Math.min(Math.trunc(intensity), MAX_INTENSITY));
+  // Everything else the region remembers — judgedBlockIds above all — survives
+  // a script's change of weather, or the engine's next diff could not lift
+  // what it closed.
   const next: WeatherRegionState = {
+    ...current,
     weatherType,
     intensity: clamped,
     // The clock on the next natural transition restarts here: the script has
@@ -399,29 +368,16 @@ export function buildWeatherSetChanges(
     affectedSceneIds: [...current.affectedSceneIds],
   };
 
-  const out: StateChange[] = [
+  return [
     {
       kind: "feature.setState",
       featureId: FEATURE_ID,
       key: regionId,
       state: next,
     },
+    transitionEvent(regionId, next),
+    ...emitEnvContributions(next),
   ];
-  for (const sceneId of next.affectedSceneIds) {
-    out.push({
-      kind: "scene.removeCondition",
-      sceneId,
-      predicate: { featureId: FEATURE_ID },
-    });
-    if (next.weatherType !== "clear" && next.intensity > 0) {
-      out.push(buildWeatherSceneCondition(sceneId, next));
-    }
-  }
-  // Casts `blocked: false` on its own once the new intensity is under the
-  // threshold — which is how "the wind eased" reopens the roads the storm shut.
-  out.push(...emitConnectionBlocks(next, ctx));
-  out.push(...emitEnvContributions(next));
-  return out;
 }
 
 // ===== Exported AnchorSubsystem =====
@@ -431,23 +387,21 @@ export const weatherSubsystem: AnchorSubsystem = {
   kind: "anchor",
   anchorKind: ANCHOR_KIND,
   description:
-    "Regional weather — Markov evolution with env contributions and scene conditions",
+    "Regional weather — Markov evolution with env contributions; passages and conditions are judged by the weather engine",
   effectSummary:
-    "Per-region weather contributing temperature/illumination cap to env and writing scene conditions with skill penalties.",
+    "Per-region weather contributing temperature/illumination cap to env; passages and conditions are judged by the weather engine on each change.",
   affectedKinds: [
     "feature.setState",
     "feature.removeState",
-    "scene.addCondition",
-    "scene.removeCondition",
     "environment.contribute",
     "environment.cap",
-    "connection.setBlock",
+    "event.emit",
   ],
   priority: 100,
   planningPrompt: `## Weather
 Current weather conditions are shown in the state description below.
 Weather changes automatically — you do NOT need to set or control weather.
-Weather affects outdoor scenes only (skill penalties, blocked paths in severe weather).`,
+Weather affects outdoor scenes only (skill penalties; in severe weather the weather engine closes exposed passages).`,
 
   /**
    * Weather exists wherever a region exists — always true.
@@ -473,21 +427,16 @@ Weather affects outdoor scenes only (skill penalties, blocked paths in severe we
     if (affectedSceneIds.length === 0) return [];
 
     const regionState = makeRegionState(preset, affectedSceneIds);
-    const out: StateChange[] = [];
-    out.push({
-      kind: "feature.setState",
-      featureId: FEATURE_ID,
-      key: anchorId,
-      state: regionState,
-    });
-    out.push(...emitEnvContributions(regionState));
-    if (regionState.weatherType !== "clear" && regionState.intensity > 0) {
-      for (const sceneId of regionState.affectedSceneIds) {
-        out.push(buildWeatherSceneCondition(sceneId, regionState));
-      }
-    }
-    out.push(...emitConnectionBlocks(regionState, ctx));
-    return out;
+    return [
+      {
+        kind: "feature.setState",
+        featureId: FEATURE_ID,
+        key: anchorId,
+        state: regionState,
+      },
+      ...emitEnvContributions(regionState),
+      transitionEvent(anchorId, regionState),
+    ];
   },
 
   /**
@@ -537,22 +486,9 @@ Weather affects outdoor scenes only (skill penalties, blocked paths in severe we
     // locations visited in the current flush.)
     out.push(...emitEnvContributions(next));
 
-    // Conditions and connection blocking only change on transitions — the
-    // Applier doesn't dedupe scene conditions by featureId, so we first
-    // remove stale `[Weather]` conditions, then add the current one.
-    if (transitioned) {
-      for (const sceneId of next.affectedSceneIds) {
-        out.push({
-          kind: "scene.removeCondition",
-          sceneId,
-          predicate: { featureId: FEATURE_ID },
-        });
-        if (next.weatherType !== "clear" && next.intensity > 0) {
-          out.push(buildWeatherSceneCondition(sceneId, next));
-        }
-      }
-      out.push(...emitConnectionBlocks(next, ctx));
-    }
+    // What the change does to the region is the weather engine's judgement,
+    // asked for once per change through this event.
+    if (transitioned) out.push(transitionEvent(anchorId, next));
     return out;
   },
 

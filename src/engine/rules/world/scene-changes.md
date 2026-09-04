@@ -37,8 +37,13 @@ item ownership; pair it with the structural operation that caused the rewrite.
 
 A connection id identifies one exact passage, not a whole place.
 
-- `connectionBlock` changes whether that passage can be traversed and records
-  the objective reason.
+- `connectionBlock` sets or clears whether that passage can be traversed and
+  records the objective reason. One flag per passage, three writers — the
+  weather engine, scripted events and you — and the last write wins: clearing
+  it opens the passage whoever shut it. Use `blocked:false` only when an act
+  actually removes the obstacle; a person getting past an obstacle that stays
+  is `movement.passBlocked` on their movement (see
+  `movement-and-position.md`).
 - `connectionDiscovered` records which characters learned about a still-hidden
   passage. Include everyone who could discover it from the event, not only the
   actor.

@@ -33,8 +33,6 @@ function makeEnvBucket(): EnvBucket {
   };
 }
 
-type ConnectionVote = { featureId: string; reason: string };
-
 /**
  * Applier
  *
@@ -42,13 +40,15 @@ type ConnectionVote = { featureId: string; reason: string };
  * StateChange[] which the Applier consolidates and flushes in a two-pass
  * algorithm:
  *
- *   Pass 1: group order-independent kinds (hp/san/fatigue deltas,
- *           connection block votes, event emissions).
- *   Pass 2: (a) apply grouped aggregates (sum + clamp + DamageReport,
- *               refcount resolution for connection blocks);
+ *   Pass 1: group order-independent kinds (hp/san/fatigue deltas, event
+ *           emissions, environment contributions).
+ *   Pass 2: (a) apply grouped aggregates (sum + clamp + DamageReport);
  *           (b) replay the original change stream for order-dependent
- *               kinds (scene/character condition add/remove,
- *               feature scoped state set/remove).
+ *               kinds (conditions, descriptions, connection flags, feature
+ *               state, items). A connection block is one flag per edge and
+ *               the last write wins: the weather engine, a scripted event and
+ *               the World Action Engine all write it, and any of them may
+ *               clear what another set.
  */
 /** Structural equality for plain feature-state objects. */
 function deepEqual(a: unknown, b: unknown): boolean {
@@ -71,8 +71,6 @@ function deepEqual(a: unknown, b: unknown): boolean {
 }
 
 export class Applier {
-  private connectionVotes = new Map<string, ConnectionVote[]>();
-
   constructor(
     private readonly dgsm: DynamicGameStateManager,
     private readonly featureScopes: ReadonlyMap<string, FeatureStateScope>
@@ -410,12 +408,6 @@ export class Applier {
       string,
       Array<{ featureId: string; delta: number; reason: string }>
     >();
-    const setBlockVotes: Array<{
-      connectionId: string;
-      blocked: boolean;
-      featureId: string;
-      reason: string;
-    }> = [];
     const featureEmissions: FeatureEvent[] = [];
     // Last write wins: a spot is one slot, not an accumulation. Same for the
     // appearance prose.
@@ -441,14 +433,6 @@ export class Applier {
           break;
         case "character.fatigue":
           this.bucketPush(fatigueBuckets, c.characterId, c);
-          break;
-        case "connection.setBlock":
-          setBlockVotes.push({
-            connectionId: c.connectionId,
-            blocked: c.blocked,
-            featureId: c.sourceFeatureId,
-            reason: c.reason,
-          });
           break;
         case "character.spot":
           spotWrites.set(c.characterId, c.spot);
@@ -536,9 +520,6 @@ export class Applier {
       const r = this.applyDelta(charId, "fatigue", contribs);
       if (r) damageReports.push(r);
     }
-    for (const vote of setBlockVotes) {
-      this.applySetBlockVote(vote);
-    }
 
     // Pass 2 (b) — order-dependent; replay original changes
     for (const c of changes) {
@@ -562,6 +543,26 @@ export class Applier {
         case "scene.setDescription":
           this.dgsm.setPlaceDescription(c.sceneId, c.description);
           break;
+        case "connection.setBlock": {
+          // One flag per edge, last writer wins. The validator refuses an
+          // unknown exit id upstream and a subsystem's pair id names two real
+          // places, so a miss here is stale runtime state — a warn, never a
+          // throw: one bad flag must not take the whole flush down.
+          const edge = this.dgsm.resolveConnectionEdgeById(c.connectionId);
+          if (!edge) {
+            console.warn(
+              `[Applier] connection.setBlock dropped: connection id "${c.connectionId}" resolves to no edge`
+            );
+            break;
+          }
+          this.dgsm.setConnectionBlocked(
+            edge.a.id,
+            edge.b.id,
+            c.blocked,
+            c.reason
+          );
+          break;
+        }
         case "connection.setHidden":
           this.dgsm.setConnectionHiddenById(c.connectionId, c.hidden);
           break;
@@ -714,64 +715,5 @@ export class Applier {
       finalValueAfter: after,
       died,
     };
-  }
-
-  /**
-   * Votes are keyed by the CANONICAL EDGE, not by the connection id: a passage
-   * authored as two one-way exit ids (one in each direction) is one edge, and
-   * a block voted through one id must be liftable through the other. The vote
-   * table therefore shares the key scheme of `state.blockedConnections`.
-   */
-  private applySetBlockVote(vote: {
-    connectionId: string;
-    blocked: boolean;
-    featureId: string;
-    reason: string;
-  }): void {
-    const edge = this.dgsm.resolveConnectionEdgeById(vote.connectionId);
-    if (!edge) {
-      // The validator refuses unknown connection ids upstream, so a miss here
-      // means stale runtime state. Never a throw: one bad vote must not take
-      // the whole flush down.
-      console.warn(
-        `[Applier] connection.setBlock dropped: connection id "${vote.connectionId}" resolves to no edge`
-      );
-      return;
-    }
-    if (!this.connectionVotes.has(edge.key)) {
-      this.connectionVotes.set(edge.key, []);
-    }
-    const votes = this.connectionVotes.get(edge.key)!;
-    const existingIdx = votes.findIndex(
-      (v) => v.featureId === vote.featureId && v.reason === vote.reason
-    );
-    if (vote.blocked) {
-      if (existingIdx === -1) {
-        votes.push({ featureId: vote.featureId, reason: vote.reason });
-      }
-    } else if (existingIdx !== -1) {
-      votes.splice(existingIdx, 1);
-    }
-    this.dgsm.setConnectionBlocked(
-      edge.a.id,
-      edge.b.id,
-      votes.length > 0,
-      votes.map((v) => v.reason).join("; ")
-    );
-  }
-
-  /**
-   * Serialize the refcount vote table (keyed by canonical edge key) so
-   * simulation snapshots survive session restarts. Pairs with
-   * rehydrateConnectionVotes.
-   */
-  serializeConnectionVotes(): Record<string, ConnectionVote[]> {
-    const out: Record<string, ConnectionVote[]> = {};
-    for (const [k, v] of this.connectionVotes) out[k] = [...v];
-    return out;
-  }
-
-  rehydrateConnectionVotes(data: Record<string, ConnectionVote[]>): void {
-    this.connectionVotes = new Map(Object.entries(data));
   }
 }

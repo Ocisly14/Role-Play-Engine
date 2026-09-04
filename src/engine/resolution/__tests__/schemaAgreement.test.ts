@@ -559,15 +559,15 @@ describe("both engine tools stay inside the strict subset", () => {
     // rather than in a 400 from the API. Lean shape (2026-09-03): the ending
     // entry is two required scalars, deltas lost `causalBasis`, the
     // occurrence row lost `locationId`/`actorId`/`affectedIds`/`signals`/
-    // `facts` for `speech`/`content` — 28 for submit, 48 for repair (every
-    // item field goes optional there, plus the address fields). Both still
-    // over the limit of 24.
+    // `facts` for `speech`/`content`, movement gained `passBlocked` — 29 for
+    // submit, 49 for repair (every item field goes optional there, plus the
+    // address fields). Both still over the limit of 24.
     const submitOptionals: string[] = [];
     optionals(submitResolutionTool.inputSchema, submitOptionals);
     const repairOptionals: string[] = [];
     optionals(repairResolutionTool.inputSchema, repairOptionals);
-    expect(submitOptionals.length).toBe(28);
-    expect(repairOptionals.length).toBe(48);
+    expect(submitOptionals.length).toBe(29);
+    expect(repairOptionals.length).toBe(49);
     expect(submitOptionals.length).toBeGreaterThan(ANTHROPIC_OPTIONAL_LIMIT);
     expect(submitResolutionTool.strict).toBe(false);
     expect(repairResolutionTool.strict).toBe(false);

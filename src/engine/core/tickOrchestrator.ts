@@ -51,9 +51,23 @@ import {
 } from "../shared/characterConditionPenalties.js";
 import type { SubsystemRegistry } from "../subsystem/registry.js";
 import type { AnchorSubsystem } from "../subsystem/types.js";
+import {
+  WEATHER_TRANSITION_EVENT,
+  type WeatherRegionState,
+  type WeatherTransitionEventData,
+} from "../subsystem/weather.js";
 import type { CodeToolRegistry } from "../tools/codeTool.js";
+import { type WeatherJudgeFn, judgeWeather } from "../weather/weatherEngine.js";
+import {
+  EMPTY_WEATHER_JUDGEMENT,
+  buildWeatherJudgementRequest,
+  weatherJudgementChanges,
+} from "../weather/weatherJudgement.js";
 import type { Applier } from "./applier.js";
-import { makeDGSMFeatureReadContext } from "./featureReadContext.js";
+import {
+  implicitRegionIds,
+  makeDGSMFeatureReadContext,
+} from "./featureReadContext.js";
 import type { ScriptedEventRunner } from "./scriptedEventRunner.js";
 import type {
   CharacterAction,
@@ -77,6 +91,8 @@ export interface OrchestratorDeps {
   codeTools: CodeToolRegistry;
   /** Injectable for tests; defaults to the real World Action Engine. */
   resolveTickFn?: ResolveTickFn;
+  /** Injectable for tests; defaults to the real weather engine. */
+  weatherJudgeFn?: WeatherJudgeFn;
   tickDurationMinutes: number;
 }
 
@@ -294,7 +310,13 @@ export class TickOrchestrator {
         if (!actorId) continue;
         movementStates.set(
           actionId,
-          initMovementRuntime(dgsm, actorId, init.route, init.vehicleId)
+          initMovementRuntime(
+            dgsm,
+            actorId,
+            init.route,
+            init.vehicleId,
+            init.passBlocked === true
+          )
         );
       }
       for (const transition of engineResult.resolution.transitions) {
@@ -415,6 +437,38 @@ export class TickOrchestrator {
         committedActionsThisTick: commits,
       })
     );
+
+    // Phase 8b — weather judgement. A region whose weather changed this tick
+    // (the subsystem's transition, its seeding, or a script's weather.set)
+    // raised a transition event into the buffer; the weather engine says
+    // which passages that weather closes and what each outdoor place is
+    // like, and its answer joins this same flush. After the scripted events,
+    // so a script's weather.set is judged in the tick it lands. Clear weather
+    // needs no judgement: everything the last one closed or hung goes.
+    const weatherTransitions = new Map<string, WeatherRegionState>();
+    for (const c of buffer) {
+      if (c.kind !== "event.emit" || c.event.type !== WEATHER_TRANSITION_EVENT) {
+        continue;
+      }
+      const data = c.event.data as unknown as WeatherTransitionEventData | undefined;
+      if (data?.regionId && data.state) {
+        weatherTransitions.set(data.regionId, data.state);
+      }
+    }
+    for (const [regionId, state] of weatherTransitions) {
+      const clear = state.weatherType === "clear" || state.intensity <= 0;
+      const request = buildWeatherJudgementRequest(dgsm, regionId, state);
+      const judged = clear
+        ? { ok: true as const, judgement: EMPTY_WEATHER_JUDGEMENT }
+        : await (this.deps.weatherJudgeFn ?? judgeWeather)(request);
+      if (!judged.ok) {
+        console.warn(
+          `[TickOrchestrator] weather judgement for ${regionId} failed: ${judged.failure} — passages and conditions left as they were`
+        );
+        continue;
+      }
+      buffer.push(...weatherJudgementChanges(regionId, state, judged.judgement));
+    }
 
     // Phase 11 — single flush. Engine WorldDeltas are consumed natively by
     // the Applier and apply ahead of the buffered StateChanges, so semantic
@@ -626,14 +680,11 @@ export class TickOrchestrator {
     switch (kind) {
       case "scene":
         return dgsm.getAllSceneIds().slice().sort();
-      case "region": {
-        const out = new Set<string>();
-        for (const sid of dgsm.getAllSceneIds()) {
-          const r = dgsm.getRegionIdForScene(sid);
-          if (r) out.add(r);
-        }
-        return Array.from(out).sort();
-      }
+      // Same rule as makeDGSMFeatureReadContext.getAllRegionIds — see
+      // implicitRegionIds in featureReadContext.ts for why the outdoors
+      // counts as a region even though no scene names it as a parent.
+      case "region":
+        return implicitRegionIds(dgsm);
       case "character":
         return dgsm
           .getState()

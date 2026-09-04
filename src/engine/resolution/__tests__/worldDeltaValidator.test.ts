@@ -989,6 +989,36 @@ describe("finalizeResolution", () => {
       action_live: "interrupted",
     });
   });
+
+  it("carries movement.passBlocked into the movement init, and only as a boolean", () => {
+    const finalized = finalizeResolution(
+      {
+        starting: [
+          start({
+            resolvedDurationTicks: undefined,
+            movement: { route: ["SCN_1"], passBlocked: true },
+          }),
+        ],
+      },
+      makeContext({})
+    );
+    expect(finalized.movementInits[ACTION_ID]).toEqual({
+      route: ["SCN_1"],
+      passBlocked: true,
+    });
+
+    const errors = validateRawResolution(
+      {
+        starting: [
+          start({
+            movement: { route: ["SCN_1"], passBlocked: "yes" as never },
+          }),
+        ],
+      },
+      makeContext({})
+    );
+    expect(text(errors)).toContain("passBlocked");
+  });
 });
 
 describe("an entry in the wrong list gets one instruction, not a review", () => {

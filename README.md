@@ -37,11 +37,13 @@ reasons; the package and the code carry no named-setting terminology.
 Two engines share one world state:
 
 - **Code engine** — deterministic transitions: movement along the place
-  graph, the clock, weather, sunlight, stamina, item damage,
-  condition expiry, dice.
-- **LLM engine** — open-ended outcomes. A single model session reads the
+  graph, the clock, the weather state machine, sunlight, stamina, item
+  damage, condition expiry, dice.
+- **LLM engines** — open-ended outcomes. The World Action Engine reads the
   full world context, resolves every action that triggered this tick, and
-  emits typed `WorldDelta`s that the code validates and applies.
+  emits typed `WorldDelta`s that the code validates and applies. A smaller
+  weather engine judges, on each weather change, which passages the weather
+  closes and what each outdoor place is like.
 
 Characters never see structured state. Each tick, what a character can
 perceive is rendered into one first-person paragraph, and the character's

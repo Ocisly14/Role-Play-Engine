@@ -1,9 +1,8 @@
-// M3: connectionBlock finally WORKS. The Applier keys its refcount vote table
-// by the canonical symmetric edge (the same key scheme as
-// state.blockedConnections), resolves the exit id through the connection
-// registry, and writes through the 4-arg setConnectionBlocked — so
-// pathfinding, the movement runtime and the context builder all see the
-// block through their existing read paths, zero changes there.
+// connectionBlock lands on state.blockedConnections as ONE flag per canonical
+// edge (the same key scheme pathfinding, the movement runtime and the context
+// builder already read): the exit id resolves through the connection
+// registry, a subsystem's `<featureId>:<a>|<b>` pair through the fallback,
+// and whoever writes last says whether the passage is open.
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -256,28 +255,65 @@ describe("pathfinding refuses the blocked edge and detours", () => {
   });
 });
 
-describe("refcounted votes from several sources", () => {
-  it("stays blocked until every voter withdraws", () => {
+describe("one flag per edge — the last writer wins, whoever they are", () => {
+  it("a second source overwrites the reason, and a third clears the edge", () => {
     const { dgsm, applier } = fixture;
     applier.flush([], T, [
       blockDelta("a1", "connection.ja.rmain", true, "a felled tree"),
-      blockDelta("a2", "connection.ja.rmain", true, "a mudslide"),
     ]);
-    expect(dgsm.getConnectionBlockReason("J_A", "R_MAIN")).toBe(
-      "a felled tree; a mudslide"
-    );
-
-    // One voter withdraws — the other's block stands, reason updated.
     applier.flush([], T, [
-      blockDelta("a1", "connection.ja.rmain", false, "a felled tree"),
+      blockDelta("a2", "connection.ja.rmain", true, "a mudslide"),
     ]);
     expect(dgsm.getConnectionBlockReason("J_A", "R_MAIN")).toBe("a mudslide");
 
-    // The last voter withdraws — the edge opens.
+    // A third action, a third reason: the edge still opens. Nothing is
+    // counted — whoever writes last says what the passage is.
     applier.flush([], T, [
-      blockDelta("a2", "connection.ja.rmain", false, "a mudslide"),
+      blockDelta("a3", "connection.ja.rmain", false, "the tree dragged aside"),
     ]);
     expect(dgsm.getConnectionBlockReason("J_A", "R_MAIN")).toBeUndefined();
+  });
+
+  it("an Engine delta clears a block a subsystem set", () => {
+    const { dgsm, applier } = fixture;
+    applier.flush(
+      [
+        {
+          kind: "connection.setBlock",
+          connectionId: makeFeatureEdgeId("weather", "J_A", "R_MAIN"),
+          blocked: true,
+          sourceFeatureId: "weather",
+          reason: "snowdrifts",
+        },
+      ],
+      T,
+      []
+    );
+    expect(dgsm.getConnectionBlockReason("J_A", "R_MAIN")).toBe("snowdrifts");
+
+    applier.flush([], T, [
+      blockDelta("a1", "connection.ja.rmain", false, "shovelled through"),
+    ]);
+    expect(dgsm.getConnectionBlockReason("J_A", "R_MAIN")).toBeUndefined();
+  });
+
+  it("within one flush the buffered change lands after the Engine's", () => {
+    const { dgsm, applier } = fixture;
+    applier.flush(
+      [
+        {
+          kind: "connection.setBlock",
+          connectionId: makeFeatureEdgeId("weather", "J_A", "R_MAIN"),
+          blocked: true,
+          sourceFeatureId: "weather",
+          reason: "snowdrifts",
+        },
+      ],
+      T,
+      [blockDelta("a1", "connection.ja.rmain", false, "shovelled through")]
+    );
+    // Engine deltas apply first, subsystem changes after: the road is shut.
+    expect(dgsm.getConnectionBlockReason("J_A", "R_MAIN")).toBe("snowdrifts");
   });
 
   it("collapses the two directions' exit ids onto one edge", () => {
@@ -289,37 +325,11 @@ describe("refcounted votes from several sources", () => {
     expect(dgsm.getConnectionBlockReason("S_HOME", "J_A")).toBeDefined();
 
     // ...and lift it through the junction's opposite-direction exit id: same
-    // edge, same vote table entry.
+    // edge, same underlying flag.
     applier.flush([], T, [
       blockDelta("a1", "connection.junc.home", false, "door jammed"),
     ]);
     expect(dgsm.getConnectionBlockReason("S_HOME", "J_A")).toBeUndefined();
-  });
-});
-
-describe("vote table serialization", () => {
-  it("round-trips votes keyed by edge so a rehydrated applier can unblock", () => {
-    const { dgsm, applier } = fixture;
-    applier.flush([], T, [
-      blockDelta("a1", "connection.ja.rmain", true, "a felled tree"),
-      blockDelta("a2", "connection.ja.rmain", true, "a mudslide"),
-    ]);
-
-    const serialized = applier.serializeConnectionVotes();
-    expect(Object.keys(serialized)).toEqual(["road:R_MAIN::scene:J_A"]);
-    expect(serialized["road:R_MAIN::scene:J_A"]).toHaveLength(2);
-
-    // A fresh applier (post-restart) picks the votes back up.
-    const revived = new Applier(dgsm, new Map());
-    revived.rehydrateConnectionVotes(JSON.parse(JSON.stringify(serialized)));
-    revived.flush([], T, [
-      blockDelta("a1", "connection.ja.rmain", false, "a felled tree"),
-    ]);
-    expect(dgsm.getConnectionBlockReason("J_A", "R_MAIN")).toBe("a mudslide");
-    revived.flush([], T, [
-      blockDelta("a2", "connection.ja.rmain", false, "a mudslide"),
-    ]);
-    expect(dgsm.getConnectionBlockReason("J_A", "R_MAIN")).toBeUndefined();
   });
 });
 

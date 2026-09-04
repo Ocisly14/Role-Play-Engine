@@ -11,6 +11,7 @@ import { createDefaultCodeToolRegistry } from "../registerDefaults.js";
 import type { ScriptedEvent } from "../scriptedEvents/types.js";
 import type { SubsystemRegistry } from "../subsystem/registry.js";
 import type { CodeToolRegistry } from "../tools/codeTool.js";
+import type { WeatherJudgeFn } from "../weather/weatherEngine.js";
 import { Applier } from "./applier.js";
 import { EventBus } from "./eventBus.js";
 import { ScriptedEventRunner } from "./scriptedEventRunner.js";
@@ -18,6 +19,7 @@ import { type ResolveTickFn, TickOrchestrator } from "./tickOrchestrator.js";
 import type {
   CharacterAction,
   FeatureEvent,
+  FeatureStateScope,
   TickReport,
   Unsubscribe,
 } from "./types.js";
@@ -53,7 +55,6 @@ export interface TickEnginePersistedState {
   actionSchemaVersion: number;
   inbox: ActionCommand[];
   actions: EngineAction[];
-  connectionVotes: Record<string, { featureId: string; reason: string }[]>;
 }
 
 export interface CreateTickEngineOptions {
@@ -67,11 +68,23 @@ export interface CreateTickEngineOptions {
   codeTools?: CodeToolRegistry;
   /** Test seam: replaces the World Action Engine LLM session. */
   resolveTickFn?: ResolveTickFn;
+  /** Test seam: replaces the weather engine LLM call. */
+  weatherJudgeFn?: WeatherJudgeFn;
   persistedState?: TickEnginePersistedState;
 }
 
 export function createTickEngine(opts: CreateTickEngineOptions): TickEngine {
-  const applier = new Applier(opts.dgsm, new Map());
+  // Each subsystem's state lives under ITS anchor kind. The Applier used to
+  // be handed an empty map here and wrote every feature.setState under
+  // "scene", while the orchestrator and the read contexts read under the
+  // subsystem's own kind — region-scoped weather was written where nothing
+  // ever read it, and stood at its preset for the whole run.
+  const featureScopes = new Map<string, FeatureStateScope>(
+    opts.subsystemRegistry
+      .getAnchorSubsystems()
+      .map((s) => [s.id, s.anchorKind] as const)
+  );
+  const applier = new Applier(opts.dgsm, featureScopes);
   const scriptedRunner = new ScriptedEventRunner(opts.scriptedEvents);
   const bus = new EventBus();
   const inbox = new CommandInbox();
@@ -88,7 +101,6 @@ export function createTickEngine(opts: CreateTickEngineOptions): TickEngine {
     }
     inbox.rehydrate(opts.persistedState.inbox);
     actionStore.rehydrate(opts.persistedState.actions);
-    applier.rehydrateConnectionVotes(opts.persistedState.connectionVotes);
   }
 
   const orchestrator = new TickOrchestrator({
@@ -100,6 +112,7 @@ export function createTickEngine(opts: CreateTickEngineOptions): TickEngine {
     actionStore,
     codeTools,
     resolveTickFn: opts.resolveTickFn,
+    weatherJudgeFn: opts.weatherJudgeFn,
     tickDurationMinutes: opts.tickDurationMinutes,
   });
 
@@ -155,7 +168,6 @@ export function createTickEngine(opts: CreateTickEngineOptions): TickEngine {
         actionSchemaVersion: ACTION_SCHEMA_VERSION,
         inbox: inbox.serialize(),
         actions: actionStore.serialize(),
-        connectionVotes: applier.serializeConnectionVotes(),
       };
     },
   };

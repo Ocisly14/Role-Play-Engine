@@ -406,7 +406,6 @@ describe("persistence", () => {
           actionSchemaVersion: 999,
           inbox: [],
           actions: [],
-          connectionVotes: {},
         },
       })
     ).toThrow(/actionSchemaVersion/);
