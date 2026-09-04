@@ -376,9 +376,13 @@ export async function generateText(
       content,
       maxOutputTokens: maxOutputTokens ?? ctx.settings.maxOutputTokens,
       temperature,
-      // Streaming exists only to feed onToken, and only Google wired it up.
+      // Only the adapters that actually forward deltas get the callback.
+      // Anthropic streams every call now (its 128K ceiling leaves the SDK no
+      // choice), so passing it there costs nothing extra.
       onToken:
-        onToken && ctx.provider === ModelProviderName.GOOGLE
+        onToken &&
+        (ctx.provider === ModelProviderName.GOOGLE ||
+          ctx.provider === ModelProviderName.ANTHROPIC)
           ? onToken
           : undefined,
     });

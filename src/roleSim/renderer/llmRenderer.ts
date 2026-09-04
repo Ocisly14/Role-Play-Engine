@@ -66,6 +66,11 @@ input.
   the room, so it never wears the room's tag. Nor does a lamp wear the tag of
   the street it stands on, or a wheel the tag of the cart.
 - An entity with no tag in this minute's input is written with no tag.
+- A \`cond.*\` tag is NOT a handle, wherever you see one. The place
+  Description is authored prose and cites the place's own conditions that
+  way, but a condition is not a thing anyone can point at — only people,
+  items and places can be cited. Render the damp, the smell, the failing
+  light in words, and leave the bracket out.
 - A tag follows the prose, it does not replace it: the words name the thing,
   the bracket comes after them.
 - A bracket holds an id and nothing else — no description, no punctuation, no

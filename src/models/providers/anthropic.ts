@@ -38,6 +38,22 @@ export function rejectsSamplingParams(modelName: string): boolean {
 }
 
 /**
+ * The cap on the current generation (Opus 4.6+, Sonnet 4.6+, Fable/Mythos 5),
+ * and the default when a caller names no budget of its own. Which models
+ * actually allow it is `configuration.ts`'s business — whatever arrives here
+ * is sent as `max_tokens` unexamined, so a value above the model's own cap
+ * comes back as a 400 rather than a shorter answer.
+ *
+ * This number is also why every call streams. The SDK refuses outright to
+ * send a non-streaming request whose `max_tokens` could outrun the 10-minute
+ * request timeout (`calculateNonstreamingTimeout`: the threshold works out at
+ * ~21K tokens), and it is only the streaming path that keeps reading after
+ * the headers arrive — `fetchWithTimeout` clears its abort timer once the
+ * response resolves, so a long body is never cut off mid-generation.
+ */
+export const MAX_OUTPUT_TOKENS = 128000;
+
+/**
  * The SDK appends its own `/v1/messages` to `baseURL`, so a configured
  * endpoint that already ends in `/v1` produces `/v1/v1/messages` and a 404 on
  * every call. (OpenAI is the opposite — its SDK expects `/v1` to be part of
@@ -143,9 +159,9 @@ export class AnthropicAdapter implements ProviderAdapter {
         : {}),
     }));
 
-    const response = await this.client().messages.create({
+    const stream = this.client().messages.stream({
       model: req.modelName,
-      max_tokens: req.maxOutputTokens ?? 8192,
+      max_tokens: req.maxOutputTokens ?? MAX_OUTPUT_TOKENS,
       system: toSystemParam(req.system),
       messages: [{ role: "user", content }],
       // Omitted entirely for 4.6+; sending it is a hard 400 there.
@@ -153,6 +169,17 @@ export class AnthropicAdapter implements ProviderAdapter {
         ? { temperature: req.temperature }
         : {}),
     });
+
+    if (req.onToken) {
+      const emit = req.onToken;
+      stream.on("text", (delta) => emit(delta));
+    }
+
+    // Awaiting the stream is also what registers a rejection handler on it,
+    // so a mid-stream API error surfaces here instead of as an unhandled
+    // rejection. Everything below reads the same assembled `Message` the
+    // non-streaming call used to return.
+    const response = await stream.finalMessage();
 
     const text = response.content
       .map((block) => (block.type === "text" ? block.text : ""))
@@ -162,9 +189,9 @@ export class AnthropicAdapter implements ProviderAdapter {
   }
 
   async chatWithTools(req: ToolChatRequest): Promise<ToolChatResponse> {
-    const response = await this.client().messages.create({
+    const stream = this.client().messages.stream({
       model: req.modelName,
-      max_tokens: req.maxOutputTokens ?? 8192,
+      max_tokens: req.maxOutputTokens ?? MAX_OUTPUT_TOKENS,
       system: toSystemParam(req.system),
       messages: req.messages.map(toAnthropicMessage),
       tools: req.tools.map((tool) => ({
@@ -194,6 +221,8 @@ export class AnthropicAdapter implements ProviderAdapter {
         ? { temperature: req.temperature }
         : {}),
     });
+
+    const response = await stream.finalMessage();
 
     const toolCalls = response.content
       .filter((block) => block.type === "tool_use")

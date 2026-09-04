@@ -30,7 +30,6 @@ export enum ModelProviderName {
 export interface ModelSettings {
   name: string;
   stop?: string[];
-  maxInputTokens?: number;
   maxOutputTokens?: number;
   temperature?: number;
   frequency_penalty?: number;
