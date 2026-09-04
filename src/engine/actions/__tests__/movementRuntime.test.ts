@@ -131,6 +131,30 @@ describe("route-of-waypoints movement", () => {
     expect(result.unstatedHop).toEqual({ fromId: "J_A", toId: "J_C" });
   });
 
+  it("walks the joined prefix and stops where the stated route breaks", () => {
+    const dgsm = makeDgsm();
+    // J_A → J_B is one road; J_B → S_HOME was never stated. The walk is worth
+    // making anyway: it puts the walker at J_B, where they can look around,
+    // instead of leaving them at J_A with a complaint.
+    const result = initMovementRuntime(dgsm, "npc_1", ["J_B", "S_HOME"]);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.state.route).toEqual(["J_B"]);
+    expect(result.state.destinationId).toBe("J_B");
+    expect(result.state.unstatedHopAhead).toEqual({
+      fromId: "J_B",
+      toId: "S_HOME",
+    });
+    // The clock is the prefix's, not the stated route's.
+    expect(result.totalMinutes).toBe(4);
+
+    let status = "moving";
+    for (let i = 0; i < 6 && status === "moving"; i += 1) {
+      status = advanceMovement(dgsm, "npc_1", result.state).status;
+    }
+    expect(status).toBe("arrived");
+  });
+
   it("driving moves the vehicle at road drive speed and leaves the driver put", () => {
     const dgsm = makeDgsm();
     // Driver sits in the cab; the truck stands at J_A.

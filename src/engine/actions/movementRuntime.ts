@@ -58,6 +58,13 @@ export interface MovementRuntimeState {
    *  is the destination. Legs are planned lazily on arrival at each
    *  waypoint, so a mid-route block interrupts exactly where it stands. */
   route: string[];
+  /** Set when the stated route was longer than the joined one: the hop the
+   *  walk stops short of. The route above is the walkable prefix, so the
+   *  walker really does set off and really does arrive somewhere — this
+   *  records where their way ran out. The Engine reads it with the rest of
+   *  the action's runtime, so an ending it narrates says where they got to
+   *  rather than where they meant to go. */
+  unstatedHopAhead?: { fromId: string; toId: string };
   /** Index of the waypoint the CURRENT routeSnapshot walks toward. */
   currentLegIndex: number;
   destinationId: string;
@@ -81,8 +88,11 @@ export type MovementInitResult =
       ok: false;
       reason: string;
       /**
-       * Set when the route broke because two named places are not one stretch
-       * apart. Carried as ids rather than as prose because the actor's own
+       * Set when the route broke on its FIRST hop — the walker is not one
+       * stretch from the first place they named, so there is nothing to walk
+       * and they never set off. (A break further along truncates the route
+       * instead; see `unstatedHopAhead`.) Carried as ids rather than as prose
+       * because the actor's own
        * account of it is written upstream, where the words a character reads
        * are chosen — this half only says WHICH two places failed to join.
        *
@@ -136,9 +146,17 @@ function placesAdjacent(
 
 /** Plan the FIRST leg and build the runtime state; later legs are planned on
  *  arrival at each waypoint. Called once when the Engine first resolves the
- *  action with a movement annotation. Adjacency of the whole stated route is
- *  checked up front so a bad route fails loudly at the start, with a reason
- *  the actor reads as feedback, not silently three legs in. */
+ *  action with a movement annotation.
+ *
+ *  The whole stated route is checked up front, but a break in it TRUNCATES
+ *  rather than fails: the walker covers every hop they really know and stops
+ *  where the way runs out. Failing the whole route instead left them standing
+ *  in the same room being told, correctly and uselessly, that two places are
+ *  not joined — in a measured run two characters spent 4 and 3 decisions that
+ *  way, and one of them wrote the paralysis into memory as evidence he had
+ *  been got at. Stopping short puts him somewhere new instead, and what he
+ *  does next he decides from what he can see there. Only a break in the FIRST
+ *  hop still fails: there is no prefix to walk. */
 /** Rescale a planned leg for driving: along-road steps ride the road's
  *  driveTimeMinutes; a road with none takes no vehicles and fails the leg. */
 function toDrivenSteps(
@@ -246,13 +264,12 @@ export function initMovementRuntime(
   // NOTE: whether the driver is sitting inside is checked at each advance,
   // not here — init runs before this tick's deltas flush, so a same-tick
   // "board and drive" resolution has not put them in the cab yet.
+  let unstatedHopAhead: { fromId: string; toId: string } | undefined;
   for (let i = 0; i + 1 < route.length; i += 1) {
     if (!placesAdjacent(dgsm, route[i], route[i + 1])) {
-      return {
-        ok: false,
-        reason: `movement init failed: route hop "${placeLabel(dgsm, route[i])}" → "${placeLabel(dgsm, route[i + 1])}" is not a single stretch — the way between them was never stated`,
-        unstatedHop: { fromId: route[i], toId: route[i + 1] },
-      };
+      unstatedHopAhead = { fromId: route[i], toId: route[i + 1] };
+      route = route.slice(0, i + 1);
+      break;
     }
   }
   const planned = planLeg(dgsm, actorId, route[0], vehicleId);
@@ -291,6 +308,7 @@ export function initMovementRuntime(
         ? { passBlockedConnectionId }
         : {}),
       route: [...route],
+      ...(unstatedHopAhead ? { unstatedHopAhead } : {}),
       currentLegIndex: 0,
       destinationId: route[route.length - 1],
       targetPosition: planned.targetPosition,
