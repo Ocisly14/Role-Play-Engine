@@ -1,7 +1,8 @@
-// Phase 7 session loop: code tools answered mid-session, terminal
-// submit_resolution accepted alone, addressed errors answered by a COMPLETE
-// resubmission through the same tool (there is no patch tool), and — when
-// correction cannot converge or the model fails — a result that applies
+// Phase 7 session loop: code tools answered mid-session, the terminal PAIR
+// (submit_actions + submit_effects) accepted when it arrives alone in a turn
+// and merged into one resolution, addressed errors answered by a COMPLETE
+// resubmission through the same two tools (there is no patch tool), and —
+// when correction cannot converge or the model fails — a result that applies
 // nothing at all.
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -124,6 +125,34 @@ function turn(calls: Array<{ id: string; name: string; args?: object }>) {
   };
 }
 
+/** One submission turn's calls: the resolution split across the two terminal
+ *  tools exactly as the schema partitions it. Tests keep writing whole
+ *  resolutions; this routes each list to the tool that owns it, which is also
+ *  the merge the Engine has to undo. */
+function submission(raw: Record<string, unknown>, prefix = "s") {
+  // Every list present, empty ones as `[]` — the wire contract the protocol
+  // states and both schemas require.
+  const pick = (fields: string[]) =>
+    Object.fromEntries(fields.map((f) => [f, raw[f] ?? []]));
+  return [
+    {
+      id: `${prefix}_actions`,
+      name: "submit_actions",
+      args: pick(["starting", "ending"]),
+    },
+    {
+      id: `${prefix}_effects`,
+      name: "submit_effects",
+      args: pick([
+        "occurrences",
+        "characterChanges",
+        "sceneChanges",
+        "itemChanges",
+      ]),
+    },
+  ];
+}
+
 // A movement action leaves the clock to the route: `resolvedDurationTicks`
 // on it is refused by the validator, and the runtime derives the time.
 const validSubmission = {
@@ -227,11 +256,9 @@ describe("resolveTick session loop", () => {
     // the model had not made. The empty call gets its own answer.
     generateToolCalls
       .mockResolvedValueOnce(
-        turn([{ id: "t1", name: "submit_resolution", args: {} }])
+        turn([{ id: "t1", name: "submit_actions", args: {} }])
       )
-      .mockResolvedValueOnce(
-        turn([{ id: "t2", name: "submit_resolution", args: validSubmission }])
-      );
+      .mockResolvedValueOnce(turn(submission(validSubmission, "t2")));
 
     const result = await resolveTick(makeContext(), makeDeps());
     expect(result.ok).toBe(true);
@@ -257,9 +284,7 @@ describe("resolveTick session loop", () => {
           },
         ])
       )
-      .mockResolvedValueOnce(
-        turn([{ id: "t2", name: "submit_resolution", args: validSubmission }])
-      );
+      .mockResolvedValueOnce(turn(submission(validSubmission, "t2")));
 
     const result = await resolveTick(makeContext(), makeDeps());
 
@@ -300,11 +325,7 @@ describe("resolveTick session loop", () => {
           },
         ])
       )
-      .mockResolvedValueOnce(
-        turn([
-          { id: "submit", name: "submit_resolution", args: validSubmission },
-        ])
-      );
+      .mockResolvedValueOnce(turn(submission(validSubmission, "submit")));
 
     const result = await resolveTick(makeContext(), makeDeps());
 
@@ -323,12 +344,10 @@ describe("resolveTick session loop", () => {
       .mockResolvedValueOnce(
         turn([
           { id: "t1", name: "damageRoll", args: { formula: "1d6" } },
-          { id: "t2", name: "submit_resolution", args: validSubmission },
+          { id: "t2", name: "submit_actions", args: validSubmission },
         ])
       )
-      .mockResolvedValueOnce(
-        turn([{ id: "t3", name: "submit_resolution", args: validSubmission }])
-      );
+      .mockResolvedValueOnce(turn(submission(validSubmission, "t3")));
 
     const result = await resolveTick(makeContext(), makeDeps());
     expect(result.ok).toBe(true);
@@ -357,7 +376,7 @@ describe("resolveTick session loop", () => {
     expect(result.failure).toContain("model error");
   });
 
-  it("corrects by resubmitting the complete resolution through submit_resolution", async () => {
+  it("corrects by resubmitting the complete resolution through both tools", async () => {
     // The action is queued, so ending it is the wrong moment entirely.
     const invalid = {
       ending: [{ actionId: "action_c1", outcome: "done already" }],
@@ -372,14 +391,12 @@ describe("resolveTick session loop", () => {
       ],
     };
     generateToolCalls
-      .mockResolvedValueOnce(
-        turn([{ id: "t1", name: "submit_resolution", args: invalid }])
-      )
+      .mockResolvedValueOnce(turn(submission(invalid, "t1")))
       .mockResolvedValueOnce(
         // The whole resolution again, corrected: the transition moved into
         // the moment it belongs in. Nothing of the rejected submission is
         // kept on the Engine's side.
-        turn([{ id: "t2", name: "submit_resolution", args: validSubmission }])
+        turn(submission(validSubmission, "t2"))
       );
 
     const result = await resolveTick(makeContext(), makeDeps());
@@ -399,8 +416,13 @@ describe("resolveTick session loop", () => {
     expect(rejection.results[0].content).toContain("action:action_c1");
     expect(rejection.results[0].content).toContain("has not started yet");
     expect(rejection.results[0].content).toContain(
-      "submit_resolution again with the COMPLETE resolution"
+      "send the COMPLETE resolution again, both tools in one turn"
     );
+    // Both calls of the rejected turn are answered — an unanswered tool_use
+    // is a 400 on the very next request.
+    expect(
+      rejection.results.map((r: { toolCallId: string }) => r.toolCallId)
+    ).toEqual(["t1_actions", "t1_effects"]);
     expect(rejection.results[0].content).not.toContain("repair_resolution");
     // The tool LIST is identical to the opening round's — tools render ahead
     // of the system prompt in the cached prefix, so swapping the array would
@@ -410,9 +432,14 @@ describe("resolveTick session loop", () => {
     expect(correctionCall.tools).toEqual(openingCall.tools);
     expect(correctionCall.tools.map((t: { name: string }) => t.name)).toEqual([
       "damageRoll",
-      "submit_resolution",
+      "submit_actions",
+      "submit_effects",
     ]);
-    expect(correctionCall.toolChoice).toEqual({ name: "submit_resolution" });
+    // `toolChoice` cannot name two tools, and naming one would forbid the
+    // other half of the resolution. So a correction round demands *a* tool
+    // and the rejection text demands both; the intake refuses the rest.
+    expect(correctionCall.toolChoice).toBe("any");
+    expect(correctionCall.allowParallelCalls).toBe(true);
   });
 
   it("applies nothing when correction cannot converge", async () => {
@@ -429,9 +456,7 @@ describe("resolveTick session loop", () => {
       ],
     };
     // Every round re-sends the same broken resolution.
-    generateToolCalls.mockResolvedValue(
-      turn([{ id: "t1", name: "submit_resolution", args: invalid }])
-    );
+    generateToolCalls.mockResolvedValue(turn(submission(invalid, "t1")));
 
     const result = await resolveTick(makeContext(), makeDeps());
 
@@ -457,9 +482,7 @@ describe("resolveTick session loop", () => {
       ],
     };
     generateToolCalls
-      .mockResolvedValueOnce(
-        turn([{ id: "t1", name: "submit_resolution", args: invalid }])
-      )
+      .mockResolvedValueOnce(turn(submission(invalid, "t1")))
       // A provider that ignores toolChoice answers with a lookup instead.
       .mockResolvedValueOnce(
         turn([{ id: "t2", name: "damageRoll", args: { formula: "1d6" } }])
@@ -648,23 +671,20 @@ describe("the turn budget", () => {
     generateToolCalls.mockReset();
   });
 
-  it("stops offering parallel calls once one tool is demanded", async () => {
-    // Correction is the one moment `toolChoice` still names a single tool.
-    // On that turn a parallel call can add nothing but a second copy of it —
-    // and the intake takes a submission ONLY when it arrives alone. Measured
-    // live: both copies refused, another full-world round trip spent sending
-    // the same thing again by itself.
+  it("keeps parallel calls open on every turn, correction included", async () => {
+    // A resolution is two calls now, so a turn that cannot batch cannot
+    // carry one. `toolChoice` stays `any` throughout for the same reason:
+    // naming `submit_actions` on a correction round would forbid the tool
+    // holding the occurrences, and the correction could never be complete.
     generateToolCalls
       .mockResolvedValueOnce(
         turn([{ id: "t0", name: "damageRoll", args: { formula: "1d6" } }])
       )
       .mockResolvedValueOnce(
         // Ending an action that is still queued — rejected, so correction opens.
-        turn([
-          {
-            id: "t1",
-            name: "submit_resolution",
-            args: {
+        turn(
+          submission(
+            {
               ending: [{ actionId: "action_c1", outcome: "done already" }],
               occurrences: [
                 {
@@ -675,30 +695,85 @@ describe("the turn budget", () => {
                 },
               ],
             },
-          },
-        ])
+            "t1"
+          )
+        )
       )
-      .mockResolvedValueOnce(
-        turn([{ id: "t2", name: "submit_resolution", args: validSubmission }])
-      );
+      .mockResolvedValueOnce(turn(submission(validSubmission, "t2")));
 
     const result = await resolveTick(makeContext(), makeDeps());
     expect(result.ok).toBe(true);
 
     const calls = generateToolCalls.mock.calls.map((c) => c[0]);
-    // While it still had a choice of tool, batching stayed available.
-    for (const call of calls.slice(0, 2)) {
+    for (const call of calls) {
       expect(call.toolChoice).toBe("any");
       expect(call.allowParallelCalls).toBe(true);
     }
-    // On the demanded resubmission it does not.
-    expect(calls[2].toolChoice).toEqual({ name: "submit_resolution" });
-    expect(calls[2].allowParallelCalls).toBe(false);
+  });
+
+  it("merges the two calls into one resolution", async () => {
+    // The split is a wire detail: what the validator and the applier see is
+    // the same whole resolution the single tool used to carry.
+    generateToolCalls.mockResolvedValueOnce(
+      turn(
+        submission(
+          {
+            starting: [
+              { actionId: "action_c1", movement: { route: ["SCN_FAR"] } },
+            ],
+            occurrences: [],
+            characterChanges: [],
+            sceneChanges: [],
+            itemChanges: [],
+          },
+          "one"
+        )
+      )
+    );
+
+    const result = await resolveTick(makeContext(), makeDeps());
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.resolution.transitions[0]).toMatchObject({
+      actionId: "action_c1",
+      to: "active",
+    });
+    expect(generateToolCalls).toHaveBeenCalledTimes(1);
+  });
+
+  it("names the tool that never came when the resolution is invalid without it", async () => {
+    // A lone `submit_actions` is legitimate when there is nothing to report —
+    // but an ending with no occurrence to cite it is not, and "every ending
+    // must be cited" is unanswerable feedback if the model never sent an
+    // occurrence list. The rejection says which tool was missing.
+    generateToolCalls
+      .mockResolvedValueOnce(
+        turn([
+          {
+            id: "lonely",
+            name: "submit_actions",
+            args: {
+              starting: [],
+              ending: [{ actionId: "action_c1", outcome: "done already" }],
+            },
+          },
+        ])
+      )
+      .mockResolvedValueOnce(turn(submission(validSubmission, "fix")));
+
+    const result = await resolveTick(makeContext(), makeDeps());
+    expect(result.ok).toBe(true);
+
+    const rejection = generateToolCalls.mock.calls[1][0].messages
+      .filter((m: { role: string }) => m.role === "tool")
+      .at(-1);
+    expect(rejection.results[0].content).toContain("submit_effects");
+    expect(rejection.results[0].content).toContain("read as empty");
   });
 
   it("tells the model the budget it is spending, with the real numbers", async () => {
     generateToolCalls.mockResolvedValueOnce(
-      turn([{ id: "sub", name: "submit_resolution", args: validSubmission }])
+      turn(submission(validSubmission, "sub"))
     );
     await resolveTick(makeContext(), makeDeps());
 

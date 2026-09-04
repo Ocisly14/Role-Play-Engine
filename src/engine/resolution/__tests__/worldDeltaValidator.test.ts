@@ -666,6 +666,14 @@ describe("validateRawResolution — outcome, talk and the bar", () => {
     );
     expect(text(noBar)).toContain("needs a check");
   });
+
+  it("reads an empty opposedBy as nobody resisting, not as an opposed check", () => {
+    const errors = validateRawResolution(
+      { starting: [start({ opposedBy: [] })] },
+      makeContext({ newCommands: [skillCommand] })
+    );
+    expect(errors).toEqual([]);
+  });
 });
 
 describe("validateRawResolution — deltas and occurrences", () => {
@@ -1460,12 +1468,14 @@ describe("operations are checked against the fields they advertise", () => {
   });
 });
 
-// `input_schema` is a description the provider does not enforce — `strict` is
-// off everywhere and cannot be turned on for `submit_resolution` (every
-// top-level field is optional and `operation` is deliberately open). So the
-// contents can arrive in shapes the schema does not describe, and dropping a
-// whole list takes a resolution with it: observed once as `starting` arriving
-// as an array and `ending`, in the same call, as its own JSON text.
+// `input_schema` is a description the provider does not enforce unless
+// `strict` is on, and it is on for only half the submission: `submit_actions`
+// is compiled into a grammar, `submit_effects` is not (its 19 operation
+// branches are what the compiler refuses). So the effect lists can still
+// arrive in shapes the schema does not describe, and dropping a whole list
+// takes a resolution with it. The action lists are covered now — but these
+// normalizations stay, because OpenAI drops the flag over the nested optional
+// fields and both halves reach this code the same way.
 describe("normalizeRawResolution reads what the schema did not guarantee", () => {
   const entry = { actionId: "action_c1", outcome: "the lock gives" };
 
@@ -1820,8 +1830,10 @@ describe("normalizeList reads a list the model wrapped in a string", () => {
 });
 
 describe("the validator is a total function over model output", () => {
-  // `submit_resolution` is strict, so Anthropic and OpenAI cannot send any of
-  // these shapes; DeepSeek has no strict mode and can. Every one of them used
+  // `submit_actions` is strict, so on Anthropic and DeepSeek the action lists
+  // cannot arrive like this; `submit_effects` is not, and OpenAI drops the
+  // flag over the nested optional fields, so every shape below is still
+  // reachable. Each one used
   // to reach a `.entries()`, a `for…of` or a `.trim()` and take the tick down
   // with a TypeError instead of coming back as an error the Engine can fix.
   const noThrow = (raw: unknown): ResolutionError[] => {

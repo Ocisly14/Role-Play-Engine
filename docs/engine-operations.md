@@ -78,11 +78,13 @@ engine 处理的「操作」分四层，彼此不共享枚举：**演员发出�
 - `inventoryValidation`：改成把答案直接放进请求——命令点名了谁、或点名了谁手里的东西，`contextBuilder` 就把那个人的口袋一并注入 Items 段。几百 token，而且在问题被提出之前就答完了。
 - `opposedRoll`：定义了但从未注册，也没有任何代码调用。对抗掷骰的真实路径是 Engine 在 `starting` 里声明 `opposedBy`，`skillRollService` 到期时掷两边。已连同上面三个一起删除。
 
-**终止工具**：`submit_resolution`。输出经 `worldDeltaValidator` 校验，最多 `MAX_CORRECTION_ROUNDS = 3` 轮完整重提（没有独立的 patch 工具，修正轮仍调用 `submit_resolution` 提交整份结果）；仍不合法则整个 tick 不应用任何结果。
+**终止工具**：`submit_actions` + `submit_effects`，同一轮里一起调用。前者带 `starting`/`ending`，后者带 `occurrences` 和三个 `*Changes`；代码先合并再校验，下游看到的仍是一份完整 resolution。最多 `MAX_CORRECTION_ROUNDS = 3` 轮完整重提（没有独立的 patch 工具，修正轮仍是两个工具一起重发整份结果）；仍不合法则整个 tick 不应用任何结果。
+
+拆成两个工具不是设计偏好，而是 Anthropic 唯一肯编译的形态：`submit_actions` 是 `strict: true`（6 个 optional、零 `anyOf`），`submit_effects` 不是——三个 operation union 合计 19 个 `anyOf` 分支，语法编译器直接拒绝。没有语法约束时模型会把 `starting` 写成一段把数组重新包了一层的 JSON 字符串（66 次实测里 55 次提交中占 7 次），每次都要多付一轮全世界重发。`scripts/probe-strict-schema.ts` 可以用几个被拒请求的代价重新测出这些上限；改动这个划分前先跑它。
 
 ---
 
-## 4. `submit_resolution` 的四块内容
+## 4. 提交内容的四块（`submit_actions` + `submit_effects` 合并后）
 
 ### 4.1 `starting[]` —— 本 tick 开始的动作（`RawActionStart`）
 

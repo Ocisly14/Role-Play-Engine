@@ -3,11 +3,14 @@
 // The unified World Action Engine session (plan Phase 7). Called once per
 // triggered tick with the full EngineResolutionContext. Runs an agentic loop:
 // the model may consult the deterministic damage dice (a roll must never be
-// the model's) and must finish with
-// one terminal `submit_resolution` call. Output is validated in code and gets
-// up to three complete corrective resubmissions; if it remains invalid, the
-// whole tick is rejected without partial application. No action types or per-action
-// prompts — one ordered set of world-rule modules governs everything.
+// the model's) and must finish with one terminal TURN carrying both
+// `submit_actions` and `submit_effects` — the resolution is split across two
+// tools because only the first half compiles into a strict grammar (see
+// worldDeltaSchema.ts). The two are merged before validation, so everything
+// downstream still sees one whole resolution. Output is validated in code and
+// gets up to three complete corrective resubmissions; if it remains invalid,
+// the whole tick is rejected without partial application. No action types or
+// per-action prompts — one ordered set of world-rule modules governs everything.
 
 import { readFileSync } from "node:fs";
 import { ModelClass, generateToolCalls } from "../../models/index.js";
@@ -37,7 +40,8 @@ import {
 import {
   CODE_TOOL_SPECS,
   type RawTickResolution,
-  submitResolutionTool,
+  SUBMIT_TOOLS,
+  SUBMIT_TOOL_NAMES,
 } from "./worldDeltaSchema.js";
 import {
   exitsFromHere,
@@ -130,7 +134,7 @@ const SANITY_RULES_DOC = loadRuleFile(
  *  every tick, and nobody would see it in either place alone. */
 const SESSION_PROTOCOL = loadRuleFile(
   "session-protocol.md",
-  "Ground the resolution with the deterministic tools where needed; finish with exactly one submit_resolution answering every worklist id."
+  "Ground the resolution with the deterministic tools where needed; finish with one turn calling both submit_actions and submit_effects, answering every worklist id."
 ).replaceAll("{{MAX_ITERATIONS}}", String(MAX_ITERATIONS));
 
 const SYSTEM_PROMPT = `You are the World Action Engine of a tick-based Call of Cthulhu world
@@ -366,7 +370,7 @@ export function renderContextSegments(context: EngineResolutionContext): {
     // submission written with that turn in its history, which arrived
     // malformed three times out of four. Nearly every tick has no damage to
     // roll, so the first call is the submission.
-    "Resolve now. Unless a blow lands this tick, your FIRST and ONLY call is submit_resolution. Give every `resolve.starting` id a starting entry. Answer every `resolve.ending` id either with an ending entry plus a speech-false occurrence, or, for pure talk, with a speech-true occurrence and no ending entry. No speech row for a `starting` id: its words come next minute. Call damageRoll only for damage that is actually being dealt, with a real formula; there is nothing else to look up.",
+    "Resolve now. Unless a blow lands this tick, your FIRST and ONLY turn is submit_actions and submit_effects together — both calls, one turn. Give every `resolve.starting` id a starting entry. Answer every `resolve.ending` id either with an ending entry plus a speech-false occurrence, or, for pure talk, with a speech-true occurrence and no ending entry. No speech row for a `starting` id: its words come next minute. Call damageRoll only for damage that is actually being dealt, with a real formula; there is nothing else to look up.",
   ].join("\n\n");
 
   return { stable: `${stable}\n\n`, volatile };
@@ -421,20 +425,52 @@ function renderEmpty(toolName: string): string {
   return [
     `REJECTED. Your \`${toolName}\` call arrived with NO arguments — an empty object, every field missing.`,
     "",
-    "Send the complete resolution with all six arrays: every starting id in `starting`; every ending id answered by an ending plus a speech-false occurrence, or by a speech-true occurrence alone when it was pure talk; no speech row for a starting id. Use `[]` for every empty array.",
+    COMPLETE_SUBMISSION,
   ].join("\n");
 }
+
+/** The same tool twice in one turn. Merging two copies would drop one of them
+ *  without saying so, and there is no basis for preferring either. */
+function renderDuplicate(toolName: string): string {
+  return [
+    `REJECTED. \`${toolName}\` was called more than once in one turn. Each of the two tools is called exactly once per turn.`,
+    "",
+    COMPLETE_SUBMISSION,
+  ].join("\n");
+}
+
+/** What a complete submission is, in one sentence, wherever one is demanded. */
+const COMPLETE_SUBMISSION =
+  "Send the complete resolution as ONE turn containing both calls: `submit_actions` with `starting` and `ending`, `submit_effects` with `occurrences`, `characterChanges`, `sceneChanges` and `itemChanges`. Every starting id belongs in `starting`; every ending id is answered by an ending entry plus a speech-false occurrence, or by a speech-true occurrence alone when it was pure talk; no speech row for a starting id. Use `[]` for every empty array.";
 
 /** True when the provider handed back readable JSON that holds nothing. */
 function hasNoArgs(call: { args: Record<string, unknown> }): boolean {
   return Object.keys(call.args).length === 0;
 }
 
-/** Addressed errors plus the contract for a complete corrective submission. */
-function renderErrors(errors: ResolutionError[]): string {
+/** Addressed errors plus the contract for a complete corrective submission.
+ *
+ *  `missing` names the submission tool that was never called this turn. An
+ *  uncalled tool reads as empty lists, which is legitimate on a tick that has
+ *  nothing to put in them — so it is not an error by itself, and it is only
+ *  worth saying once the resolution turned out to be invalid. Said then, it
+ *  usually IS the error: "every ending must be cited by an occurrence" is
+ *  unanswerable feedback when the model never sent an occurrence list. */
+function renderErrors(
+  errors: ResolutionError[],
+  missing: string[] = []
+): string {
   return [
-    "REJECTED. Correct these errors and call submit_resolution again with the COMPLETE resolution:",
+    "REJECTED. Correct these errors and send the COMPLETE resolution again, both tools in one turn:",
     ...errors.map((e) => `- ${formatErrorTarget(e.target)} — ${e.message}`),
+    ...(missing.length > 0
+      ? [
+          "",
+          `Note: you did not call ${missing.join(" or ")} this turn, so ${
+            missing.length > 1 ? "those lists were" : "its lists were"
+          } read as empty. If that was not what you meant, the errors above are the consequence.`,
+        ]
+      : []),
     "",
     "Send all six arrays, using `[]` for empty arrays. Keep every correct element unchanged, correct or omit the invalid elements, and include every action the trigger requires exactly once in the list where it belongs.",
   ].join("\n");
@@ -467,7 +503,7 @@ export async function resolveTick(
   // ONE tool list for the whole session. Tools render ahead of the system
   // prompt in the cached prefix, so keeping this array stable preserves the
   // system-prompt cache across tool lookups and corrective submissions.
-  const tools = [...CODE_TOOL_SPECS, submitResolutionTool];
+  const tools = [...CODE_TOOL_SPECS, ...SUBMIT_TOOLS];
   let awaitingCorrection = false;
   let correctionRounds = 0;
 
@@ -481,17 +517,18 @@ export async function resolveTick(
         cacheSystemPrompt: true,
         messages,
         tools,
-        // After rejection the only move left is a complete corrected submission.
-        toolChoice: correcting ? { name: "submit_resolution" } : "any",
-        // Parallel calls only while the model still has a choice of tool.
-        // Once `toolChoice` names one, a second copy of it is the only other
-        // thing a parallel turn can produce — and the intake below takes a
-        // submission ONLY when it arrives alone, so both copies were
-        // rejected and the turn was spent for nothing. Measured live: the
-        // demanded submission came back twice, both refused, and the tick
-        // paid another full-world round trip (~65k tokens) to send the same
-        // thing again by itself.
-        allowParallelCalls: !correcting,
+        // `any` throughout: a resolution is now two calls, and `tool_choice`
+        // can name only one tool. Naming `submit_actions` on a correction
+        // round would forbid the very tool that carries the occurrences. So
+        // the envelope guarantee on a correction round is that SOME tool must
+        // be called (`any`) plus the rejection text demanding both; the
+        // intake refuses anything that is not a submission.
+        toolChoice: "any",
+        // Required, not merely allowed: the pair must arrive in ONE turn or
+        // every tick pays a second full-world round trip. `disable_parallel_
+        // tool_use` would make the split strictly more expensive than the
+        // single tool it replaced.
+        allowParallelCalls: true,
         modelClass: ModelClass.MEDIUM,
         operation: "world-action-engine",
       });
@@ -509,35 +546,70 @@ export async function resolveTick(
       );
     }
 
-    const submits = toolCalls.filter((c) => c.name === "submit_resolution");
-    const codeCalls = toolCalls.filter((c) => CODE_TOOL_NAMES.has(c.name));
+    const submits = toolCalls.filter((c) => SUBMIT_TOOL_NAMES.has(c.name));
 
     // ---- a submission, first or corrected --------------------------------
-    // A correction round demands `submit_resolution` through toolChoice and
-    // forbids parallel calls, so what arrives is either that one call or a
-    // provider ignoring toolChoice (DeepSeek does, measured). Either way the
-    // intake is the same as a first submission: the whole resolution,
-    // validated whole. There is no patch protocol — the previous submission
-    // is not kept, and a corrected one replaces it entirely.
-    if (submits.length === 1 && codeCalls.length === 0) {
-      const submit = submits[0];
-      if (submit.unreadableArgs || hasNoArgs(submit)) {
+    // The resolution now arrives as a PAIR of calls in one turn — one strict
+    // (`submit_actions`), one not (`submit_effects`) — because no single
+    // schema covering all six lists compiles into a grammar. They are merged
+    // before anything looks at them, so everything downstream still sees one
+    // whole resolution, validated whole. There is no patch protocol: a
+    // corrected turn replaces the previous one entirely.
+    //
+    // A turn carrying only one of the two is still taken. Omitting a list has
+    // always meant "empty" (`normalizeList(undefined)` returns `[]`), and a
+    // tick of pure starts genuinely has no effects to report — so a lone
+    // `submit_actions` is a complete answer when the worklist asks for
+    // nothing else. When it is NOT complete, the validator says so on its own
+    // terms, and `renderErrors` names the tool that never came.
+    // `submits.length === toolCalls.length`, not `codeCalls.length === 0`: a
+    // turn holding a submission plus anything else — a lookup, a tool name
+    // that does not exist — falls through to the path that answers EVERY
+    // call. Every tool_use in a turn must be answered or the next request is
+    // rejected outright, and a submission taken here would leave its
+    // companion unanswered.
+    if (submits.length > 0 && submits.length === toolCalls.length) {
+      // Duplicates: the same tool twice in one turn. Neither copy can be
+      // trusted over the other, and merging them would silently drop one.
+      const duplicated = [...SUBMIT_TOOL_NAMES].filter(
+        (name) => submits.filter((c) => c.name === name).length > 1
+      );
+      const unreadable = submits.filter((c) => c.unreadableArgs);
+      // Emptiness is judged over the TURN, not over each call. `{}` from
+      // `submit_effects` beside a real `submit_actions` says "nothing came of
+      // it", which is the same thing omitting the call says and is often
+      // true. Only a turn that carries no argument anywhere is the mistake
+      // this answer was written for.
+      const sentNothing = submits.every(hasNoArgs);
+      if (duplicated.length > 0 || unreadable.length > 0 || sentNothing) {
         messages.push(assistantMessage);
         messages.push({
           role: "tool",
-          results: [
-            {
-              toolCallId: submit.id,
-              content: submit.unreadableArgs
-                ? renderUnreadable(submit.name, submit.unreadableArgs.rawLength)
-                : renderEmpty(submit.name),
-            },
-          ],
+          // Every tool_use in a turn must be answered or the next request is
+          // rejected outright — so each call gets a result, the faulty ones
+          // naming their fault and the rest told the turn is being resent.
+          results: submits.map((call) => ({
+            toolCallId: call.id,
+            content: duplicated.includes(call.name)
+              ? renderDuplicate(call.name)
+              : call.unreadableArgs
+                ? renderUnreadable(call.name, call.unreadableArgs.rawLength)
+                : sentNothing
+                  ? renderEmpty(call.name)
+                  : "Not applied: another call in this turn could not be read. Send the whole resolution again, both tools, in one turn.",
+          })),
         });
         continue;
       }
+
+      const merged: Record<string, unknown> = {};
+      for (const call of submits) Object.assign(merged, call.args);
+      const missing = [...SUBMIT_TOOL_NAMES].filter(
+        (name) => !submits.some((c) => c.name === name)
+      );
+
       const raw = normalizeRawResolution(
-        submit.args as unknown as RawTickResolution
+        merged as unknown as RawTickResolution
       );
       const invocationsSoFar = deps.codeTools.drainInvocations();
       const errors = validateRawResolution(raw, context);
@@ -564,20 +636,24 @@ export async function resolveTick(
       }
       awaitingCorrection = true;
       messages.push(assistantMessage);
+      const rejection = renderErrors(errors, missing);
       messages.push({
         role: "tool",
-        results: [{ toolCallId: submit.id, content: renderErrors(errors) }],
+        results: submits.map((call) => ({
+          toolCallId: call.id,
+          content: rejection,
+        })),
       });
       continue;
     }
 
     if (correcting) {
-      // The corrected submission was demanded by name and did not come alone
-      // (or at all). There is nothing to answer that would help — a tool
-      // lookup now is a turn spent on a resolution that has already been
-      // written — so the session ends here.
+      // A correction turn that brought no submission (or mixed one with a
+      // tool lookup). There is nothing to answer that would help — a lookup
+      // now is a turn spent on a resolution that has already been written —
+      // so the session ends here.
       return unusable(
-        `${context.tick.tickId}: expected a corrected submission alone, got ${
+        `${context.tick.tickId}: expected a corrected submission, got ${
           toolCalls.length === 0
             ? "none"
             : toolCalls.map((c) => c.name).join(", ")
@@ -592,11 +668,10 @@ export async function resolveTick(
     messages.push(assistantMessage);
     const results: ToolResultRecord[] = [];
     for (const call of toolCalls) {
-      if (call.name === "submit_resolution") {
+      if (SUBMIT_TOOL_NAMES.has(call.name)) {
         results.push({
           toolCallId: call.id,
-          content:
-            "Error: submit_resolution was NOT accepted — it must be the only tool call in its turn. Finish tool lookups first, then submit alone.",
+          content: `Error: ${call.name} was NOT accepted — a submission turn carries submit_actions and submit_effects and nothing else. Finish your damageRoll lookups first, then submit both together in one turn.`,
         });
         continue;
       }

@@ -4,6 +4,17 @@ This document governs how to use the Engine tools and submit one complete tick
 resolution. Domain judgement belongs to the world-rule modules; this protocol
 defines the envelope, worklist coverage and what a rejection asks for.
 
+One resolution is submitted as **two calls in one turn**:
+
+- `submit_actions` carries `starting` and `ending` — the action lifecycle.
+- `submit_effects` carries `occurrences`, `characterChanges`, `sceneChanges`
+  and `itemChanges` — everything those actions produced.
+
+They are one submission. Code merges them before anything is validated, and
+validates the result whole. A turn that calls only one of them has the other's
+lists read as empty, which is correct only when there was genuinely nothing to
+put in them.
+
 ## Read the request; do not look it up again
 
 The request is the world; there is nothing to look up again. The World Graph gives the
@@ -25,15 +36,16 @@ A turn is expensive: the whole request is resent every turn, so each
 unnecessary turn is expensive.
 
 - Your budget is {{MAX_ITERATIONS}} turns in all.
-- Most ticks need no lookup: the first and only call is
-  `submit_resolution`.
+- Most ticks need no lookup: the first and only turn is `submit_actions` and
+  `submit_effects`, called together.
 - When damage is actually dealt, issue every required `damageRoll` call in the
   same turn. Never spend one turn per roll.
 - Never call `damageRoll` with a placeholder or zero formula.
-- Finish with exactly one `submit_resolution` call, alone in its turn. Do not
-  send two submissions or mix the submission with damage calls.
-- After a rejection, the only valid call is another complete
-  `submit_resolution`, alone in its turn.
+- Finish with one submission turn: `submit_actions` once and `submit_effects`
+  once, and nothing else in that turn. Do not call either tool twice, and do
+  not mix the submission with damage calls.
+- After a rejection, the only valid turn is another complete submission —
+  both tools again, with the whole resolution.
 
 If the turn budget expires without a valid submission, nothing from this
 session is applied.
@@ -90,9 +102,10 @@ continue. Silence leaves them active.
 
 ## Submission content
 
-The submission always carries all six arrays: `starting`, `ending`,
-`characterChanges`, `sceneChanges`, `itemChanges` and `occurrences`. A group
-with nothing to say is an empty array `[]`, never omitted.
+The submission always carries all six arrays across the two calls —
+`starting` and `ending` in `submit_actions`; `occurrences`,
+`characterChanges`, `sceneChanges` and `itemChanges` in `submit_effects`. A
+group with nothing to say is an empty array `[]`, never omitted.
 
 - Do not emit lifecycle status, progress, elapsed time or `nextWakeAt`.
 - `resolvedDurationTicks` belongs only on a non-movement starting action.
@@ -101,6 +114,10 @@ with nothing to say is an empty array `[]`, never omitted.
   id. Emit only state that actually changed.
 - Outcomes and occurrence content are objective, third-person and final. They
   contain no working, corrections or character-perspective interpretation.
+- Write every line a person will read — outcomes, occurrence content, and the
+  prose inside changes — in the language of the place descriptions in the
+  request. These rules are in English; the world is not necessarily, and the
+  words you write are read by the people living in it.
 
 Each occurrence has non-empty `actionIds`, a boolean `speech`, non-empty
 `perceivers` — each entry `{characterId, clarity}` with `clarity` one of
@@ -120,8 +137,8 @@ A rejection lists every error, each addressed to the element it is about:
 `action:<id>`, `occurrence:<actionIds>`, `characterChange:<index>`,
 `sceneChange:<index>`, `itemChange:<index>`, or the resolution as a whole.
 
-There is no patch tool. Correct the listed elements and call
-`submit_resolution` again with the COMPLETE resolution, all six arrays:
+There is no patch tool. Correct the listed elements and send the COMPLETE
+resolution again — both calls in one turn, all six arrays:
 
 - Keep every element that was not named unchanged.
 - Fix or drop each element that was named. An element that should not have

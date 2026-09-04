@@ -1,12 +1,13 @@
 // src/engine/resolution/worldDeltaSchema.ts
 //
 // LLM-facing tool schemas for the unified World Action Engine session: the
-// deterministic code tools it may consult mid-session, and the single
-// terminal `submit_resolution` tool whose arguments are the raw
-// TickResolution. One schema for every action — no per-definition or
+// deterministic code tools it may consult mid-session, and the two terminal
+// tools — `submit_actions` and `submit_effects` — whose merged arguments are
+// the raw TickResolution. One schema for every action — no per-definition or
 // per-action-kind variants (plan D8). The schema stays deliberately loose
 // where enumeration would explode; worldDeltaValidator enforces the real
-// contract in code.
+// contract in code. Why the submission is two tools and not one is written
+// above SUBMISSION_PROPERTIES, where the split is made.
 
 import type { ToolSpec } from "../../models/providers/types.js";
 import { PERCEPTION_CLARITIES } from "../actions/types.js";
@@ -601,141 +602,207 @@ const OCCURRENCE_ITEM = {
   additionalProperties: false,
 } as const;
 
-export const submitResolutionTool: ToolSpec = {
-  name: "submit_resolution",
-  // All six top-level lists are required (empty domains use `[]`), leaving 23
-  // optional parameters — inside Anthropic's documented limit of 24. That is
-  // still not enough: a live Claude Sonnet 5 Grayhaven run on 2026-09-03
-  // rejected this schema before generation because its compiled grammar was
-  // too large. The three operation unions currently contain 19 branches.
-  // Keep the wire contract and code validation, but do not ask Anthropic to
-  // compile this particular schema until its operation grammar is simplified.
-  strict: false,
-  description:
-    "Terminal: submit the complete resolution of this tick — one starting entry per action that begins; for each action that ends, either an ending outcome plus a non-speech occurrence or a speech occurrence alone for pure talk; and any sourced world changes grouped by domain.",
-  inputSchema: {
-    type: "object",
-    properties: {
-      starting: {
-        type: "array",
-        description:
-          "Actions that BEGIN this tick — the ids the trigger section lists under `starting`. For a non-travel action: how long it should take and how hard it is. For travel: only the route (and vehicle) — the clock is derived from it. Never an outcome: its time has not been spent yet. A starting action's `utterance` is not spoken yet either: it is delivered next minute, when the id returns under `endingWithUtterance`. Write no occurrence for a starting id.",
-        items: {
+/**
+ * The six lists of one tick resolution, written once here and split across the
+ * two terminal tools below.
+ *
+ * The split exists for one reason. Anthropic compiles a `strict` tool's schema
+ * into a sampling grammar, and this schema as a whole does not compile. What
+ * blows it up is local and measurable: the three `operation` unions
+ * (`characterChanges` / `sceneChanges` / `itemChanges`) contribute all 19
+ * `anyOf` branches, and branches multiply through the arrays holding them.
+ * Probed live against claude-sonnet-5, 2026-09-03
+ * (`scripts/probe-strict-schema.ts`):
+ *
+ *   whole schema, strict     23 optional, 19 branches → 400 compiled grammar too large
+ *   effect lists alone       17 optional, 19 branches → 400 compiled grammar too large
+ *   merged operation unions  29 optional, 16 branches → 400 too many optional parameters (limit 24)
+ *   starting + ending alone   6 optional,  0 branches → accepted
+ *
+ * `starting` and `ending` carry no union at all — and they are exactly the
+ * fields the model gets wrong when nothing constrains it. Across the stored
+ * Claude traces `starting` came back as a JSON string re-wrapping its own array
+ * in 7 of 55 submissions (3 of 3 in the 2026-09-03 grayhaven run) and `ending`
+ * in 1 of 61, while the four effect lists never did it once. `normalizeList`
+ * reads those shapes back, but each one costs a correction round, and a
+ * correction round is a full re-send of the world.
+ *
+ * So the cheap half takes the grammar and the expensive half keeps the prose
+ * contract it has always had. A non-strict tool is compiled into no grammar and
+ * counts toward neither ceiling — that is what makes the pairing legal, and the
+ * same probe confirms it: making both halves strict is rejected exactly as the
+ * single tool was.
+ */
+const SUBMISSION_PROPERTIES = {
+  starting: {
+    type: "array",
+    description:
+      "Actions that BEGIN this tick — the ids the trigger section lists under `starting`. For a non-travel action: how long it should take and how hard it is. For travel: only the route (and vehicle) — the clock is derived from it. Never an outcome: its time has not been spent yet. A starting action's `utterance` is not spoken yet either: it is delivered next minute, when the id returns under `endingWithUtterance`. Write no occurrence for a starting id.",
+    items: {
+      type: "object",
+      properties: {
+        actionId: { type: "string" },
+        resolvedDurationTicks: {
+          type: "integer",
+          description:
+            "How long the action SHOULD take, a whole number of minutes, at least 1. REQUIRED for a non-travel action whose command carries no `utterance`. A spoken line takes one minute — code clocks it, so omit this (or send 1) for an action with an `utterance`. OMIT when `movement` is set — travel time is derived from the route and anything you write here is overridden. You never state elapsed time — code advances progress from the clock.",
+        },
+        check: {
           type: "object",
+          description:
+            "The bar for the skill the actor declared, set BEFORE any roll exists. Omit entirely when the declared skill does not fit the attempt or no check is needed: an omitted check means the skill grants nothing, and the action is settled on its own merits. Never raise the bar to punish a poor skill choice. An actor who declared NO skill cannot be checked at all.",
           properties: {
-            actionId: { type: "string" },
-            resolvedDurationTicks: {
-              type: "integer",
-              description:
-                "How long the action SHOULD take, a whole number of minutes, at least 1. REQUIRED for a non-travel action whose command carries no `utterance`. A spoken line takes one minute — code clocks it, so omit this (or send 1) for an action with an `utterance`. OMIT when `movement` is set — travel time is derived from the route and anything you write here is overridden. You never state elapsed time — code advances progress from the clock.",
-            },
-            check: {
-              type: "object",
-              description:
-                "The bar for the skill the actor declared, set BEFORE any roll exists. Omit entirely when the declared skill does not fit the attempt or no check is needed: an omitted check means the skill grants nothing, and the action is settled on its own merits. Never raise the bar to punish a poor skill choice. An actor who declared NO skill cannot be checked at all.",
-              properties: {
-                requiredLevel: {
-                  type: "string",
-                  enum: [...CHECK_LEVELS],
-                },
-              },
-              required: ["requiredLevel"],
-              additionalProperties: false,
-            },
-            opposedBy: {
-              type: "array",
-              description:
-                "Set when someone actively resists: the character and the defense skill they resist with. `skillId` must be one of the ability domains from the skill reference (never `Languages` — nobody defends in a tongue). Code rolls both sides and compares levels; you choose who defends and with what, never who wins. Needs `check`.",
-              items: {
-                type: "object",
-                properties: {
-                  characterId: { type: "string" },
-                  skillId: { type: "string" },
-                },
-                required: ["characterId", "skillId"],
-                additionalProperties: false,
-              },
-            },
-            movement: {
-              type: "object",
-              description:
-                "REQUIRED whenever the actor deliberately travels along the world's connected ways — a 40-minute haul or one step into the next room alike; a single adjacent waypoint is a complete route. Forced or discontinuous displacement (thrown, dragged, knocked through an opening, falling, jumping directly through a window) uses a character position change instead. A duration alone moves nobody, and no outcome or occurrence may put hands on what the applied position cannot reach. `route` = the path the ACTOR STATED, grounded to place ids: ordered waypoints, each adjacent to the previous, last = destination. Ground only what their words carry (stepping out of the current room onto its street is an implied first hop). NEVER invent an unstated leg — a character who did not say how to get somewhere walks only as far as their words go, and re-decides there. Code derives travel time from the route (walk or drive): omit resolvedDurationTicks for pure travel.",
-              properties: {
-                route: {
-                  type: "array",
-                  items: { type: "string" },
-                  minItems: 1,
-                },
-                vehicleId: {
-                  type: "string",
-                  description:
-                    "Set when the actor DRIVES: the vehicle moves along the route (drivable roads only) and everyone in its interior scene rides along. The driver must be inside the vehicle; whether they may drive it is yours to judge.",
-                },
-                passBlockedConnectionId: {
-                  type: "string",
-                  description:
-                    "The exact connectionId from exitsFromHere when the actor GETS PAST that blocked passage — climbs the fallen tree, wades the flooded ford, pushes on through the blizzard — without removing what blocks it. This one-use grant is consumed at that edge; later blocked edges still stop the route. Use it only when you can decide passage directly, with no check on this starting entry. Omit it when the obstacle stops them. When the act REMOVES the obstacle, write connectionBlock blocked:false instead.",
-                },
-              },
-              required: ["route"],
-              additionalProperties: false,
+            requiredLevel: {
+              type: "string",
+              enum: [...CHECK_LEVELS],
             },
           },
-          required: ["actionId"],
+          required: ["requiredLevel"],
           additionalProperties: false,
         },
-      },
-      ending: {
-        type: "array",
-        description:
-          "Actions that FINISH this tick with something to account for — ids the trigger lists under `ending`, a pure-speech action, whose whole answer is a `speech: true` occurrence, needs no entry here. Two scalars: the id and what came of it. The trace goes in `occurrences`, citing this actionId — every entry here must be cited there. Whether it is `replaced`, `duration_reached` or interrupted is code's knowledge; do not mark it.",
-        items: {
+        opposedBy: {
+          type: "array",
+          description:
+            "Set when someone actively resists: the character and the defense skill they resist with. `skillId` must be one of the ability domains from the skill reference (never `Languages` — nobody defends in a tongue). Code rolls both sides and compares levels; you choose who defends and with what, never who wins. Needs `check`.",
+          items: {
+            type: "object",
+            properties: {
+              characterId: { type: "string" },
+              skillId: { type: "string" },
+            },
+            required: ["characterId", "skillId"],
+            additionalProperties: false,
+          },
+        },
+        movement: {
           type: "object",
+          description:
+            "REQUIRED whenever the actor deliberately travels along the world's connected ways — a 40-minute haul or one step into the next room alike; a single adjacent waypoint is a complete route. Forced or discontinuous displacement (thrown, dragged, knocked through an opening, falling, jumping directly through a window) uses a character position change instead. A duration alone moves nobody, and no outcome or occurrence may put hands on what the applied position cannot reach. `route` = the path the ACTOR STATED, grounded to place ids: ordered waypoints, each adjacent to the previous, last = destination. Ground only what their words carry (stepping out of the current room onto its street is an implied first hop). NEVER invent an unstated leg — a character who did not say how to get somewhere walks only as far as their words go, and re-decides there. Code derives travel time from the route (walk or drive): omit resolvedDurationTicks for pure travel.",
           properties: {
-            actionId: { type: "string" },
-            outcome: {
+            route: {
+              type: "array",
+              items: { type: "string" },
+              minItems: 1,
+            },
+            vehicleId: {
               type: "string",
               description:
-                'What came of it, objectively — the FINISHED account, not your working. It is narrated to the actor and kept in the log, so it carries no reasoning, no corrections, no second thoughts, no addressing yourself: never "wait", "actually", "let me reconsider", or a note about which character is which. Settle all of that before you write, then write only the result. A `diceRoll` you were given is input: never restate or contradict it. Never the target\'s reply or reaction — that is theirs, next minute.',
+                "Set when the actor DRIVES: the vehicle moves along the route (drivable roads only) and everyone in its interior scene rides along. The driver must be inside the vehicle; whether they may drive it is yours to judge.",
+            },
+            passBlockedConnectionId: {
+              type: "string",
+              description:
+                "The exact connectionId from exitsFromHere when the actor GETS PAST that blocked passage — climbs the fallen tree, wades the flooded ford, pushes on through the blizzard — without removing what blocks it. This one-use grant is consumed at that edge; later blocked edges still stop the route. Use it only when you can decide passage directly, with no check on this starting entry. Omit it when the obstacle stops them. When the act REMOVES the obstacle, write connectionBlock blocked:false instead.",
             },
           },
-          required: ["actionId", "outcome"],
+          required: ["route"],
           additionalProperties: false,
         },
       },
-      characterChanges: {
-        type: "array",
-        description: `Persistent character-state changes only; descriptive results belong in occurrences. \`operation\` is one of, with exactly these fields: ${renderOps(CHARACTER_OPS)}.`,
-        items: sourcedDelta("characterId", true, CHARACTER_OPS),
-      },
-      sceneChanges: {
-        type: "array",
-        description: `Scene-state changes. \`operation\` is one of, with exactly these fields: ${renderOps(SCENE_OPS)}.`,
-        items: sourcedDelta("sceneId", true, SCENE_OPS),
-      },
-      itemChanges: {
-        type: "array",
-        description: `Item changes; itemId is required except for create. \`operation\` is one of, with exactly these fields: ${renderOps(ITEM_OPS)}.`,
-        items: sourcedDelta("itemId", false, ITEM_OPS),
-      },
-      occurrences: {
-        type: "array",
-        description:
-          "Every objective thing that happened this tick, one flat row and one paragraph each: the trace of every ending (cite it in `actionIds` — an ending nothing cites is refused), one `speech: true` row for each id under `endingWithUtterance` (those are the only spoken lines delivered this tick — the row IS the answer for that action, code adds the words; a starting action's utterance is not said yet and gets no row), and anything else worth perceiving (speech false) — a noise, a visible attempt in progress. Write each row's `content` last. Content is world-true, third-person, no character-perspective wording.",
-        items: OCCURRENCE_ITEM,
-      },
+      required: ["actionId"],
+      additionalProperties: false,
     },
-    required: [
-      "starting",
-      "ending",
-      "characterChanges",
-      "sceneChanges",
-      "itemChanges",
-      "occurrences",
-    ],
-    additionalProperties: false,
   },
+  ending: {
+    type: "array",
+    description:
+      "Actions that FINISH this tick with something to account for — ids the trigger lists under `ending`, a pure-speech action, whose whole answer is a `speech: true` occurrence, needs no entry here. Two scalars: the id and what came of it. The trace goes in `occurrences`, citing this actionId — every entry here must be cited there. Whether it is `replaced`, `duration_reached` or interrupted is code's knowledge; do not mark it.",
+    items: {
+      type: "object",
+      properties: {
+        actionId: { type: "string" },
+        outcome: {
+          type: "string",
+          description:
+            'What came of it, objectively — the FINISHED account, not your working. It is narrated to the actor and kept in the log, so it carries no reasoning, no corrections, no second thoughts, no addressing yourself: never "wait", "actually", "let me reconsider", or a note about which character is which. Settle all of that before you write, then write only the result. A `diceRoll` you were given is input: never restate or contradict it. Never the target\'s reply or reaction — that is theirs, next minute.',
+        },
+      },
+      required: ["actionId", "outcome"],
+      additionalProperties: false,
+    },
+  },
+  characterChanges: {
+    type: "array",
+    description: `Persistent character-state changes only; descriptive results belong in occurrences. \`operation\` is one of, with exactly these fields: ${renderOps(CHARACTER_OPS)}.`,
+    items: sourcedDelta("characterId", true, CHARACTER_OPS),
+  },
+  sceneChanges: {
+    type: "array",
+    description: `Scene-state changes. \`operation\` is one of, with exactly these fields: ${renderOps(SCENE_OPS)}.`,
+    items: sourcedDelta("sceneId", true, SCENE_OPS),
+  },
+  itemChanges: {
+    type: "array",
+    description: `Item changes; itemId is required except for create. \`operation\` is one of, with exactly these fields: ${renderOps(ITEM_OPS)}.`,
+    items: sourcedDelta("itemId", false, ITEM_OPS),
+  },
+  occurrences: {
+    type: "array",
+    description:
+      "Every objective thing that happened this tick, one flat row and one paragraph each: the trace of every ending (cite it in `actionIds` — an ending nothing cites is refused), one `speech: true` row for each id under `endingWithUtterance` (those are the only spoken lines delivered this tick — the row IS the answer for that action, code adds the words; a starting action's utterance is not said yet and gets no row), and anything else worth perceiving (speech false) — a noise, a visible attempt in progress. Write each row's `content` last. Content is world-true, third-person, no character-perspective wording.",
+    items: OCCURRENCE_ITEM,
+  },
+} as const;
+
+/** Every list a resolution can carry. The two tools below partition this set;
+ *  nothing may belong to both, and nothing may be left out. */
+export type SubmissionField = keyof typeof SUBMISSION_PROPERTIES;
+
+export const ACTION_FIELDS = [
+  "starting",
+  "ending",
+] as const satisfies readonly SubmissionField[];
+
+export const EFFECT_FIELDS = [
+  "occurrences",
+  "characterChanges",
+  "sceneChanges",
+  "itemChanges",
+] as const satisfies readonly SubmissionField[];
+
+/** One terminal tool's arguments: a closed object over the fields it owns.
+ *  Every list is REQUIRED — an empty domain sends `[]` — which is also what
+ *  holds the strict half's optional count at 6 of the 24 allowed. */
+function submissionSchema(
+  fields: readonly SubmissionField[]
+): Record<string, unknown> {
+  const properties: Record<string, unknown> = {};
+  for (const field of fields) properties[field] = SUBMISSION_PROPERTIES[field];
+  return {
+    type: "object",
+    properties,
+    required: [...fields],
+    additionalProperties: false,
+  };
+}
+
+/** STRICT. Six optional parameters, no `anyOf` anywhere: the provider compiles
+ *  a grammar for this one, so `starting` cannot arrive as a string. */
+export const submitActionsTool: ToolSpec = {
+  name: "submit_actions",
+  strict: true,
+  description:
+    "Terminal, and only half of one: call it in the SAME turn as submit_effects. The action lifecycle of this tick — one `starting` entry for every id the trigger lists under `starting`, and one `ending` entry for every id under `ending` that did something. An action that was nothing but words takes no ending entry: its whole answer is a speech occurrence in submit_effects. Neither tool is a complete resolution alone.",
+  inputSchema: submissionSchema(ACTION_FIELDS),
 };
+
+/** NOT strict, and it does not need to be: these four lists have never come
+ *  back malformed, and their 19 operation branches are what the grammar
+ *  compiler refuses. The contract here is carried by the descriptions and by
+ *  `validateRawResolution`, as it always was. */
+export const submitEffectsTool: ToolSpec = {
+  name: "submit_effects",
+  strict: false,
+  description:
+    "Terminal, and only half of one: call it in the SAME turn as submit_actions. Everything this tick's actions produced — every occurrence somebody perceives, and any sourced world changes grouped by domain. A domain with nothing to say sends `[]`, never omits the list. Neither tool is a complete resolution alone.",
+  inputSchema: submissionSchema(EFFECT_FIELDS),
+};
+
+/** The pair, in the order they are offered to the model. */
+export const SUBMIT_TOOLS: ToolSpec[] = [submitActionsTool, submitEffectsTool];
+export const SUBMIT_TOOL_NAMES: ReadonlySet<string> = new Set(
+  SUBMIT_TOOLS.map((tool) => tool.name)
+);
 
 // ==================== Code-tool schemas for the session ====================
 

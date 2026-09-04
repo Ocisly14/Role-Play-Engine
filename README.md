@@ -118,12 +118,16 @@ the context builder. A tick with no triggers makes no model calls.
 - **No action types, no per-action prompts.** One rule document,
   `src/engine/rules/world-action-resolution.md`, governs every action;
   `src/engine/rules/session-protocol.md` is the session contract.
-- **Validated output.** The session ends with exactly one
-  `submit_resolution` call. Its payload is checked in code by
-  `worldDeltaValidator.ts`; a rejected payload gets up to
+- **Validated output.** The session ends with one terminal turn carrying
+  both `submit_actions` (the action lifecycle) and `submit_effects`
+  (occurrences and world changes). They are merged into one resolution and
+  checked in code by `worldDeltaValidator.ts`; a rejected payload gets up to
   `MAX_CORRECTION_ROUNDS` (3) corrective rounds, each a complete resubmission
-  through the same `submit_resolution` tool (there is no patch tool), and a
-  tick still invalid after that applies nothing.
+  through the same two tools (there is no patch tool), and a tick still
+  invalid after that applies nothing. The submission is two tools rather than
+  one because only `submit_actions` fits inside Anthropic's grammar limits
+  for `strict` — see the comment above `SUBMISSION_PROPERTIES` in
+  `src/engine/resolution/worldDeltaSchema.ts`.
 - **One code tool.** `damageRoll` (`src/engine/tools/diceTools.ts`) is the
   only tool the session can call, because a roll must never be the
   model's. The request already carries the place graph, the places and the

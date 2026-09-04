@@ -23,8 +23,10 @@ import {
   type RawSanityCheck,
   type RawTickResolution,
   SCENE_OPS,
+  SUBMIT_TOOLS,
   opKinds,
-  submitResolutionTool,
+  submitActionsTool,
+  submitEffectsTool,
 } from "../worldDeltaSchema.js";
 
 type Schema = {
@@ -32,7 +34,20 @@ type Schema = {
   required?: string[];
 };
 
-const submit = submitResolutionTool.inputSchema as unknown as Schema;
+/** The two terminal tools partition one resolution, so the agreement tests
+ *  below read them as the single object they describe between them. What the
+ *  split changes is which provider compiles which half into a grammar — not
+ *  the wire contract, which is asserted here exactly as before. */
+const submit = {
+  properties: {
+    ...((submitActionsTool.inputSchema as unknown as Schema).properties ?? {}),
+    ...((submitEffectsTool.inputSchema as unknown as Schema).properties ?? {}),
+  },
+  required: [
+    ...((submitActionsTool.inputSchema as unknown as Schema).required ?? []),
+    ...((submitEffectsTool.inputSchema as unknown as Schema).required ?? []),
+  ],
+} as Schema;
 
 const propsOf = (s: Schema | undefined): string[] =>
   Object.keys(s?.properties ?? {}).sort();
@@ -115,7 +130,7 @@ const _covers: [
 void _covers;
 
 describe("the tool schema and the TS types describe the same thing", () => {
-  it("submit_resolution has exactly the top-level lists the type has", () => {
+  it("the two tools together carry exactly the top-level lists the type has", () => {
     expect(propsOf(submit)).toEqual(sorted(RESOLUTION));
   });
 
@@ -448,9 +463,10 @@ describe("the Engine submission schema and provider limits", () => {
     }
   };
 
-  it("submit_resolution stays strict-compatible", () => {
+  it("both submission tools stay strict-compatible", () => {
     const out: string[] = [];
-    violations(submitResolutionTool.inputSchema, "schema", out);
+    for (const tool of SUBMIT_TOOLS)
+      violations(tool.inputSchema, tool.name, out);
     expect(out).toEqual([]);
   });
 
@@ -478,9 +494,23 @@ describe("the Engine submission schema and provider limits", () => {
     }
   };
 
+  const branchCount = (node: unknown): number => {
+    if (!node || typeof node !== "object") return 0;
+    if (Array.isArray(node)) {
+      return node.reduce<number>((n, v) => n + branchCount(v), 0);
+    }
+    const o = node as Record<string, unknown>;
+    let n = Array.isArray(o.anyOf) ? (o.anyOf as unknown[]).length : 0;
+    for (const [k, v] of Object.entries(o)) {
+      if (k === "enum" || k === "required" || k === "const") continue;
+      n += branchCount(v);
+    }
+    return n;
+  };
+
   it("asks for strict only within Anthropic's optional-parameter budget", () => {
     let total = 0;
-    for (const tool of [...CODE_TOOL_SPECS, submitResolutionTool]) {
+    for (const tool of [...CODE_TOOL_SPECS, ...SUBMIT_TOOLS]) {
       const out: string[] = [];
       optionals(tool.inputSchema, out);
       if (tool.strict) total += out.length;
@@ -488,34 +518,91 @@ describe("the Engine submission schema and provider limits", () => {
     expect(total).toBeLessThanOrEqual(ANTHROPIC_OPTIONAL_LIMIT);
   });
 
-  it("pins the optional count but keeps submit_resolution non-strict", () => {
-    // The exact total, so a schema change that moves it is noticed here
-    // rather than in a 400 from the API. Lean shape (2026-09-03): the six
-    // top-level lists are required (an empty domain is `[]`), the ending
-    // entry is two required scalars, deltas lost `causalBasis`, the
-    // occurrence row lost `locationId`/`actorId`/`affectedIds`/`signals`/
-    // `facts` for `speech`/`content`, movement gained a one-edge pass id —
-    // 23 optionals, one under the limit of 24. The patch tool that used to
-    // sit beside it (49 optionals) is gone: a correction is a complete
-    // resubmission through this same tool. Optional count is not the only
-    // ceiling, though: Claude Sonnet 5 rejected the current 19-branch
-    // operation grammar as too large in a live Grayhaven run on 2026-09-03.
-    const submitOptionals: string[] = [];
-    optionals(submitResolutionTool.inputSchema, submitOptionals);
-    expect(submitOptionals.length).toBe(23);
-    expect(submitOptionals.length).toBeLessThanOrEqual(
-      ANTHROPIC_OPTIONAL_LIMIT
-    );
-    expect(submitResolutionTool.strict).toBe(false);
+  it("keeps the grammar on the half that compiles, and only that half", () => {
+    // Probed live against claude-sonnet-5 on 2026-09-03 with
+    // scripts/probe-strict-schema.ts (`--sweep`, `--sweep-occ`). Anthropic
+    // publishes two ceilings — 20 strict tools, 24 optional parameters across
+    // them — and enforces a third it does not put a number on: the size of the
+    // compiled grammar. This is that number, measured:
+    //
+    //   STRICT SET                                    opt  anyOf  verdict
+    //   starting+ending                                 6      0  accepted ← production
+    //   starting+ending + occurrences                  10      0  accepted
+    //   starting+ending + a 1..7-branch union           6    1-7  accepted
+    //   starting+ending + occurrences + 1..5 branches  10    1-5  accepted
+    //   starting+ending + occurrences + 6 branches     10      6  GRAMMAR TOO LARGE
+    //   starting+ending + occurrences + characterChanges 10    7  GRAMMAR TOO LARGE
+    //   …+ itemChanges                                 18     11  GRAMMAR TOO LARGE
+    //   the three change lists, unions merged          19     16  GRAMMAR TOO LARGE
+    //   the four effect lists                          17     19  GRAMMAR TOO LARGE
+    //   all six lists                                  23     19  GRAMMAR TOO LARGE
+    //
+    // Three things follow, and they are the reason this table is written down
+    // rather than re-derived:
+    //
+    //  1. What is bounded is TOTAL grammar mass, not branch count. A 7-branch
+    //     union compiles beside `starting`/`ending`; the same union stops
+    //     compiling once `occurrences` — which has no `anyOf` at all — joins
+    //     them. `anyOf` is the most expensive item on the bill, not the bill.
+    //  2. The budget is roughly "the action half, plus one small thing". With
+    //     `occurrences` also strict there is room for exactly 5 more branches.
+    //     `CHARACTER_OPS` collapses to 6 (its `hp`/`fatigue` row is the only
+    //     one sharing a field list) — one over, which is as close as this gets.
+    //  3. Simplifying the operation unions does NOT rescue them. Folding
+    //     connection×3→1 and environment×2→1 takes 19 branches to 16 and costs
+    //     6 optionals; at 16 branches with a legal optional count it is still
+    //     refused. 19 is not marginally over the ceiling, it is about 4x over.
+    //
+    // So the current partition is not a first draft — it is the only useful
+    // arrangement the API accepts, and the effect lists cannot be brought
+    // under a grammar by rearranging or simplifying them. Numbers here are
+    // pinned, not just the flags: an optional added to `starting`, or an
+    // `anyOf` introduced anywhere in the strict half, is a change that can
+    // stop the tool compiling, and it should be caught here rather than in a
+    // 400 from the API. Re-measure with the probe when the model changes —
+    // these were taken on the MEDIUM class the Engine actually runs on.
+    const actionOptionals: string[] = [];
+    optionals(submitActionsTool.inputSchema, actionOptionals);
+    const effectOptionals: string[] = [];
+    optionals(submitEffectsTool.inputSchema, effectOptionals);
+
+    expect(submitActionsTool.strict).toBe(true);
+    expect(actionOptionals.length).toBe(6);
+    expect(branchCount(submitActionsTool.inputSchema)).toBe(0);
+
+    expect(submitEffectsTool.strict).toBe(false);
+    expect(effectOptionals.length).toBe(17);
+    expect(branchCount(submitEffectsTool.inputSchema)).toBe(19);
+
+    // Together they are still the same 23 optionals over the same six lists.
+    expect(actionOptionals.length + effectOptionals.length).toBe(23);
     expect(
-      (submitResolutionTool.inputSchema as { required?: string[] }).required
-    ).toEqual([
-      "starting",
-      "ending",
-      "characterChanges",
-      "sceneChanges",
-      "itemChanges",
-      "occurrences",
-    ]);
+      [
+        ...((submitActionsTool.inputSchema as { required?: string[] })
+          .required ?? []),
+        ...((submitEffectsTool.inputSchema as { required?: string[] })
+          .required ?? []),
+      ].sort()
+    ).toEqual(
+      [
+        "starting",
+        "ending",
+        "characterChanges",
+        "sceneChanges",
+        "itemChanges",
+        "occurrences",
+      ].sort()
+    );
+  });
+
+  it("gives each list to exactly one of the two tools", () => {
+    const action = Object.keys(
+      (submitActionsTool.inputSchema as { properties: object }).properties
+    );
+    const effect = Object.keys(
+      (submitEffectsTool.inputSchema as { properties: object }).properties
+    );
+    expect(action.filter((f) => effect.includes(f))).toEqual([]);
+    expect([...action, ...effect].sort()).toEqual(sorted(RESOLUTION));
   });
 });

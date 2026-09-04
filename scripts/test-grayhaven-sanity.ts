@@ -8,7 +8,7 @@
 //
 // Raw model calls are always dumped so a rare natural-1 pass (no SAN delta and
 // no condition by design) can still be checked for a sanityChecks declaration
-// at the submit_resolution call.
+// at the submission call.
 // Extra harness flags such as --ticks, --repeat, --trace, or --drop-sessions
 // may be supplied by the caller.
 
