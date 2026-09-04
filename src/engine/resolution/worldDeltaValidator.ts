@@ -54,13 +54,16 @@ import type {
 
 // ==================== Shape guards ====================
 //
-// The validator is a TOTAL function over whatever the model sent. The Engine
-// submission schema is intentionally non-strict: Anthropic cannot compile its
-// current operation grammar, OpenAI cannot express its nested optional fields
-// in strict mode, and DeepSeek has no strict mode. Every read below that would
-// throw on the wrong shape goes through these, and the wrong shape becomes an
-// addressed error the Engine can correct — never a TypeError that takes the
-// whole tick down.
+// The validator is a TOTAL function over whatever the model sent. Only half
+// the submission is schema-enforced: `submit_actions` is strict, so on
+// Anthropic `starting` and `ending` arrive as declared — but `submit_effects`
+// is not (Anthropic cannot compile its operation grammar), OpenAI cannot
+// express either half's nested optional fields in strict mode, and DeepSeek
+// honours `strict` only on `submit_actions` (its adapter rewrites that half
+// into DeepSeek's narrower subset) and only when the beta channel accepts the
+// request. Every read below that would throw on the wrong
+// shape goes through these, and the wrong shape becomes an addressed error
+// the Engine can correct — never a TypeError that takes the whole tick down.
 
 /** A JSON object and nothing else — not null, not an array. */
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -509,11 +512,16 @@ function validateStart(entry: RawActionStart, lookup: Lookup): string[] {
         }
         errs.push(...validateDefenseSkill(defender.skillId, i));
       }
-    }
-    if (!entry.check) {
-      errs.push(
-        "opposedBy needs a check — name the bar the opposition is against"
-      );
+      // An empty array is how a resolution spells "nobody resists", and the
+      // correction round itself asks for `[]` rather than omission on every
+      // other list. Reading it as an assertion of opposition cost a whole
+      // full-world round for a submission that said nothing wrong; the
+      // adjudicator has always read it as unopposed (skillAdjudicator.ts).
+      if (entry.opposedBy.length > 0 && !entry.check) {
+        errs.push(
+          "opposedBy needs a check — name the bar the opposition is against"
+        );
+      }
     }
   }
   // The route goes straight to the movement runtime, which walks the
@@ -1720,14 +1728,16 @@ export function validateRawResolution(
 /**
  * Make a model-shaped resolution safe to read.
  *
- * Every list here is declared as an array in the schema. A provider that
- * honours `strict` cannot send anything else; DeepSeek has no strict mode,
- * and the retired patch tool used to take index-keyed OBJECTS for the same
- * fields, so the model was measured sending `{"0": {...}}` where an array
- * belonged. That used to reach `.filter` and take the whole tick down with a
- * TypeError — a malformed submission must be a correctable error, never a
- * crash. Object form means exactly what the array form means, so read it and
- * move on.
+ * Every list here is declared as an array in both schemas. A provider that
+ * honours `strict` cannot send anything else, and that now covers `starting`
+ * and `ending` on Anthropic and DeepSeek — but never the effect lists, and
+ * never OpenAI, which cannot express either half. The retired patch tool used
+ * to take index-keyed
+ * OBJECTS for the same fields, so the model was measured sending
+ * `{"0": {...}}` where an array belonged. That used to reach `.filter` and
+ * take the whole tick down with a TypeError — a malformed submission must be
+ * a correctable error, never a crash. Object form means exactly what the
+ * array form means, so read it and move on.
  */
 export function normalizeList<T>(value: unknown, field = "field"): T[] {
   if (value === undefined || value === null) return [];
@@ -1743,13 +1753,23 @@ export function normalizeList<T>(value: unknown, field = "field"): T[] {
       .map(([, item]) => item);
   }
   if (typeof value === "string") {
-    // The whole list, serialized. The engine tools are `strict` now, and a
-    // provider that honours it (Anthropic, OpenAI) cannot produce this shape.
-    // DeepSeek has no strict mode, so the tolerance stays for that path.
+    // The whole list, serialized — the failure the split was made to end.
     //
-    // Two shapes were measured before strict went on. The list as its own
-    // JSON text — `"[{...}]"` — and the list wrapped in an object under its
-    // own name, or a name the model made up: `"{\"starting\": [...]}"`,
+    // Without a grammar the model writes a JSON DOCUMENT for the field it is
+    // filling instead of the field's value, and it happens at the start of
+    // generation: measured over 66 stored Claude engine calls, `starting` (the
+    // first key it writes) came back as a string in 7 of 55 submissions and
+    // `ending` in 1 of 61, while the four effect lists never did it once. In
+    // every one of those 7 the model had written `starting` first.
+    //
+    // `submit_actions` is strict now, so neither Anthropic nor DeepSeek can
+    // produce this shape for these two fields any more. It stays reachable on
+    // OpenAI, which drops the flag over the nested optional fields, and — for
+    // the effect lists — on every provider.
+    //
+    // Three shapes were measured. The list as its own JSON text —
+    // `"[{...}]"` — and the list wrapped in an object under its own name, or
+    // a name the model made up: `"{\"starting\": [...]}"`,
     // `"{\"actions\": [...]}"`. Dropping either took a whole resolution with
     // it — the transition, the reason, an occurrence two characters were
     // meant to perceive — and left one line of warning behind.

@@ -5,12 +5,13 @@
 // DeepSeek's wire format is OpenAI-shaped, and the obvious move is to point
 // the `openai` SDK at their base URL. This adapter deliberately doesn't. The
 // shapes agree until they don't — usage counters are already reported under
-// DeepSeek's own names, `strict` is not a field DeepSeek defines, and the
-// reasoner family adds `reasoning_content` — and every one of those
-// divergences would arrive as a silently wrong value rather than a type
-// error. Owning the request means each difference is a line of code here with
-// a reason next to it, and it means the OpenAI adapter can change (or the SDK
-// major-bump) without a second vendor riding along on its assumptions.
+// DeepSeek's own names, `strict` lives on the same field but accepts a
+// narrower schema language AND only on a different base URL, and the reasoner
+// family adds `reasoning_content` — and every one of those divergences would
+// arrive as a silently wrong value rather than a type error. Owning the
+// request means each difference is a line of code here with a reason next to
+// it, and it means the OpenAI adapter can change (or the SDK major-bump)
+// without a second vendor riding along on its assumptions.
 //
 // The cost of owning it is small: one JSON POST, no streaming (`onToken` is
 // wired for Google alone — see generator.ts), and no embeddings.
@@ -21,6 +22,11 @@ import { parseJsonResponse } from "../../engine/shared/jsonParse.js";
 import { getEndpoint } from "../configuration.js";
 import { normalizeUsageMetadata } from "../tokenUsage.js";
 import { ModelProviderName } from "../types.js";
+import {
+  canBeStrict,
+  stripNulls,
+  toDeepSeekStrictSchema,
+} from "./deepseekStrictSchema.js";
 import type {
   ChatRequest,
   ChatResponse,
@@ -38,16 +44,39 @@ const CHAT_COMPLETIONS_PATH = "/chat/completions";
 
 const DEFAULT_BASE_URL = "https://api.deepseek.com/v1";
 
+/** The two channels DeepSeek serves the same completions API on. Beta is not
+ *  a preview of the whole API — it is the ONLY place `strict` tool schemas are
+ *  honoured, and the general endpoint rejects the field. */
+export type DeepSeekChannel = "default" | "beta";
+
+/** A version segment as it appears at the end of a base URL. `beta` sits in
+ *  the same slot as `v1`, so a base already pointing at it must not have a
+ *  second segment appended. */
+const VERSION_SEGMENT = /\/(?:v\d+|beta)$/;
+
 /** Joins the configured base onto the completions path. Split out from the
  *  adapter because the base is read from env at module load (like every other
- *  provider's), so this is the only part a test can reach. */
-export function completionsUrl(base: string | undefined): string {
+ *  provider's), so this is the only part a test can reach.
+ *
+ *  `channel: "beta"` REPLACES whatever version segment the base carries, which
+ *  is how a strict request reaches `/beta` without the operator configuring a
+ *  second URL. A gateway that mirrors DeepSeek under a prefix gets the same
+ *  treatment (`<prefix>/beta`); one that doesn't serve beta at all will 404
+ *  that call and only that call — the non-strict traffic never leaves `/v1`. */
+export function completionsUrl(
+  base: string | undefined,
+  channel: DeepSeekChannel = "default"
+): string {
   const trimmed = (base ?? DEFAULT_BASE_URL).replace(/\/+$/, "");
+  if (channel === "beta") {
+    const root = trimmed.replace(VERSION_SEGMENT, "");
+    return `${root}/beta${CHAT_COMPLETIONS_PATH}`;
+  }
   // A gateway base given without the version segment would otherwise POST to
   // `<host>/chat/completions` and 404 on every call. Anthropic's adapter trims
   // a `/v1` the SDK adds for itself; this is the same repair from the other
   // side — the version belongs in the path exactly once.
-  const versioned = /\/v\d+$/.test(trimmed) ? trimmed : `${trimmed}/v1`;
+  const versioned = VERSION_SEGMENT.test(trimmed) ? trimmed : `${trimmed}/v1`;
   return `${versioned}${CHAT_COMPLETIONS_PATH}`;
 }
 
@@ -96,6 +125,39 @@ interface WireResponse {
 type WireToolChoice =
   | "required"
   | { type: "function"; function: { name: string } };
+
+/**
+ * Thinking is ON by default on every v4 model, and thinking mode refuses to be
+ * TOLD which tool to call:
+ *
+ *   400 invalid_request_error — "Thinking mode does not support this
+ *   tool_choice"
+ *
+ * measured on both v4 models, for `required` and for a named tool alike. Every
+ * seam here forces a choice, so something has to give — and the choice of what
+ * matters more than it looks.
+ *
+ * Turning thinking off is the tempting answer, because it keeps the envelope
+ * guarantee the callers were written against. It was also measured, and it is
+ * the wrong trade for a small model: across four 5-tick grayhaven runs with
+ * thinking off, `deepseek-v4-flash` answered a tick whose endings were mostly
+ * SPEECH — the case where the protocol wants a `speech: true` occurrence and no
+ * ending entry — correctly 2 times in 5, submitting an empty resolution the
+ * other 3 and taking two whole ticks down with it. `deepseek-v4-pro` was 2 for
+ * 2 on the same shape. That is a reasoning failure on a two-branch rule, and it
+ * was bought with the reasoning budget.
+ *
+ * `tool_choice: "auto"` IS accepted alongside thinking (probed), and the model
+ * still calls the tool. So the trade taken here is the other one: keep the
+ * reasoning, ask rather than demand. What is given up is real but bounded —
+ * `generateToolCalls` throws when a turn returns no tool call and
+ * `runWithPolicy` retries it, so the failure mode is a re-sent request, not a
+ * lost tick.
+ *
+ * `strict` is unaffected either way: DeepSeek documents it as supported in both
+ * modes, and the grammar is what still guarantees the ARGUMENTS.
+ */
+const THINKING_SAFE_TOOL_CHOICE = "auto" as const;
 
 // ─── Request construction ──────────────────────────────────────────
 
@@ -150,18 +212,43 @@ function toWireMessages(message: ModelMessage): WireMessage[] {
 }
 
 /**
- * `strict` is intentionally not forwarded: it is an OpenAI extension DeepSeek
- * does not define, and sending an undefined field to get schema enforcement
- * that isn't there would be worse than not asking. The envelope guarantee
- * comes from `toolChoice` either way — see the note on `ToolSpec.strict`.
+ * EVERY tool goes strict here, and `ToolSpec.strict` is deliberately ignored.
+ *
+ * That flag records an ANTHROPIC fact, not a contract. `submit_effects` carries
+ * `strict: false` because Anthropic's grammar compiler refuses its 19 `anyOf`
+ * branches — measured, with a 400 that says so. DeepSeek has no such ceiling,
+ * so on this path the flag distinguishes nothing: honouring it would leave the
+ * half of the resolution that most needs a closed `operation` union (a misspelt
+ * field costs a full-world correction round) as the only unconstrained half,
+ * for a reason belonging to a different vendor.
+ *
+ * The whole set was probed live against `/beta`: submit_actions, submit_effects
+ * (16k of schema, all 19 branches), both together, all three agent tools, and
+ * damageRoll — every one accepted, and the engine's full tool set at 22.8k
+ * accepted as one request.
+ *
+ * The schema is never the one the caller wrote: DeepSeek validates server-side
+ * against a narrower language, so `toDeepSeekStrictSchema` derives the variant
+ * that passes and `stripNulls` (in `readToolCallArgs`) undoes the nullability
+ * on the way back. The caller neither writes nor reads anything DeepSeek-shaped.
+ *
+ * Two exemptions, neither of them a softening of the policy. `canBeStrict`
+ * skips a schema declaring no `type`/`anyOf`/`$ref`, which DeepSeek rejects
+ * outright — and one request is all-or-nothing, so an inexpressible tool sent
+ * strict would take the expressible ones down with it. `noGrammar` skips a
+ * tool whose owner measured that a grammar costs more than it buys; the agent
+ * tools carry it, and the note on that field says what was measured.
  */
 function toWireTool(tool: ToolSpec) {
+  const parameters = toDeepSeekStrictSchema(tool.inputSchema);
+  const strict = tool.noGrammar !== true && canBeStrict(parameters);
   return {
     type: "function" as const,
     function: {
       name: tool.name,
       description: tool.description,
-      parameters: tool.inputSchema,
+      parameters: strict ? parameters : tool.inputSchema,
+      ...(strict ? { strict: true } : {}),
     },
   };
 }
@@ -226,7 +313,8 @@ function saveBrokenArgs(toolName: string, text: string): string {
 
 function readToolCallArgs(
   toolName: string,
-  raw: string | undefined
+  raw: string | undefined,
+  strict = false
 ): { args: Record<string, unknown>; unreadableArgs?: { rawLength: number } } {
   const text = raw ?? "";
   if (text.trim() === "") return { args: {} };
@@ -234,7 +322,14 @@ function readToolCallArgs(
   try {
     const parsed = parseJsonResponse<unknown>(text);
     if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-      return { args: parsed as Record<string, unknown> };
+      // Under a strict grammar every optional field arrives as an explicit
+      // `null` (that is how the schema had to spell "absent"). Drop them here
+      // and the rest of the engine reads the same object it reads from every
+      // other provider.
+      const args = strict
+        ? (stripNulls(parsed) as Record<string, unknown>)
+        : (parsed as Record<string, unknown>);
+      return { args };
     }
     failure = "parsed, but not into an object";
   } catch (err) {
@@ -270,14 +365,21 @@ function warnIfTruncated(
   );
 }
 
-function readToolCalls(calls: WireToolCall[] | undefined): ToolCallRecord[] {
+function readToolCalls(
+  calls: WireToolCall[] | undefined,
+  strictTools: ReadonlySet<string> = new Set()
+): ToolCallRecord[] {
   return (calls ?? []).flatMap((call) => {
     if (call.type !== "function") return [];
     return [
       {
         id: call.id,
         name: call.function.name,
-        ...readToolCallArgs(call.function.name, call.function.arguments),
+        ...readToolCallArgs(
+          call.function.name,
+          call.function.arguments,
+          strictTools.has(call.function.name)
+        ),
       },
     ];
   });
@@ -286,8 +388,8 @@ function readToolCalls(calls: WireToolCall[] | undefined): ToolCallRecord[] {
 export class DeepSeekAdapter implements ProviderAdapter {
   readonly provider = ModelProviderName.DEEPSEEK;
 
-  private endpoint(): string {
-    return completionsUrl(getEndpoint(ModelProviderName.DEEPSEEK));
+  private endpoint(channel: DeepSeekChannel): string {
+    return completionsUrl(getEndpoint(ModelProviderName.DEEPSEEK), channel);
   }
 
   /**
@@ -296,7 +398,10 @@ export class DeepSeekAdapter implements ProviderAdapter {
    * logs the message, so a 401 that reads "401 Unauthorized" instead of
    * "Invalid API key" costs three retries and a provider fallback to find out.
    */
-  private async post(body: Record<string, unknown>): Promise<WireResponse> {
+  private async post(
+    body: Record<string, unknown>,
+    channel: DeepSeekChannel = "default"
+  ): Promise<WireResponse> {
     const apiKey = process.env.DEEPSEEK_API_KEY?.trim();
     if (!apiKey) {
       throw new Error("DEEPSEEK_API_KEY is not set.");
@@ -304,7 +409,7 @@ export class DeepSeekAdapter implements ProviderAdapter {
 
     let response: Response;
     try {
-      response = await fetch(this.endpoint(), {
+      response = await fetch(this.endpoint(channel), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -389,28 +494,44 @@ export class DeepSeekAdapter implements ProviderAdapter {
     messages.push(...req.messages.flatMap(toWireMessages));
 
     const toolChoice = toWireToolChoice(req.toolChoice);
-    const response = await this.post({
-      model: req.modelName,
-      messages,
-      tools: req.tools.map(toWireTool),
-      // Opt-in, and the caller must then answer every returned call or the
-      // next request fails — same contract as the other two adapters.
-      parallel_tool_calls: req.allowParallelCalls === true,
-      // Asked for, not relied on: DeepSeek honours `tool_choice` most of the
-      // time and ignores it the rest — measured, it answered a round that
-      // demanded one named tool with a different one. A caller that must
-      // have one specific tool has to tolerate the other.
-      ...(toolChoice ? { tool_choice: toolChoice } : {}),
-      max_tokens: req.maxOutputTokens ?? DEFAULT_MAX_OUTPUT_TOKENS,
-      ...(req.temperature !== undefined
-        ? { temperature: req.temperature }
-        : {}),
-    });
+    const tools = req.tools.map(toWireTool);
+    // `strict` is a beta-channel field: sent to the general endpoint it is
+    // rejected, and sent nowhere at all it enforces nothing. Since every
+    // expressible tool now goes strict, this routes to beta whenever there is
+    // a tool at all — but it is still derived from the request rather than
+    // configured, so a call with no tools (or only inexpressible ones) stays
+    // on the general endpoint instead of relying on beta for nothing.
+    const strictTools = new Set(
+      tools.filter((t) => t.function.strict).map((t) => t.function.name)
+    );
+    const response = await this.post(
+      {
+        model: req.modelName,
+        messages,
+        tools,
+        // Opt-in, and the caller must then answer every returned call or the
+        // next request fails — same contract as the other two adapters.
+        parallel_tool_calls: req.allowParallelCalls === true,
+        // Asked for, not relied on: DeepSeek honours `tool_choice` most of the
+        // time and ignores it the rest — measured, it answered a round that
+        // demanded one named tool with a different one. A caller that must
+        // have one specific tool has to tolerate the other.
+        // The caller's forced choice is downgraded, never dropped: `auto`
+        // still puts the tools in front of the model and still reports a
+        // refusal as "no tool call", which the policy above retries.
+        ...(toolChoice ? { tool_choice: THINKING_SAFE_TOOL_CHOICE } : {}),
+        max_tokens: req.maxOutputTokens ?? DEFAULT_MAX_OUTPUT_TOKENS,
+        ...(req.temperature !== undefined
+          ? { temperature: req.temperature }
+          : {}),
+      },
+      strictTools.size > 0 ? "beta" : "default"
+    );
     warnIfTruncated(response, req.maxOutputTokens);
 
     const message = response.choices?.[0]?.message;
     return {
-      toolCalls: readToolCalls(message?.tool_calls),
+      toolCalls: readToolCalls(message?.tool_calls, strictTools),
       text: message?.content ?? "",
       usage: normalizeUsageMetadata(response.usage),
     };
@@ -429,6 +550,7 @@ export class DeepSeekAdapter implements ProviderAdapter {
 
 export const __testing = {
   completionsUrl,
+  readToolCallArgs,
   flattenContent,
   readToolCalls,
   systemMessage,

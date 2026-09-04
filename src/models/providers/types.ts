@@ -64,11 +64,41 @@ export interface ToolSpec {
    * 111). A schema with many genuinely optional fields cannot be strict there.
    *
    * OpenAI's strict mode additionally demands that every property be
-   * required, so its adapter forwards the flag only when that holds. DeepSeek
-   * has no strict mode and drops it. The envelope guarantee comes from
-   * `toolChoice`, not from this.
+   * required, so its adapter forwards the flag only when that holds.
+   *
+   * DeepSeek IGNORES this flag entirely and sends every tool strict. The flag
+   * records an Anthropic constraint — `submit_effects` is `false` because that
+   * compiler refuses its 19 `anyOf` branches — and DeepSeek has no such
+   * ceiling, so honouring it there would leave the half that most needs a
+   * closed union unconstrained for another vendor's reason. Its adapter
+   * rewrites each schema into DeepSeek's narrower subset
+   * (`deepseekStrictSchema.ts`) and moves the request to the beta channel,
+   * which is the only one that honours `strict` at all.
+   *
+   * The envelope guarantee comes from `toolChoice`, not from this.
    */
   strict?: boolean;
+
+  /**
+   * Never ask any provider to constrain this tool, whatever it could compile.
+   *
+   * Separate from `strict` because it answers a different question. `strict`
+   * says whether a vendor CAN build the grammar; this says whether one is
+   * worth building. The agent tools are the measured case: their optional
+   * fields are all strings (`skillId`, `language`, `utterance`), and a grammar
+   * can only spell "optional" as required-plus-nullable — so the model, forced
+   * to put something there, writes `""`. Across one 5-tick run that was 22 of
+   * 24 `act` calls carrying a junk field, against 0 of 24 and 0 of 13 on the
+   * two unconstrained runs of the same module.
+   *
+   * Nothing was bought for it. These schemas are flat, three optional strings
+   * deep, and have never produced the structural failure a grammar prevents —
+   * unlike `submit_effects`, whose 19-branch `operation` union is exactly that
+   * failure waiting to happen. The trust boundary absorbs the `""` (it trims
+   * all three fields), so the cost lands as noise rather than breakage; that
+   * is a reason to stop generating it, not a reason to keep it.
+   */
+  noGrammar?: boolean;
 }
 
 export interface ToolCallRecord {

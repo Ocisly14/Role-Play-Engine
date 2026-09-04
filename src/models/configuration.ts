@@ -123,12 +123,29 @@ export const models: Models = {
     },
   },
   /**
-   * DeepSeek. `deepseek-chat` fills all three classes: it is the only model
-   * here with function calling, and every seam in this codebase forces a tool
-   * call. `deepseek-reasoner` is deliberately absent — a class that cannot
-   * satisfy `tool_choice` would fail the World Action Engine's
-   * `submit_resolution` on the LARGE fallback, which is the worst place to
-   * discover it. Override per class if that changes.
+   * DeepSeek. `deepseek-chat` and `deepseek-reasoner` used to fill all three
+   * classes; both are RETIRED — `GET https://api.deepseek.com/models` returns
+   * only `deepseek-v4-flash`, `deepseek-v4-pro` and
+   * `deepseek-v4-flash-vision-exp`, and a request naming either old id fails.
+   * A dead default is worse than no default: it 404s every call in a run
+   * whose provider was picked by one env var.
+   *
+   * Both v4 models call tools, so the old worry (a class that cannot satisfy
+   * `tool_choice`) is gone — but they think by DEFAULT, and thinking mode
+   * rejects `tool_choice` outright. That is handled once in the adapter
+   * (`deepseek.ts`: forcing a choice turns thinking off), not by avoiding a
+   * model here.
+   *
+   * MEDIUM carries everything in this codebase — the World Action Engine, the
+   * agent loop, the renderer, the weather judge — and of those four, three are
+   * volume. A 5-tick grayhaven run spent 68 of its 74 calls on the agent loop
+   * and the renderer, so paying `pro` prices for MEDIUM means paying them
+   * mostly to narrate. `flash` takes SMALL and MEDIUM.
+   *
+   * LARGE stays on `pro` and that is not decoration: `fallbackToLargeOnFailure`
+   * escalates MEDIUM to LARGE, so the arrangement is cheap by default and
+   * strong on the second try — which is the shape the Engine wants, since the
+   * call that fails is the one worth spending on.
    *
    * No EMBEDDING entry: DeepSeek serves no embeddings endpoint, and
    * `rag/embedding.ts` already routes any non-Google remote fallback to
@@ -143,7 +160,7 @@ export const models: Models = {
     endpoint: process.env.DEEPSEEK_API_URL || "https://api.deepseek.com/v1",
     model: {
       [ModelClass.SMALL]: {
-        name: process.env.SMALL_DEEPSEEK_MODEL || "deepseek-chat",
+        name: process.env.SMALL_DEEPSEEK_MODEL || "deepseek-v4-flash",
         stop: [],
         maxInputTokens: DEEPSEEK_MAX_INPUT_TOKENS,
         maxOutputTokens: 40960,
@@ -152,7 +169,7 @@ export const models: Models = {
         temperature: 0.7,
       },
       [ModelClass.MEDIUM]: {
-        name: process.env.MEDIUM_DEEPSEEK_MODEL || "deepseek-chat",
+        name: process.env.MEDIUM_DEEPSEEK_MODEL || "deepseek-v4-flash",
         stop: [],
         maxInputTokens: DEEPSEEK_MAX_INPUT_TOKENS,
         maxOutputTokens: 40960,
@@ -161,7 +178,7 @@ export const models: Models = {
         temperature: 0.7,
       },
       [ModelClass.LARGE]: {
-        name: process.env.LARGE_DEEPSEEK_MODEL || "deepseek-chat",
+        name: process.env.LARGE_DEEPSEEK_MODEL || "deepseek-v4-pro",
         stop: [],
         maxInputTokens: DEEPSEEK_MAX_INPUT_TOKENS,
         maxOutputTokens: 40960,

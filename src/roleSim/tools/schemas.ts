@@ -8,8 +8,10 @@
 // field-level help, and it already sits behind the measured cache breakpoint.
 // What lives here is only what the model needs to fill the arguments in.
 //
-// Every schema sets `additionalProperties: false` and lists `required`, which
-// is what `strict: true` demands on both providers.
+// Every schema sets `additionalProperties: false` and lists `required` — but
+// none of these is ever sent strict: they carry `noGrammar`, for the reason
+// written on that field. What they gain from the shape is a clean contract for
+// the trust boundary to check, not a provider-side grammar.
 
 import { SKILL_CATALOG } from "../../engine/rules/skillCatalog.js";
 import type { ToolSpec } from "../../models/providers/types.js";
@@ -27,6 +29,9 @@ const WRITABLE_MEMORY_TYPES = [
 
 export const actTool: ToolSpec = {
   name: "act",
+  // See `ToolSpec.noGrammar`: constraining this one makes the model fill
+  // `skillId`/`language`/`utterance` with `""` rather than leave them out.
+  noGrammar: true,
   description:
     "Declare the ONE thing you now set out to do in the world (intent only — the engine decides outcomes and real duration). Terminates this decision and consumes a tick. See the act section of the system prompt for granularity rules.",
   inputSchema: {
@@ -96,6 +101,7 @@ export const actTool: ToolSpec = {
 
 export const continueTool: ToolSpec = {
   name: "continue",
+  noGrammar: true,
   description:
     "Keep your IN-FLIGHT action running (see 'Currently doing'). If you have no in-flight action, this does NOTHING — no event, no memory, others see you standing idle; declare routines with `act` instead. Terminates this decision and consumes a tick.",
   inputSchema: {
@@ -113,6 +119,7 @@ export const continueTool: ToolSpec = {
 
 export const writeMemoryTool: ToolSpec = {
   name: "writeMemory",
+  noGrammar: true,
   description:
     "Keep, correct or retract a long-term memory — nothing is recorded for you. Free: may be called in the same turn as act/continue, and once per memory when this minute left you several worth keeping — write them all in this turn, since the turn ends when you act.",
   inputSchema: {

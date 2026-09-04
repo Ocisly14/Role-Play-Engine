@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ModelProviderName } from "../../types.js";
 import { DeepSeekAdapter, __testing } from "../deepseek.js";
-import type { ModelMessage, ToolSpec } from "../types.js";
+import type { ModelMessage } from "../types.js";
 
 const {
   completionsUrl,
@@ -72,14 +72,110 @@ describe("DeepSeek wire mapping", () => {
     expect(toWireToolChoice(undefined)).toBeUndefined();
   });
 
-  it("does not forward `strict` — DeepSeek defines no such field", () => {
-    const tool: ToolSpec = {
+  it("sends a tool strict even when the caller did not ask for it", () => {
+    // `ToolSpec.strict` records an Anthropic constraint, not a contract:
+    // submit_effects is false there only because that compiler refuses its
+    // anyOf branches. DeepSeek has no such ceiling, so the flag is ignored.
+    const wire = toWireTool({
+      name: "submit_effects",
+      description: "d",
+      strict: false,
+      inputSchema: {
+        type: "object",
+        properties: {
+          occurrences: { type: "array", items: { type: "string" } },
+        },
+        required: [],
+      },
+    });
+
+    expect(wire.function.strict).toBe(true);
+    expect(wire.function.parameters).toEqual({
+      type: "object",
+      properties: {
+        occurrences: {
+          anyOf: [
+            { type: "array", items: { type: "string" } },
+            { type: "null" },
+          ],
+        },
+      },
+      required: ["occurrences"],
+      additionalProperties: false,
+    });
+  });
+
+  it("honours noGrammar even on a schema it could perfectly well compile", () => {
+    // The agent tools carry this: a grammar can only spell their optional
+    // strings as required-plus-nullable, and the model then writes `""`.
+    const wire = toWireTool({
       name: "act",
       description: "d",
-      inputSchema: { type: "object", properties: {} },
+      noGrammar: true,
+      inputSchema: {
+        type: "object",
+        properties: {
+          description: { type: "string" },
+          skillId: { type: "string" },
+        },
+        required: ["description"],
+      },
+    });
+    expect(wire.function).not.toHaveProperty("strict");
+    // Untouched, not merely unflagged — no nullable rewrite either.
+    expect(wire.function.parameters).toEqual({
+      type: "object",
+      properties: {
+        description: { type: "string" },
+        skillId: { type: "string" },
+      },
+      required: ["description"],
+    });
+  });
+
+  it("leaves a schema that declares nothing unstrict rather than 400ing", () => {
+    // DeepSeek needs `type`/`anyOf`/`$ref` on every node, the root included.
+    // One request is all-or-nothing, so an inexpressible tool sent strict
+    // would take the expressible ones down with it.
+    const inputSchema = {};
+    const wire = toWireTool({ name: "noop", description: "d", inputSchema });
+    expect(wire.function).not.toHaveProperty("strict");
+    expect(wire.function.parameters).toBe(inputSchema);
+  });
+
+  it("forwards `strict` with the schema rewritten into DeepSeek's subset", () => {
+    // DeepSeek validates the schema server-side and 400s the whole request on
+    // an optional property or a `minItems`, so sending the flag beside the
+    // caller's schema would fail every strict call rather than constrain it.
+    const wire = toWireTool({
+      name: "submit_actions",
+      description: "d",
       strict: true,
-    };
-    expect(JSON.stringify(toWireTool(tool))).not.toContain("strict");
+      inputSchema: {
+        type: "object",
+        properties: {
+          actionId: { type: "string" },
+          route: { type: "array", items: { type: "string" }, minItems: 1 },
+        },
+        required: ["actionId"],
+      },
+    });
+
+    expect(wire.function.strict).toBe(true);
+    expect(wire.function.parameters).toEqual({
+      type: "object",
+      properties: {
+        actionId: { type: "string" },
+        route: {
+          anyOf: [
+            { type: "array", items: { type: "string" } },
+            { type: "null" },
+          ],
+        },
+      },
+      required: ["actionId", "route"],
+      additionalProperties: false,
+    });
   });
 
   it("repairs an argument string the model left broken", () => {
@@ -161,6 +257,27 @@ describe("DeepSeek wire mapping", () => {
     );
     expect(completionsUrl("https://gateway.internal/v2")).toBe(
       "https://gateway.internal/v2/chat/completions"
+    );
+  });
+
+  it("swaps the version segment for /beta when a strict tool is in play", () => {
+    // `strict` is honoured on the beta channel and rejected on the general
+    // one, so the channel is derived rather than configured.
+    expect(completionsUrl(undefined, "beta")).toBe(
+      "https://api.deepseek.com/beta/chat/completions"
+    );
+    expect(completionsUrl("https://api.deepseek.com/v1", "beta")).toBe(
+      "https://api.deepseek.com/beta/chat/completions"
+    );
+    expect(completionsUrl("https://gateway.internal/", "beta")).toBe(
+      "https://gateway.internal/beta/chat/completions"
+    );
+    // Already pointed at beta: one segment, not two.
+    expect(completionsUrl("https://api.deepseek.com/beta", "beta")).toBe(
+      "https://api.deepseek.com/beta/chat/completions"
+    );
+    expect(completionsUrl("https://api.deepseek.com/beta")).toBe(
+      "https://api.deepseek.com/beta/chat/completions"
     );
   });
 
@@ -253,6 +370,162 @@ describe("DeepSeekAdapter", () => {
       { id: "call_1", name: "submit_resolution", args: { ok: true } },
     ]);
     expect(result.usage?.cache_read_tokens).toBe(1216);
+  });
+
+  it("keeps thinking on and asks rather than demands a tool", async () => {
+    // Thinking mode 400s a forced `tool_choice`, and a small model needs the
+    // reasoning far more than the callers need the guarantee: with thinking
+    // off, flash answered a speech-only tick correctly 2 times in 5 and
+    // submitted an empty resolution the rest. `auto` is accepted alongside
+    // thinking, so the choice is downgraded instead of the model.
+    const calls = stubFetch({ choices: [{ message: { content: "" } }] });
+    await adapter.chatWithTools({
+      modelName: "deepseek-v4-flash",
+      messages: [{ role: "user", content: [{ kind: "text", text: "go" }] }],
+      tools: [{ name: "act", description: "d", inputSchema: {} }],
+      toolChoice: "any",
+    });
+    expect(calls[0].body.tool_choice).toBe("auto");
+    // Never sent: the vendor default (thinking on) is the point.
+    expect(calls[0].body).not.toHaveProperty("thinking");
+  });
+
+  it("downgrades a NAMED tool choice too — thinking refuses that one alike", async () => {
+    const calls = stubFetch({ choices: [{ message: { content: "" } }] });
+    await adapter.chatWithTools({
+      modelName: "deepseek-v4-flash",
+      messages: [{ role: "user", content: [{ kind: "text", text: "go" }] }],
+      tools: [{ name: "submitWeather", description: "d", inputSchema: {} }],
+      toolChoice: { name: "submitWeather" },
+    });
+    expect(calls[0].body.tool_choice).toBe("auto");
+  });
+
+  it("sends no tool_choice at all when the caller named none", async () => {
+    const calls = stubFetch({ choices: [{ message: { content: "" } }] });
+    await adapter.chatWithTools({
+      modelName: "deepseek-v4-flash",
+      messages: [{ role: "user", content: [{ kind: "text", text: "go" }] }],
+      tools: [{ name: "act", description: "d", inputSchema: {} }],
+    });
+    expect(calls[0].body).not.toHaveProperty("tool_choice");
+  });
+
+  it("stays on the general endpoint when no tool can carry a grammar", async () => {
+    // Beta exists here only to honour `strict`. Nothing to constrain, no
+    // reason to depend on a beta channel.
+    const calls = stubFetch({ choices: [{ message: { content: "" } }] });
+    await adapter.chatWithTools({
+      modelName: "deepseek-v4-flash",
+      messages: [{ role: "user", content: [{ kind: "text", text: "go" }] }],
+      tools: [{ name: "damageRoll", description: "d", inputSchema: {} }],
+    });
+    expect(calls[0].url).toBe("https://api.deepseek.com/v1/chat/completions");
+    expect(JSON.stringify(calls[0].body)).not.toContain("strict");
+  });
+
+  it("moves a request carrying a strict tool to the beta endpoint", async () => {
+    // The general endpoint rejects `strict`, so the presence of a strict tool
+    // is what routes the call — no env var, no operator step.
+    const calls = stubFetch({ choices: [{ message: { content: "" } }] });
+    await adapter.chatWithTools({
+      modelName: "deepseek-chat",
+      messages: [{ role: "user", content: [{ kind: "text", text: "go" }] }],
+      tools: [
+        { name: "damageRoll", description: "d", inputSchema: {} },
+        {
+          name: "submit_actions",
+          description: "d",
+          strict: true,
+          inputSchema: {
+            type: "object",
+            properties: {
+              starting: { type: "array", items: { type: "string" } },
+            },
+            required: ["starting"],
+          },
+        },
+      ],
+    });
+
+    expect(calls[0].url).toBe("https://api.deepseek.com/beta/chat/completions");
+    const tools = calls[0].body.tools as Array<{
+      function: { name: string; strict?: boolean };
+    }>;
+    // Only the tool that asked for it — a code tool riding along stays plain.
+    expect(tools.map((t) => t.function.strict)).toEqual([undefined, true]);
+  });
+
+  it("strips the nulls the grammar forced, from every tool it constrained", async () => {
+    stubFetch({
+      choices: [
+        {
+          message: {
+            content: "",
+            tool_calls: [
+              {
+                id: "call_1",
+                type: "function",
+                function: {
+                  name: "submit_actions",
+                  arguments:
+                    '{"starting":[{"actionId":"a1","check":null,"movement":null}],"ending":null}',
+                },
+              },
+              {
+                id: "call_2",
+                type: "function",
+                function: {
+                  name: "submit_effects",
+                  arguments: '{"occurrences":null}',
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+
+    const result = await adapter.chatWithTools({
+      modelName: "deepseek-chat",
+      messages: [{ role: "user", content: [{ kind: "text", text: "go" }] }],
+      allowParallelCalls: true,
+      tools: [
+        {
+          name: "submit_actions",
+          description: "d",
+          strict: true,
+          inputSchema: {
+            type: "object",
+            properties: {
+              starting: { type: "array", items: { type: "object" } },
+            },
+            required: ["starting"],
+          },
+        },
+        {
+          // Asks for NO grammar and gets one anyway — that is the policy.
+          name: "submit_effects",
+          description: "d",
+          strict: false,
+          inputSchema: {
+            type: "object",
+            properties: {
+              occurrences: { type: "array", items: { type: "object" } },
+            },
+            required: ["occurrences"],
+          },
+        },
+      ],
+    });
+
+    // Both halves come back looking exactly like Anthropic's answer: both were
+    // constrained, so every null in them was the grammar's doing, not the
+    // model's.
+    expect(result.toolCalls[0].args).toEqual({
+      starting: [{ actionId: "a1" }],
+    });
+    expect(result.toolCalls[1].args).toEqual({});
   });
 
   it("defaults parallel tool calls off", async () => {
