@@ -23,31 +23,38 @@ import {
   type RawSanityCheck,
   type RawTickResolution,
   SCENE_OPS,
-  SUBMIT_TOOLS,
   opKinds,
-  submitActionsTool,
-  submitEffectsTool,
 } from "../worldDeltaSchema.js";
+import {
+  type EndingDecision,
+  PHASE_FIELDS,
+  PHASE_TOOLS,
+  RESOLUTION_PHASES,
+} from "../worldResolutionStageSchemas.js";
 
 type Schema = {
   properties: Record<string, Schema & { items?: Schema }>;
   required?: string[];
+  anyOf?: Schema[];
 };
 
-/** The two terminal tools partition one resolution, so the agreement tests
- *  below read them as the single object they describe between them. What the
- *  split changes is which provider compiles which half into a grammar — not
- *  the wire contract, which is asserted here exactly as before. */
-const submit = {
-  properties: {
-    ...((submitActionsTool.inputSchema as unknown as Schema).properties ?? {}),
-    ...((submitEffectsTool.inputSchema as unknown as Schema).properties ?? {}),
-  },
-  required: [
-    ...((submitActionsTool.inputSchema as unknown as Schema).required ?? []),
-    ...((submitEffectsTool.inputSchema as unknown as Schema).required ?? []),
-  ],
-} as Schema;
+/** The six phase tools together describe one resolution, so the agreement
+ *  tests read them as the single object they describe between them — one
+ *  property per phase, keyed by the field that phase submits. What the split
+ *  changes is how many grammars the provider compiles, not the wire contract
+ *  of any row: five of the six arrays are the very objects the unified tools
+ *  carried, and they are asserted here exactly as they were then. */
+const submit: Schema = {
+  properties: Object.fromEntries(
+    RESOLUTION_PHASES.map((phase) => [
+      PHASE_FIELDS[phase],
+      (PHASE_TOOLS[phase].inputSchema as unknown as Schema).properties[
+        PHASE_FIELDS[phase]
+      ],
+    ])
+  ),
+  required: RESOLUTION_PHASES.map((phase) => PHASE_FIELDS[phase]),
+};
 
 const propsOf = (s: Schema | undefined): string[] =>
   Object.keys(s?.properties ?? {}).sort();
@@ -118,6 +125,15 @@ const RESOLUTION = fields<RawTickResolution>()(
   "occurrences"
 );
 
+type OutcomeDecision = Extract<EndingDecision, { mode: "outcome" }>;
+type PureSpeechDecision = Extract<EndingDecision, { mode: "pure_speech" }>;
+const OUTCOME_DECISION = fields<OutcomeDecision>()(
+  "actionId",
+  "mode",
+  "outcome"
+);
+const PURE_SPEECH_DECISION = fields<PureSpeechDecision>()("actionId", "mode");
+
 // Adding a field to any of these interfaces stops the build here, by name.
 const _covers: [
   Covers<RawActionStart, (typeof START)[number]>,
@@ -126,30 +142,66 @@ const _covers: [
   Covers<RawPerceiver, (typeof PERCEIVER)[number]>,
   Covers<RawCharacterChange, (typeof DELTA)[number]>,
   Covers<RawTickResolution, (typeof RESOLUTION)[number]>,
-] = [true, true, true, true, true, true];
+  Covers<OutcomeDecision, (typeof OUTCOME_DECISION)[number]>,
+  Covers<PureSpeechDecision, (typeof PURE_SPEECH_DECISION)[number]>,
+] = [true, true, true, true, true, true, true, true];
 void _covers;
 
+/** The two closed branches of an endings decision, in schema order. The
+ *  endings phase submits DECISIONS, not `RawActionEnd` rows —
+ *  `assembleRawResolution` turns the outcome decisions back into rows and
+ *  drops the pure-speech ones — so the `ending` assertions below read the
+ *  outcome branch, which is a `RawActionEnd` plus its discriminator. */
+type Branch = Schema & {
+  properties: Record<
+    string,
+    { const?: string; type?: string; enum?: unknown; description?: string }
+  >;
+};
+const endingBranches = (
+  submit.properties.endings.items as unknown as { anyOf: Branch[] }
+).anyOf;
+const outcomeBranch = endingBranches[0];
+const pureSpeechBranch = endingBranches[1];
+
 describe("the tool schema and the TS types describe the same thing", () => {
-  it("the two tools together carry exactly the top-level lists the type has", () => {
-    expect(propsOf(submit)).toEqual(sorted(RESOLUTION));
+  it("the six tools together carry every list of a resolution, with `ending` submitted as `endings` decisions", () => {
+    expect(propsOf(submit)).toEqual(
+      sorted([...RESOLUTION.filter((f) => f !== "ending"), "endings"])
+    );
+    expect(sorted(submit.required ?? [])).toEqual(propsOf(submit));
   });
 
   it("starting carries the fields of RawActionStart", () => {
-    expect(propsOf(submit.properties.starting.items)).toEqual(sorted(START));
+    expect([...new Set(submit.properties.starting.items?.anyOf?.flatMap(propsOf))].sort()).toEqual(sorted(START));
   });
 
-  it("ending carries the fields of RawActionEnd", () => {
-    expect(propsOf(submit.properties.ending.items)).toEqual(sorted(END));
+  it("an outcome decision carries the fields of RawActionEnd plus its discriminator, branch for branch", () => {
+    expect(endingBranches).toHaveLength(2);
+    expect(propsOf(outcomeBranch)).toEqual(sorted([...END, "mode"]));
+    expect(propsOf(outcomeBranch)).toEqual(sorted(OUTCOME_DECISION));
+    expect(propsOf(pureSpeechBranch)).toEqual(sorted(PURE_SPEECH_DECISION));
+    expect(outcomeBranch.properties.mode.const).toBe("outcome");
+    expect(pureSpeechBranch.properties.mode.const).toBe("pure_speech");
+    // Both branches are fully required: a decision with a missing half is not
+    // a decision, and there is nothing here a grammar has to leave open.
+    expect(sorted(outcomeBranch.required ?? [])).toEqual(
+      sorted(OUTCOME_DECISION)
+    );
+    expect(sorted(pureSpeechBranch.required ?? [])).toEqual(
+      sorted(PURE_SPEECH_DECISION)
+    );
   });
 
   it("an occurrence row cites its actions via actionIds and carries content last", () => {
     // The trace of an ending no longer hangs off the ending: it is a flat
     // row here, tied back by `actionIds`. Ids and flags first, the one long
-    // string LAST, and the ending entry is two scalars with the paragraph
-    // last — generation is left-to-right, so the order is the design, not a
-    // style: the model never has to close a deep object and then come back
-    // for a sibling scalar (the brace slip every unreadable DeepSeek
-    // submission made in two measured runs).
+    // string LAST, and a decision writes `mode` first and its paragraph last
+    // — generation is left-to-right, so the order is the design, not a
+    // style: the model commits to the branch before it writes anything else
+    // and never has to close a deep object and then come back for a sibling
+    // scalar (the brace slip every unreadable DeepSeek submission made in two
+    // measured runs).
     expect(propsOf(submit.properties.occurrences.items)).toEqual(
       sorted(OCCURRENCE)
     );
@@ -158,9 +210,11 @@ describe("the tool schema and the TS types describe the same thing", () => {
     );
     expect(occurrenceOrder).toEqual([...OCCURRENCE]);
     expect(occurrenceOrder.at(-1)).toBe("content");
-    expect(
-      Object.keys(submit.properties.ending.items?.properties ?? {})
-    ).toEqual(["actionId", "outcome"]);
+    expect(Object.keys(outcomeBranch.properties)).toEqual([
+      "mode",
+      "actionId",
+      "outcome",
+    ]);
   });
 
   it("a perceiver entry matches RawPerceiver, and its clarity is the shared enum", () => {
@@ -215,15 +269,10 @@ describe("what the schema marks required", () => {
   it("keeps an ending flat: no nested occurrence, actionId and outcome both required", () => {
     // The trace used to be a required `occurrence` object on the entry, so
     // the rule needed no validator; now it is the validator's job (every
-    // ending must be cited by an occurrence's `actionIds`), and the entry
+    // ending must be cited by an occurrence's `actionIds`), and the decision
     // carries nothing the model has to close.
-    expect(
-      submit.properties.ending.items?.properties.occurrence
-    ).toBeUndefined();
-    expect(submit.properties.ending.items?.required).toEqual([
-      "actionId",
-      "outcome",
-    ]);
+    expect(outcomeBranch.properties.occurrence).toBeUndefined();
+    expect(outcomeBranch.required).toEqual(["mode", "actionId", "outcome"]);
     // `content` is conditionally required (speech false), so it stays out of
     // `required` and the condition lives in its description and the validator.
     expect(submit.properties.occurrences.items?.required).toEqual([
@@ -237,28 +286,25 @@ describe("what the schema marks required", () => {
     expect(content?.description).toContain("REQUIRED when speech is false");
   });
 
-  it("leaves duration optional in shape — travel derives its clock from the route", () => {
-    // Duration cannot be `required`: a movement action must NOT be clocked
-    // by hand (code derives its time from the route and overrides any
-    // number), while a non-travel action must be. The conditional lives in
-    // the validator (a non-travel start without a duration is rejected)
-    // plus the field description — same split as `outcome` below.
-    expect(submit.properties.starting.items?.required).toEqual(["actionId"]);
-    const duration = submit.properties.starting.items?.properties
-      .resolvedDurationTicks as { description?: string } | undefined;
-    expect(duration?.description).toContain("OMIT when `movement` is set");
+  it("requires duration for non-travel and forbids it on travel", () => {
+    const [timed, travel] = submit.properties.starting.items?.anyOf ?? [];
+    expect(timed.required).toEqual(["actionId", "resolvedDurationTicks"]);
+    expect(timed.properties.movement).toBeUndefined();
+    expect(travel.required).toEqual(["actionId", "movement"]);
+    expect(travel.properties.resolvedDurationTicks).toBeUndefined();
   });
 
   it("makes outcome a paragraph, not a verdict", () => {
     // The enum (success/partial/failure/blocked) is gone: nothing downstream
     // read it, and its conditional rules were 81 of 188 repair lines in one
     // measured run. What remains is the account the actor is told.
-    const outcome = submit.properties.ending.items?.properties.outcome as
-      | { type?: string; enum?: unknown; description?: string }
-      | undefined;
+    const outcome = outcomeBranch.properties.outcome;
     expect(outcome?.type).toBe("string");
     expect(outcome?.enum).toBeUndefined();
     expect(outcome?.description).not.toContain("endingNeedsOutcome");
+    // The other branch carries no outcome at all: "required unless" is not a
+    // thing a grammar can say, so the choice is two closed branches.
+    expect(pureSpeechBranch.properties.outcome).toBeUndefined();
   });
 
   it("says what a speech row is and what it waives", () => {
@@ -266,7 +312,7 @@ describe("what the schema marks required", () => {
       | { type?: string; description?: string }
       | undefined;
     expect(speech?.type).toBe("boolean");
-    expect(speech?.description).toContain("needs no `ending` entry");
+    expect(speech?.description).toContain('`mode: "pure_speech"`');
     expect(speech?.description).toContain("TWO rows");
   });
 });
@@ -427,7 +473,7 @@ describe("the operation grammar is the same table as the prose", () => {
   });
 });
 
-describe("the Engine submission schema and provider limits", () => {
+describe("the Engine phase schemas and provider limits", () => {
   // Anthropic compiles a strict tool's schema into a grammar and 400s the
   // whole request on any keyword outside its subset. Measured before strict
   // went on: `starting` returned as a JSON string, a submission shattered
@@ -463,17 +509,20 @@ describe("the Engine submission schema and provider limits", () => {
     }
   };
 
-  it("both submission tools stay strict-compatible", () => {
+  it("every phase tool stays strict-compatible", () => {
     const out: string[] = [];
-    for (const tool of SUBMIT_TOOLS)
+    for (const phase of RESOLUTION_PHASES) {
+      const tool = PHASE_TOOLS[phase];
       violations(tool.inputSchema, tool.name, out);
+    }
     expect(out).toEqual([]);
   });
 
   // The limit the API enforces (now documented): at most 24 optional
-  // parameters across every strict tool in one request, counted through
-  // every nesting level. Measured live: 111 → 400. A tool may only ask for
-  // strict when it fits, and this says by how much.
+  // parameters across every strict tool in one REQUEST, counted through
+  // every nesting level. Measured live: 111 → 400. A request now offers one
+  // phase tool, plus `damageRoll` in the endings phase, so the count that
+  // matters is per phase rather than the sum over six lists.
   const ANTHROPIC_OPTIONAL_LIMIT = 24;
   const optionals = (node: unknown, out: string[], path = ""): void => {
     if (!node || typeof node !== "object") return;
@@ -493,6 +542,11 @@ describe("the Engine submission schema and provider limits", () => {
       optionals(v, out, `${path}.${k}`);
     }
   };
+  const optionalCount = (schema: unknown): number => {
+    const out: string[] = [];
+    optionals(schema, out);
+    return out.length;
+  };
 
   const branchCount = (node: unknown): number => {
     if (!node || typeof node !== "object") return 0;
@@ -508,25 +562,30 @@ describe("the Engine submission schema and provider limits", () => {
     return n;
   };
 
-  it("asks for strict only within Anthropic's optional-parameter budget", () => {
-    let total = 0;
-    for (const tool of [...CODE_TOOL_SPECS, ...SUBMIT_TOOLS]) {
-      const out: string[] = [];
-      optionals(tool.inputSchema, out);
-      if (tool.strict) total += out.length;
+  it("asks for strict only within Anthropic's optional-parameter budget, per request", () => {
+    for (const phase of RESOLUTION_PHASES) {
+      const offered = [
+        PHASE_TOOLS[phase],
+        ...(phase === "endings" ? CODE_TOOL_SPECS : []),
+      ];
+      let total = 0;
+      for (const tool of offered) {
+        if (tool.strict) total += optionalCount(tool.inputSchema);
+      }
+      expect(total).toBeLessThanOrEqual(ANTHROPIC_OPTIONAL_LIMIT);
     }
-    expect(total).toBeLessThanOrEqual(ANTHROPIC_OPTIONAL_LIMIT);
   });
 
-  it("keeps the grammar on the half that compiles, and only that half", () => {
+  it("keeps every phase small enough to compile, and the sum where it was", () => {
     // Probed live against claude-sonnet-5 on 2026-09-03 with
-    // scripts/probe-strict-schema.ts (`--sweep`, `--sweep-occ`). Anthropic
-    // publishes two ceilings — 20 strict tools, 24 optional parameters across
-    // them — and enforces a third it does not put a number on: the size of the
-    // compiled grammar. This is that number, measured:
+    // scripts/probe-strict-schema.ts (`--sweep`, `--sweep-occ`), when the
+    // resolution was still two tools. Anthropic publishes two ceilings — 20
+    // strict tools, 24 optional parameters across them — and enforces a third
+    // it does not put a number on: the size of the compiled grammar. This is
+    // that number, measured:
     //
     //   STRICT SET                                    opt  anyOf  verdict
-    //   starting+ending                                 6      0  accepted ← production
+    //   starting+ending                                 6      0  accepted
     //   starting+ending + occurrences                  10      0  accepted
     //   starting+ending + a 1..7-branch union           6    1-7  accepted
     //   starting+ending + occurrences + 1..5 branches  10    1-5  accepted
@@ -546,63 +605,49 @@ describe("the Engine submission schema and provider limits", () => {
     //     them. `anyOf` is the most expensive item on the bill, not the bill.
     //  2. The budget is roughly "the action half, plus one small thing". With
     //     `occurrences` also strict there is room for exactly 5 more branches.
-    //     `CHARACTER_OPS` collapses to 6 (its `hp`/`fatigue` row is the only
-    //     one sharing a field list) — one over, which is as close as this gets.
     //  3. Simplifying the operation unions does NOT rescue them. Folding
     //     connection×3→1 and environment×2→1 takes 19 branches to 16 and costs
     //     6 optionals; at 16 branches with a legal optional count it is still
     //     refused. 19 is not marginally over the ceiling, it is about 4x over.
     //
-    // So the current partition is not a first draft — it is the only useful
-    // arrangement the API accepts, and the effect lists cannot be brought
-    // under a grammar by rearranging or simplifying them. Numbers here are
-    // pinned, not just the flags: an optional added to `starting`, or an
-    // `anyOf` introduced anywhere in the strict half, is a change that can
-    // stop the tool compiling, and it should be caught here rather than in a
-    // 400 from the API. Re-measure with the probe when the model changes —
-    // these were taken on the MEDIUM class the Engine actually runs on.
-    const actionOptionals: string[] = [];
-    optionals(submitActionsTool.inputSchema, actionOptionals);
-    const effectOptionals: string[] = [];
-    optionals(submitEffectsTool.inputSchema, effectOptionals);
-
-    expect(submitActionsTool.strict).toBe(true);
-    expect(actionOptionals.length).toBe(6);
-    expect(branchCount(submitActionsTool.inputSchema)).toBe(0);
-
-    expect(submitEffectsTool.strict).toBe(false);
-    expect(effectOptionals.length).toBe(17);
-    expect(branchCount(submitEffectsTool.inputSchema)).toBe(19);
-
-    // Together they are still the same 23 optionals over the same six lists.
-    expect(actionOptionals.length + effectOptionals.length).toBe(23);
-    expect(
-      [
-        ...((submitActionsTool.inputSchema as { required?: string[] })
-          .required ?? []),
-        ...((submitEffectsTool.inputSchema as { required?: string[] })
-          .required ?? []),
-      ].sort()
-    ).toEqual(
-      [
-        "starting",
-        "ending",
-        "characterChanges",
-        "sceneChanges",
-        "itemChanges",
-        "occurrences",
-      ].sort()
+    // So the effect lists could not be brought under a grammar by rearranging
+    // or simplifying them while they shared one tool — which is why they no
+    // longer do. Split one list per request, the largest thing any request
+    // compiles is eight branches beside five optionals (`sceneChanges`),
+    // between the 6-optional/7-branch pairing the probe accepted and the
+    // 10-optional/6-branch one it refused; it is the most exposed of the six
+    // and has NOT itself been probed. The numbers are pinned, not just the
+    // flags: an optional added to a phase, or a branch added to a union, is a
+    // change that can stop that phase compiling, and it should be caught here
+    // rather than in a 400 from the API. Re-measure with the probe when the
+    // model changes — these were taken on the MEDIUM class the Engine runs on.
+    for (const phase of RESOLUTION_PHASES) {
+      expect(PHASE_TOOLS[phase].strict).toBe(true);
+    }
+    const optionalsByPhase = RESOLUTION_PHASES.map((phase) =>
+      optionalCount(PHASE_TOOLS[phase].inputSchema)
     );
+    expect(optionalsByPhase).toEqual([0, 6, 0, 8, 5, 4]);
+    expect(
+      RESOLUTION_PHASES.map((phase) =>
+        branchCount(PHASE_TOOLS[phase].inputSchema)
+      )
+    ).toEqual([2, 2, 7, 4, 8, 0]);
+    // The five reused lists still add up to the 23 optionals the two-tool
+    // partition carried (6 in the action half, 17 in the effect half); the
+    // endings decision adds none. Same six lists, cut differently.
+    expect(optionalsByPhase.reduce((a, b) => a + b, 0)).toBe(23);
   });
 
-  it("gives each list to exactly one of the two tools", () => {
-    const action = Object.keys(
-      (submitActionsTool.inputSchema as { properties: object }).properties
+  it("gives each list to exactly one phase tool", () => {
+    const owned = RESOLUTION_PHASES.map((phase) =>
+      Object.keys(
+        (PHASE_TOOLS[phase].inputSchema as { properties: object }).properties
+      )
     );
-    const effect = Object.keys(
-      (submitEffectsTool.inputSchema as { properties: object }).properties
+    for (const fields of owned) expect(fields).toHaveLength(1);
+    expect(sorted(owned.flat())).toEqual(
+      sorted([...RESOLUTION.filter((f) => f !== "ending"), "endings"])
     );
-    expect(action.filter((f) => effect.includes(f))).toEqual([]);
-    expect([...action, ...effect].sort()).toEqual(sorted(RESOLUTION));
   });
 });

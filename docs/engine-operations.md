@@ -4,6 +4,8 @@ engine 处理的「操作」分四层，彼此不共享枚举：**演员发出�
 
 全局原则：**没有动作类型枚举**。所有开放式行为共用一个命令形状、一份规则文档（`src/engine/rules/world-action-resolution.md`）和一套 WorldDelta schema。
 
+> 本文档只是操作性参考，不会被注入任何 prompt——`src/` 下没有任何代码 `import`/读取本文件。真正喂给模型的规则文档全部在 `src/engine/rules/**`，且全部是英文；两边如果读起来不一致，以那边的英文规则为准。
+
 ---
 
 ## 1. 输入侧：唯一的命令 `act`
@@ -78,13 +80,17 @@ engine 处理的「操作」分四层，彼此不共享枚举：**演员发出�
 - `inventoryValidation`：改成把答案直接放进请求——命令点名了谁、或点名了谁手里的东西，`contextBuilder` 就把那个人的口袋一并注入 Items 段。几百 token，而且在问题被提出之前就答完了。
 - `opposedRoll`：定义了但从未注册，也没有任何代码调用。对抗掷骰的真实路径是 Engine 在 `starting` 里声明 `opposedBy`，`skillRollService` 到期时掷两边。已连同上面三个一起删除。
 
-**终止工具**：`submit_actions` + `submit_effects`，同一轮里一起调用。前者带 `starting`/`ending`，后者带 `occurrences` 和三个 `*Changes`；代码先合并再校验，下游看到的仍是一份完整 resolution。最多 `MAX_CORRECTION_ROUNDS = 3` 轮完整重提（没有独立的 patch 工具，修正轮仍是两个工具一起重发整份结果）；仍不合法则整个 tick 不应用任何结果。
+**六个提交工具，一个阶段一个请求**：一次 tick resolution 现在拆成六个顺序阶段——`endings → starts → characterChanges → itemChanges → sceneChanges → occurrences`。每个阶段是独立的一次请求，只带该阶段自己的一个 strict 提交工具：`submit_endings`、`submit_starts`、`submit_character_changes`、`submit_item_changes`、`submit_scene_changes`、`submit_occurrences`（定义在 `worldResolutionStageSchemas.ts`）。`damageRoll` 只出现在 endings 阶段的请求里，其余五个阶段看不到它。
 
-拆成两个工具不是设计偏好，而是 Anthropic 唯一肯编译的形态：`submit_actions` 是 `strict: true`（6 个 optional、零 `anyOf`），`submit_effects` 不是——三个 operation union 合计 19 个 `anyOf` 分支，语法编译器直接拒绝。没有语法约束时模型会把 `starting` 写成一段把数组重新包了一层的 JSON 字符串（66 次实测里 55 次提交中占 7 次），每次都要多付一轮全世界重发。`scripts/probe-strict-schema.ts` 可以用几个被拒请求的代价重新测出这些上限；改动这个划分前先跑它。
+一个阶段的数组一落地就校验（`worldResolutionStageValidator.ts`）；通过后作为**只读**事实注入后面每个阶段的 prompt——模型看得到更早阶段已经定下的事实，但不能改写它们。被拒的阶段用同一个工具再提交，单个阶段最多尝试 `MAX_PHASE_ATTEMPTS = 3` 次；没有 patch 工具，也不能借这次提交去修正已经通过的更早阶段。纠正的内容分两种：`starts` 和 `occurrences` 的行有天然主键（前者按 actionId，后者按引用的 action 加 speech 标志），代码会保留上一次提交里单独看合法的行，在拒绝消息里列出"已保留"与"仍欠"的清单，只要模型补齐欠的部分，合并后对整个数组重新校验（`MERGE_PHASES`、`retainedRows`、`mergeRows`）；其余四个阶段按下标寻址，仍然要求重发**完整**数组。这么改的原因是实测里模型把"重发完整数组"执行成了越纠越少——六条 start 缩成两条、四条 occurrence 缩成两条占位文本。
+
+六个阶段都通过之后，拼好的整份 resolution 仍然要过一次全局校验——`validateRawResolution` 再 `finalizeResolution`——这一步只跑一次，跑之前没有任何阶段直接改动过 `DynamicGameState`，只有全局校验通过的完整结果才会送进 Applier。全局校验失败会回退到最早该为这个错误负责的那个阶段（错误种类到阶段的映射见设计文档的 Error Ownership 表），丢弃它和它之后所有已通过的阶段，把全局错误折进被回退阶段的 prompt 里从那里重新往前跑；每个 tick 最多回退一次（`MAX_GLOBAL_REWINDS = 1`），回退后仍不合法就是整个 tick 不应用任何结果。整条流水线共用一个硬上限 `MAX_PROVIDER_CALLS = 12` 次模型调用——每个阶段的重试、strict-schema 兜底重试、回退后的重新执行全部算在同一个预算里；预算耗尽同样是整个 tick 不应用任何结果。
+
+拆成六个小 schema 延续的是同一个约束：旧的两工具方案里 `submit_actions` 是 `strict: true`（6 个 optional、零 `anyOf`），`submit_effects` 不是——三个 operation union 合计 19 个 `anyOf` 分支，语法编译器直接拒绝，模型会把 `starting` 写成一段把数组重新包了一层的 JSON 字符串。六个阶段各自的 schema 都足够小，全部能保持 `strict: true`。唯一的例外窄口：只有当供应商明确是因为语法/schema 编译拒绝了请求时（不是网络错误、不是限流、不是模型输出畸形、也不是校验失败），才对**那一个阶段**用一份内容相同、只是 `strict: false` 的工具重试恰好一次，并打一条警告；这次降级按 `(provider, model, schema fingerprint)` 记在进程内存里，同一进程里同样的组合不会再重复付这个代价。`scripts/probe-strict-schema.ts` 仍然是用几个被拒请求的代价重新测出这些上限的工具；改动任何一个阶段的 schema 之前先跑它。
 
 ---
 
-## 4. 提交内容的四块（`submit_actions` + `submit_effects` 合并后）
+## 4. 提交内容的四块（六个阶段拼成一份完整 resolution 之后）
 
 ### 4.1 `starting[]` —— 本 tick 开始的动作（`RawActionStart`）
 

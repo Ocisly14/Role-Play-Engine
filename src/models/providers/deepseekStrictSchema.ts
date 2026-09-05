@@ -15,11 +15,11 @@
 //     not supported — everything else our schemas use is: `enum`, `const`,
 //     `anyOf`, `minimum`/`maximum`, `$ref`/`$defs`
 //
-// The first rule is the hard one. `submit_actions` is `strict: true` for
-// Anthropic, whose strict mode allows optional properties; four of its nested
-// fields are genuinely optional (`check` is absent when no check applies,
-// `movement` when nobody travels), and marking them required would be a lie
-// the model has to satisfy.
+// The first rule is the hard one. Every phase tool is `strict: true` for
+// Anthropic, whose strict mode allows optional properties, and several of their
+// nested fields are genuinely optional — on `submit_starts` alone, `check` is
+// absent when no check applies and `movement` when nobody travels — so marking
+// them required would be a lie the model has to satisfy.
 //
 // So this module DERIVES the DeepSeek variant instead of asking anyone to
 // author a second copy. Each optional property becomes required-but-nullable —
@@ -59,9 +59,9 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
  *
  * `opSchema` writes a discriminator as a bare `{const: "hp"}` — legal JSON
  * Schema, and enough for Anthropic, which infers the type from the value. This
- * is the one thing that stood between DeepSeek and a strict `submit_effects`;
- * it read as a grammar-size problem (Anthropic's failure mode for the same
- * tool) and was neither.
+ * is the one thing that stood between DeepSeek and strict submission of the
+ * phase tools' operation unions; it read as a grammar-size problem (Anthropic's
+ * failure mode for the same schemas) and was neither.
  *
  * So the type is filled in from the constant itself. Only for a node that
  * declares nothing else — a `const` sitting beside an explicit `type` is

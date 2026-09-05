@@ -25,7 +25,7 @@
 //
 // STOPS ON REPEATED ERRORS. Every console warning and error is normalised to
 // a signature (ids and numbers stripped); when one signature repeats
-// --max-repeat times, or two ticks in a row fail outright, the run stops and
+// across --max-repeat ticks, or two ticks in a row fail outright, the run stops and
 // says which. A run that is failing the same way ten times is not gathering
 // data, it is spending money.
 //
@@ -71,6 +71,8 @@ import {
 // CLI
 // =========================================================================
 
+import { ErrorWatch, type TickDiagnostics } from "./lib/errorWatch.js";
+
 const argv = process.argv.slice(2);
 const flag = (name: string): string | undefined => {
   const i = argv.indexOf(`--${name}`);
@@ -101,84 +103,6 @@ const REPORT_FILE = path.join(LOG_DIR, `full-injection-${SESSION_ID}.json`);
 // =========================================================================
 // Error watch
 // =========================================================================
-
-/** Collapse a log line to what makes it the SAME failure twice: ids, times,
- *  counts and quoted fragments differ between two instances of one bug. */
-function signature(line: string): string {
-  return line
-    .replace(/[0-9a-f]{8}-[0-9a-f-]{27,}/gi, "<uuid>")
-    .replace(/\b\d{4}-\d{2}-\d{2}T[\d:]+\b/g, "<time>")
-    .replace(/\b\d+\b/g, "<n>")
-    .replace(/"[^"]*"/g, '"…"')
-    .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, 160);
-}
-
-class ErrorWatch {
-  readonly counts = new Map<string, { count: number; sample: string }>();
-  tickFailedInARow = 0;
-  private sawTickFailureThisTick = false;
-
-  private restore: Array<() => void> = [];
-
-  install(): void {
-    for (const level of ["warn", "error"] as const) {
-      const original = console[level].bind(console);
-      console[level] = (...args: unknown[]) => {
-        const line = args
-          .map((a) =>
-            a instanceof Error ? a.message : typeof a === "string" ? a : ""
-          )
-          .join(" ");
-        if (line.trim().length > 0) this.record(line);
-        original(...(args as []));
-      };
-      this.restore.push(() => {
-        console[level] = original;
-      });
-    }
-  }
-
-  uninstall(): void {
-    for (const undo of this.restore) undo();
-    this.restore = [];
-  }
-
-  private record(line: string): void {
-    if (line.includes("[SimulationRunner] Error during tick")) {
-      this.sawTickFailureThisTick = true;
-    }
-    const key = signature(line);
-    const entry = this.counts.get(key);
-    if (entry) entry.count += 1;
-    else this.counts.set(key, { count: 1, sample: line.trim().slice(0, 300) });
-  }
-
-  /** Called after every tick. Returns the reason to stop, or null. */
-  verdict(): string | null {
-    if (this.sawTickFailureThisTick) this.tickFailedInARow += 1;
-    else this.tickFailedInARow = 0;
-    this.sawTickFailureThisTick = false;
-
-    if (this.tickFailedInARow >= 2) {
-      return "two ticks in a row failed outright";
-    }
-    for (const [key, { count, sample }] of this.counts) {
-      if (count >= MAX_REPEAT) {
-        return `the same failure ${count}x: ${sample || key}`;
-      }
-    }
-    return null;
-  }
-
-  top(limit = 8): Array<{ signature: string; count: number; sample: string }> {
-    return [...this.counts.entries()]
-      .map(([signature, v]) => ({ signature, ...v }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, limit);
-  }
-}
 
 // =========================================================================
 // Session: fresh or resumed
@@ -336,7 +260,7 @@ async function main(): Promise<void> {
 
   const { runner, resumedAtTick, npcCount } = await prepare();
 
-  const watch = new ErrorWatch();
+  const watch = new ErrorWatch(MAX_REPEAT);
   watch.install();
 
   let interrupted = false;
@@ -355,66 +279,74 @@ async function main(): Promise<void> {
     gameDateTime: string;
     ms: number;
     calls: Array<{ operation: string; calls: number; prompt: number }>;
+    diagnostics: TickDiagnostics;
   }> = [];
   let stopReason: string | null = null;
 
-  for (let i = 0; i < TICKS; i++) {
-    const before = getUsageStats();
-    const t0 = Date.now();
-    await runner.step(1);
-    const ms = Date.now() - t0;
-    const status = runner.getStatus();
-    const calls = usageDelta(before, getUsageStats());
+  try {
+    for (let i = 0; i < TICKS; i++) {
+      const before = getUsageStats();
+      const t0 = Date.now();
+      watch.beginTick(runner.getStatus().ticksExecuted + 1);
+      await runner.step(1);
+      const observed = watch.endTick();
+      stopReason = observed.stopReason;
+      const ms = Date.now() - t0;
+      const status = runner.getStatus();
+      const calls = usageDelta(before, getUsageStats());
 
-    ticks.push({
-      tick: status.ticksExecuted,
-      gameDateTime: status.currentDateTime,
-      ms,
-      calls,
-    });
-    const callLine =
-      calls.length > 0
-        ? calls
-            .map((c) => `${c.operation} ×${c.calls} (${c.prompt} tok)`)
-            .join(" · ")
-        : "no model calls";
-    console.log(
-      `[full-injection] tick ${status.ticksExecuted} · ${status.currentDateTime} · ${(ms / 1000).toFixed(1)}s · ${callLine}`
-    );
+      ticks.push({
+        tick: status.ticksExecuted,
+        gameDateTime: status.currentDateTime,
+        ms,
+        calls,
+        diagnostics: observed.diagnostics,
+      });
+      const callLine =
+        calls.length > 0
+          ? calls
+              .map((c) => `${c.operation} ×${c.calls} (${c.prompt} tok)`)
+              .join(" · ")
+          : "no model calls";
+      console.log(
+        `[full-injection] tick ${status.ticksExecuted} · ${status.currentDateTime} · ${(ms / 1000).toFixed(1)}s · ${callLine}`
+      );
 
-    // Written every tick so a watcher — or the next invocation — can see how
-    // far this got without parsing stdout.
-    writeFileSync(
-      PROGRESS_FILE,
-      `${JSON.stringify(
-        {
-          sessionId: SESSION_ID,
-          module: MODULE_NAME,
-          npcCount,
-          resumedAtTick,
-          ticksRequested: TICKS,
-          ticksDoneThisRun: i + 1,
-          tick: status.ticksExecuted,
-          gameDateTime: status.currentDateTime,
-          elapsedMs: Date.now() - startedAt,
-          updatedAt: new Date().toISOString(),
-          errors: watch.top(),
-        },
-        null,
-        2
-      )}\n`
-    );
+      // Written every tick so a watcher — or the next invocation — can see how
+      // far this got without parsing stdout.
+      writeFileSync(
+        PROGRESS_FILE,
+        `${JSON.stringify(
+          {
+            sessionId: SESSION_ID,
+            module: MODULE_NAME,
+            npcCount,
+            resumedAtTick,
+            ticksRequested: TICKS,
+            ticksDoneThisRun: i + 1,
+            tick: status.ticksExecuted,
+            gameDateTime: status.currentDateTime,
+            elapsedMs: Date.now() - startedAt,
+            updatedAt: new Date().toISOString(),
+            errors: watch.top(),
+            diagnostics: observed.diagnostics,
+            stopReason,
+          },
+          null,
+          2
+        )}\n`
+      );
 
-    stopReason = watch.verdict();
-    if (stopReason) break;
-    if (interrupted) {
-      stopReason = "interrupted";
-      break;
+      if (stopReason) break;
+      if (interrupted) {
+        stopReason = "interrupted";
+        break;
+      }
     }
+  } finally {
+    process.off("SIGINT", onSigint);
+    watch.uninstall();
   }
-
-  process.off("SIGINT", onSigint);
-  watch.uninstall();
 
   const usage = getUsageStats();
   console.log(`\n--- LLM 花费 ---\n${formatUsageReport(usage, "  ")}`);
@@ -422,8 +354,17 @@ async function main(): Promise<void> {
   const errors = watch.top();
   if (errors.length > 0) {
     console.log("\n--- 重复出现的告警/错误 ---");
-    for (const e of errors) console.log(`  ${e.count}x  ${e.sample}`);
+    for (const e of errors)
+      console.log(`  ${e.count} rows / ${e.tickCount} ticks  ${e.sample}`);
   }
+  // Three separate figures on purpose: "how many ticks failed", "how many
+  // corrections were spent" and "how many actions were named by errors" are
+  // different questions, and one run was stopped by mistaking the third for
+  // the first.
+  const diagnostics = watch.summary();
+  console.log(
+    `\n--- 裁定诊断 ---\n  ticks: ${diagnostics.ticks} · failed ticks: ${diagnostics.failedTicks.length}${diagnostics.failedTicks.length ? ` (${diagnostics.failedTicks.join(", ")})` : ""} · correction attempts: ${diagnostics.correctionAttempts} · actions named by errors: ${diagnostics.affectedActions}`
+  );
 
   writeFileSync(
     REPORT_FILE,
@@ -441,6 +382,7 @@ async function main(): Promise<void> {
         ticks,
         usage,
         errors,
+        diagnostics,
       },
       null,
       2

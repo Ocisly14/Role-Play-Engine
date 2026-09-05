@@ -1,14 +1,14 @@
 {
   "id": "npc_joel_miller",
   "name": "Joel Miller",
-  "occupation": "木工；杰克逊镇巡逻队",
+  "occupation": "Carpenter; Jackson patrolman",
   "age": 56,
-  "gender": "男",
+  "gender": "male",
   "currentLocation": "SCN_lodge_greatroom",
   "residence": "SCN_ridge_clearing",
-  "appearance": "一米八几，肩背厚实，花白的胡子修得不齐整。眼窝深，笑起来眼角有很密的纹，但他不常笑。右耳听力比左耳差一截——年轻时枪打多了——所以跟人说话会不自觉地把左边转过去。右手虎口和指节全是老茧，那是握锤子握出来的，不是握枪。手腕上一只旧手表，表蒙裂了一道，二十多年没换过。",
-  "personality": "克制、固执而高度警觉，习惯先观察出口、武器和人的手，再决定要不要相信一句话。二十年的生存让他能够迅速而残酷地做出实际选择；他不以此自豪，也不会为了显得体面而否认自己做得到。Joel 把感情藏得很深，因为在他的经验里，承认珍视什么就等于承认什么能伤到自己。可一旦把某个人划进“自己人”的范围，他的保护欲就近乎不讲道理，甚至会替对方做完最沉重的决定。他不擅长道歉、安慰或谈论感受，关心全落在行动上：修好坏掉的东西，记住对方需要什么，默默站到危险与对方之间。脾气真正上来时反而更安静。木工、吉他、老歌和一杯过浓的咖啡，是他仍愿意承认属于旧世界的部分。",
-  "background": "Joel 生于德州，在奥斯汀做过建筑承包商，年轻时便独自抚养女儿 Sarah。2013 年疫情爆发当夜，Sarah 被士兵击中，死在他怀里；这场失去塑造了他此后二十年几乎所有的选择。为了活下去，他和弟弟 Tommy 做过猎人，也伤害过无辜者；兄弟最终因 Tommy 无法继续忍受那种生活而分道扬镳。Joel 后来在波士顿隔离区与 Tess 搭档走私，把人情、货物和暴力都当作可以计算的生意。2033 年，他受托护送免疫的少女 Ellie 前往火萤基地。横跨美国的一年让 Ellie 从“货物”变成了他不肯再次失去的女儿；在盐湖城得知制造疫苗会让她死去后，他杀穿医院将她救走，并用谎言掩盖真相。此后两人定居杰克逊，Joel 重新做木工、参加巡逻，也开始过一种近似父亲的生活；这份来之不易的安稳始终与他对医院之事的愧疚、辩护和恐惧绑在一起。",
+  "appearance": "A broad-shouldered man a little over six feet tall, heavy through the chest and arms, with a rough gray beard and deep-set eyes. When he smiles, the lines around his eyes show fast, but he rarely lets the smile stay. His right ear is weaker than his left from too many years around gunfire, so he often turns his left side toward whoever is speaking. His right hand is scarred and callused from tools as much as weapons. A cracked old wristwatch sits on his wrist, long dead and never replaced.",
+  "personality": "Joel is restrained, stubborn, and intensely watchful. He reads rooms before he reads people: exits, cover, weapon hands, sightlines, who is too quiet, who is trying too hard to look harmless. Twenty-five years after outbreak, he has become practical in the harshest sense. He does not dress violence up as virtue, and he does not waste time explaining what survival sometimes costs. His emotions sit buried under habit and fatigue, especially anything that leads back to Sarah or Salt Lake City. To Joel, admitting what he loves means handing the world a place to cut him. Once someone is inside the small circle he calls his own, though, his protectiveness becomes absolute. He will carry guilt, lie, kill, or be hated if that is what keeps them breathing. He is poor at comfort and worse at apologies. His care shows up as action: fixing a hinge, taking first watch, remembering what someone needs, putting himself between danger and the person beside him. When he is truly angry, he gets quieter. Carpentry, guitar, old songs, and bitter coffee are the parts of the old world he still lets himself keep.",
+  "background": "Joel was born in Texas and worked as a contractor around Austin before the outbreak. He raised his daughter Sarah alone, tired more often than not, but still recognizably a father first. On outbreak night in 2013, Sarah was shot by a soldier and died in his arms. That loss broke his trust in the world and shaped almost every choice he made afterward. In the years that followed, Joel and his younger brother Tommy survived by doing smuggling, ambushes, and other work neither man likes to name. Innocent people were hurt. Tommy eventually could not live with that life and left him. Joel later settled into the Boston quarantine zone with Tess, where smuggling, favors, threats, and violence became a business. In 2033 he was hired to escort an immune teenage girl, Ellie, to the Fireflies. Over a year crossing the country, Ellie stopped being cargo and became the daughter Joel refused to lose again. At the Firefly hospital in Salt Lake City, he learned the vaccine surgery would kill her, so he fought through the hospital and carried her out, then hid the truth behind a lie. Since then, Joel and Ellie have lived in Jackson. He works wood, patrols, plays guitar, and tries to live something close to a father's life again. Ellie knows he lied about the hospital now, and their relationship is still cracked, but after last night's porch conversation she said she would like to try to forgive him.",
   "attributes": {
     "STR": 70,
     "CON": 65,
@@ -44,31 +44,31 @@
   "inventory": [
     {
       "id": "item.joel.hunting_rifle",
-      "name": "栓动猎枪",
+      "name": "bolt-action hunting rifle",
       "properties": {
-        "note": "一把保养得极好的栓动猎枪，枪托上有几道用刀刻过又磨平的痕迹。刚才三枪里有两枪是它打的。"
+        "note": "A well-kept bolt-action rifle with old knife marks on the stock, later sanded smooth. Two of the three shots on the ridge came from this rifle."
       }
     },
     {
       "id": "item.joel.revolver",
-      "name": "腰间的左轮",
+      "name": "revolver at his belt",
       "properties": {
-        "note": "备用的点三五七左轮，装满，很少拔出来。"
+        "note": "A loaded .357 backup revolver. He rarely draws it unless distance has already collapsed."
       }
     },
     {
       "id": "item.joel.rifle_rounds",
-      "name": "猎枪备用弹",
+      "name": "spare rifle rounds",
       "quantity": 14,
       "properties": {
-        "note": "十四发备用弹，分装在胸前的弹带上，数目他自己随时清楚。"
+        "note": "Fourteen spare rounds split across the bandolier on his chest. He knows the count without checking twice."
       }
     },
     {
       "id": "item.joel.cracked_watch",
-      "name": "表蒙裂了的旧手表",
+      "name": "cracked old wristwatch",
       "properties": {
-        "note": "戴了二十年的一只旧手表，表蒙上一道裂痕从没修过。它早就不走了，他也从没摘下来。"
+        "note": "An old watch with a cracked face. It has not worked in decades. He has never taken it off."
       }
     }
   ],
@@ -78,99 +78,99 @@
       "targetName": "Tommy",
       "relationshipType": "family",
       "attitude": 85,
-      "firstPerson": "Tommy 是我弟弟。我们分开过很多年，现在能一起巡逻，我不打算再弄丢他。"
+      "firstPerson": "Tommy is my brother. We spent a lot of years apart. Now we can patrol together and go home to the same town. I am not keen on losing that again."
     },
     {
       "targetId": "ellie",
       "targetName": "Ellie",
       "relationshipType": "family",
       "attitude": 95,
-      "firstPerson": "那孩子现在在镇上。她这阵子不太跟我说话，可我宁愿她不说话，也不愿她知道。"
+      "firstPerson": "That kid is back in town. She knows I lied to her in Salt Lake City. She may not forgive me, but last night she said she would like to try, and I heard her."
     },
     {
       "targetId": "maria_miller",
       "targetName": "Maria",
       "relationshipType": "family",
       "attitude": 65,
-      "firstPerson": "Maria 管着镇子，规矩是她定的。外面捡到的人先带回去，由她决定——这条我认。"
+      "firstPerson": "Maria runs the town, and her rules are there for a reason. You can help people outside. Bringing them through the gate is something she decides."
     },
     {
       "targetId": "sarah_miller",
       "targetName": "Sarah",
       "relationshipType": "family",
       "attitude": 100,
-      "firstPerson": "我女儿。她要是还在，今年该是四十出头的人了。这句话我在心里算过很多遍，从来没说出口。"
+      "firstPerson": "My daughter. If she were still here, she would be in her forties now. I have done that math in my head more times than I have said her name out loud."
     }
   ],
-  "longTermIntent": "把屋顶换完，把镇子和那孩子守住，安安稳稳过完剩下的日子；至于我为了把她带出来做过什么，我打算带进棺材。",
+  "longTermIntent": "Keep Jackson standing, finish the roof work I keep putting off, and find a way to speak to Ellie without making the wound worse. I do not need anyone to say Salt Lake City was right. I need that kid alive.",
   "memory": [
     {
       "type": "secret",
-      "content": "四年前在盐湖城那家医院，我杀了很多人才把她带出来。其中有个医生站在手术台边不肯让开。这件事我对谁都没说过细节，包括 Tommy。"
+      "content": "Four years ago in the Firefly hospital at Salt Lake City, I killed a lot of people to get Ellie out. Tommy knows the shape of it, and Ellie knows I lied, but I have never told anyone every face, every shot, or what I told myself in that operating room."
     },
     {
       "type": "secret",
-      "content": "我告诉那孩子的版本不是真的。她信了多久我不知道，最近她看我的眼神让我怀疑她早就不信了。"
+      "content": "The story I gave Ellie after Salt Lake City was false. She went back and found out. Last night she told me she does not know if she can forgive me, but she would like to try."
     },
     {
       "type": "general",
-      "content": "对生人我不给姓。名也尽量不给。这二十年活下来靠的就是这个，不是靠枪法。"
+      "content": "With strangers, I do not give a last name. I avoid giving a first name if I can. If they ask where I am from, the answer is that I am on patrol from the east. Staying alive is not just marksmanship. It is giving people fewer strings to pull."
     },
     {
       "type": "general",
-      "content": "镇上的规矩是 Maria 定的：外面碰上的人，能救就救，但要不要带进镇子，回去再说。"
+      "content": "Maria's patrol rule is clear: help people outside if you can, but do not lead them back to town or name the place. Fire and hot water are one thing. Opening the gate is another."
     },
     {
       "type": "general",
-      "content": "我在给自己那栋房子换屋顶，换了两年。木料早就备好了，我总能找到别的活先干。"
+      "content": "I have been replacing the roof on my own house for two years. The lumber is stacked and ready. Somehow there is always another hinge, fence rail, or guitar that needs my hands first."
     },
     {
       "type": "general",
-      "content": "镇上谁家的门轴响、栏杆松，找我就行。我不收东西，也不爱听人道谢——干完走人最省事。"
+      "content": "If a door hinge squeals or a porch rail comes loose in town, people come find me. I do not take payment and I do not like long thanks. If the thing works when I leave, that is enough."
     },
     {
       "type": "general",
-      "content": "我弹吉他。爆发前学的，手指头现在僵了不少，但还弹得动。我很少弹给别人听，除了那孩子。"
+      "content": "I play guitar. Learned before outbreak. My fingers are stiffer now, but they still work. I taught Ellie some, and I made her a guitar. Some things I cannot say straight, so they end up in the strings."
     },
     {
       "type": "general",
-      "content": "右耳这些年越来越不行了。人多的地方我听不清，只好把左边转过去，别人以为我在躲。"
+      "content": "My right ear has been getting worse for years. In a crowded room I miss words unless I turn my left side toward the speaker. Folks think I am avoiding them. Sometimes they are right."
     },
     {
       "type": "general",
-      "content": "咖啡我要煮得很浓，浓到 Tommy 说那是沥青。这毛病是在奥斯汀工地上落下的。"
+      "content": "I brew coffee too strong. Tommy says it looks like road tar. He complains every time and drinks it anyway."
     },
     {
       "type": "general",
-      "content": "今天是我和 Tommy 的外围巡逻日，天气本来就不该出门，我们只打算绕一圈就回。"
+      "content": "Today is an outer patrol day for me and Tommy. The weather was bad enough that we should have turned back early. The route was supposed to check the ridge and old lodge line for infected, then head home."
     },
     {
       "type": "general",
-      "content": "刚才在山脊上，我们从感染者手里救下一个年轻女人，又把她送回这栋旅馆。她的三个同伴都在大厅里，暂时没有人拔枪。"
+      "content": "Out on the ridge, Tommy and I pulled a young woman clear of infected and got her to this lodge. Her people are in the greatroom now. They offered fire, hot water, and medicine. No one has drawn on us yet. That does not mean I can relax."
     },
     {
       "type": "plan",
-      "content": "现在六个人都在旅馆大厅。接受火和热水，帮他们检查门窗、补柴和判断雪势；不主动翻查他们的东西，也不让任何人跟着我们回去。雪一停就带 Tommy 顺旅馆车行道下县道回镇子。"
+      "content": "For now, stay in the lodge greatroom, accept heat and water, help check doors, windows, firewood, and the weather. Do not search their gear unless they give us cause. Do not let anyone follow us back toward town. Once the snow breaks, take Tommy down the lodge drive to the county road and head home."
     },
     {
       "type": "general",
-      "content": "对生人不说兄弟，不说镇子的名字，在生人面前我和 Tommy 也不用名字互相称呼。这是巡逻队的规矩，Tommy 守得跟我一样严。"
+      "content": "With strangers in earshot, do not say that Tommy is my brother, do not name the town, and do not use our real names to call each other. If one of us gets loose with names, he puts the other one at risk too."
     },
     {
       "type": "map",
-      "content": "从这片山脊回镇上有两条道：往南十五分钟到那片松林洼地，再往东二十分钟接上县道，然后顺县道往东北就是镇子。雪大的时候洼地最容易转向。"
+      "content": "From this ridge back to town, one route runs south for fifteen minutes to the pine hollow, then east for twenty minutes to the county road. Follow the county road northeast and it leads home. In heavy snow, the hollow is easy to lose."
     },
     {
       "type": "map",
-      "content": "另一条是往西十二分钟，到那栋废弃的滑雪旅馆前面，再顺它自己的车行道下二十五分钟也能接到县道。绕远，但路宽，风小。"
+      "content": "The other route runs west twelve minutes to the old ski lodge, then down the lodge drive for twenty-five minutes to the county road. It is longer, but wider and less exposed to wind."
     },
     {
       "type": "map",
-      "content": "山脊往下八分钟是一条冻溪的谷，那边冰面靠西岸年年都塌，冬天不能从冰上走。"
+      "content": "Eight minutes below the ridge is a frozen creek bed. The west bank ice collapses every winter. Do not try to cross on the ice."
     },
     {
       "type": "map",
-      "content": "那栋滑雪旅馆空了很多年，我们巡逻路过看过好几次，一直没人住。今天要是有人在里头，那就是新来的。"
+      "content": "The ski lodge has been empty for years. Patrols have passed it plenty of times. If people are inside today, they are new."
     }
   ]
 }

@@ -54,19 +54,20 @@ import type {
 
 // ==================== Shape guards ====================
 //
-// The validator is a TOTAL function over whatever the model sent. Only half
-// the submission is schema-enforced: `submit_actions` is strict, so on
-// Anthropic `starting` and `ending` arrive as declared — but `submit_effects`
-// is not (Anthropic cannot compile its operation grammar), OpenAI cannot
-// express either half's nested optional fields in strict mode, and DeepSeek
-// honours `strict` only on `submit_actions` (its adapter rewrites that half
-// into DeepSeek's narrower subset) and only when the beta channel accepts the
-// request. Every read below that would throw on the wrong
-// shape goes through these, and the wrong shape becomes an addressed error
-// the Engine can correct — never a TypeError that takes the whole tick down.
+// The validator is a TOTAL function over whatever the model sent. Every phase
+// tool asks for `strict: true` and carries a single array, so where the
+// provider compiles the grammar that array arrives as declared — but that is
+// not everywhere. OpenAI cannot express the nested optional fields in strict
+// mode, DeepSeek honours the flag only when the beta channel accepts the
+// request, and a phase whose grammar a provider refuses is deliberately
+// retried against a non-strict copy of the same schema rather than failing the
+// tick. Every read below that would throw on the wrong shape goes through
+// these, and the wrong shape becomes an addressed error the Engine can
+// correct — never a TypeError that takes the whole tick down.
 
-/** A JSON object and nothing else — not null, not an array. */
-function isRecord(value: unknown): value is Record<string, unknown> {
+/** A JSON object and nothing else — not null, not an array. Exported because
+ *  the phase validators read untrusted tool payloads through the same guard. */
+export function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
@@ -78,7 +79,7 @@ function listOf<T>(value: unknown): T[] {
 
 /** The action ids a row cites, as strings — the address of every error
  *  about it, so it has to be readable whatever the row's shape. */
-function citedActionIds(occ: unknown): string[] {
+export function citedActionIds(occ: unknown): string[] {
   return listOf<unknown>(isRecord(occ) ? occ.actionIds : undefined).filter(
     (id): id is string => typeof id === "string"
   );
@@ -153,9 +154,16 @@ export interface KnownAction {
   progressMinutes: number;
   resolvedDurationTicks?: number;
   check?: EngineAction["check"];
+  /** The roll code made against `check`, present once the action is due.
+   *  Its presence is what says "this was an attempt, not talk". */
+  checkOutcome?: EngineAction["checkOutcome"];
 }
 
-interface Lookup {
+/** Everything the per-piece validators need to look up, built once from the
+ *  full world. Exported because the phase validators build the same lookup and
+ *  call the same helpers against it, which is what keeps a phase and the final
+ *  gate from judging the same row by different tables. */
+export interface Lookup {
   characterIds: Set<string>;
   aliveCharacterIds: Set<string>;
   /** Characters with real sanity capacity, by id. A being with `maxSan: 0`
@@ -240,9 +248,9 @@ export interface ResolutionWorklist {
    *  is a second row and the entry carries the outcome. */
   endingWithUtterance: string[];
   /** Starting actions whose command carries an `utterance`. The words are
-   *  NOT said yet: code clocks a spoken line at one minute, so the id comes
-   *  back under `endingWithUtterance` next tick, and only then does a speech
-   *  row cite it. Listed so the Engine is told, beside the utterance it can
+   *  NOT said yet: they land when the action ends — after one minute for plain
+   *  talk, after the attempt's own clock for a command that also does
+   *  something — and only then does a speech row cite it. Listed so the Engine is told, beside the utterance it can
    *  read in New Commands, that the line is still in the actor's mouth —
    *  measured: 26 speech rows in one run cited an id the Engine had itself
    *  just placed under `starting`. */
@@ -395,6 +403,9 @@ export function buildLookup(context: EngineResolutionContext): Lookup {
         ? { resolvedDurationTicks: action.resolvedDurationTicks }
         : {}),
       ...(action.check !== undefined ? { check: action.check } : {}),
+      ...(action.checkOutcome !== undefined
+        ? { checkOutcome: action.checkOutcome }
+        : {}),
     });
   }
   for (const command of context.actions.newCommands) {
@@ -471,7 +482,7 @@ function resolvableAction(
   return { known };
 }
 
-function validateStart(entry: RawActionStart, lookup: Lookup): string[] {
+export function validateStart(entry: RawActionStart, lookup: Lookup): string[] {
   const resolvable = resolvableAction(entry.actionId, lookup);
   if ("error" in resolvable) return [resolvable.error];
   const { known } = resolvable;
@@ -541,10 +552,12 @@ function validateStart(entry: RawActionStart, lookup: Lookup): string[] {
     } else {
       for (const waypoint of route) {
         if (typeof waypoint !== "string" || !waypoint.trim()) {
-          errs.push("movement.route entries must be place id strings");
+          errs.push(
+            "movement.route entries must be place id strings, never empty strings. Use the real place ids along the actor’s stated route; if this is not travel, remove movement and provide resolvedDurationTicks instead"
+          );
         } else if (!lookup.locationIds.has(waypoint)) {
           errs.push(
-            `movement.route waypoint "${waypoint}" is not a place in this world`
+            `movement.route waypoint "${waypoint}" is not a place in this world. Ground the actor's stated route in the world graph; never use placeholders. If the actor is not travelling, remove movement and provide resolvedDurationTicks instead`
           );
         }
       }
@@ -577,9 +590,10 @@ function validateStart(entry: RawActionStart, lookup: Lookup): string[] {
   // long it takes; a travel action must NOT be clocked by hand — code derives
   // its time from the route, and the rules and the schema both say to omit
   // the field. Accepting it anyway (the runtime overrides it) taught the
-  // model the sentence was optional. A spoken line is clocked by code too
-  // (one minute, see finalizeResolution), so an utterance-bearing action may
-  // omit it.
+  // model the sentence was optional. Every new non-travel submission provides
+  // a duration, including plain talk (1). An utterance alone cannot establish
+  // that the command is only talk: routine physical work may need no check.
+  // Older finalized/persisted actions keep their existing timing.
   if (entry.movement !== undefined) {
     if (entry.resolvedDurationTicks !== undefined) {
       errs.push(
@@ -587,12 +601,9 @@ function validateStart(entry: RawActionStart, lookup: Lookup): string[] {
       );
     }
   } else {
-    if (
-      entry.resolvedDurationTicks === undefined &&
-      !known.command.utterance?.trim()
-    ) {
+    if (entry.resolvedDurationTicks === undefined) {
       errs.push(
-        "a non-travel action needs resolvedDurationTicks; only movement actions derive their clock from the route"
+        `a non-travel action needs resolvedDurationTicks. "${entry.actionId}" (actor "${known.command.actorId}") has ${known.command.utterance?.trim() ? "a structured utterance, which does not replace an explicit duration" : "no structured utterance"} and this entry has no movement. Add an integer duration >= 1 to THIS entry (1 for plain talk, the assessed duration for an attempt); the command proposed ${known.command.proposedDurationTicks} tick(s), which you must assess. Words quoted only in description do not set utterance. Do not invent movement to avoid duration, and do not delete this action`
       );
     }
     errs.push(...validateDuration(entry.resolvedDurationTicks));
@@ -733,6 +744,60 @@ function perceiverClarities(
   return out;
 }
 
+/**
+ * Everything about an ending that needs only the action itself: is it
+ * addressable, has it begun, does it end this tick. One message or none — a
+ * misfiled entry gets one instruction, not a field-by-field review of a form
+ * it should not be on.
+ *
+ * Split out of `validateEnd` because the endings PHASE judges exactly these
+ * three things and cannot yet judge the fourth: the occurrences that would
+ * trace this ending are submitted in the last phase, five after this one. The
+ * phase and the final gate therefore share one answer to "may this id be
+ * answered as an ending", rather than each carrying its own copy of it.
+ */
+export function validateEndingTarget(
+  actionId: string,
+  lookup: Lookup
+): string[] {
+  const resolvable = resolvableAction(actionId, lookup);
+  if ("error" in resolvable) return [resolvable.error];
+  const { known } = resolvable;
+
+  if (known.status === "queued") {
+    // The ONLY error worth reporting: this entry is in the wrong list, so
+    // every field on it is beside the point. Reported alongside the field
+    // checks, it contradicted them — "this ending should not exist" in the
+    // same breath as "your ending is missing its outcome" — and the model
+    // obeyed both, putting the action in `starting` AND completing the ending
+    // it had just been told to withdraw. That is a duplicate, which is where
+    // it came from, and the tick died three rounds later going round it. Same
+    // reasoning as the addressing failure above: a misfiled entry gets one
+    // instruction, not a field-by-field review of a form it should not be on.
+    // Returning early here is what gives both callers that behaviour.
+    return [
+      `this action has not started yet — put it in "starting" with a duration and a bar, and send it ONLY there; its outcome comes on a later tick, when its time is spent`,
+    ];
+  }
+  if (!lookup.endingActionIds.has(actionId)) {
+    return [
+      `this action does not end this tick — drop this ending entry; the trigger's \`stillRunning\` list says it continues without an entry`,
+    ];
+  }
+  return [];
+}
+
+/** The one thing an `outcome`-mode decision must carry. Shared so the endings
+ *  phase demands the same paragraph the final gate does. */
+export function validateEndOutcome(outcome: unknown): string[] {
+  if (typeof outcome !== "string" || !outcome.trim()) {
+    return [
+      "an ending requires an outcome — one objective paragraph of what came of it, which the actor is told",
+    ];
+  }
+  return [];
+}
+
 function validateEnd(
   entry: RawActionEnd,
   lookup: Lookup,
@@ -740,30 +805,10 @@ function validateEnd(
    *  there now. */
   occurrences: ReadonlyArray<RawOccurrence | null | undefined> = []
 ): string[] {
-  const resolvable = resolvableAction(entry.actionId, lookup);
-  if ("error" in resolvable) return [resolvable.error];
-  const { known } = resolvable;
+  const target = validateEndingTarget(entry.actionId, lookup);
+  if (target.length > 0) return target;
   const errs: string[] = [];
 
-  if (known.status === "queued") {
-    // The ONLY error worth reporting: this entry is in the wrong list, so
-    // every field on it is beside the point. Reported alongside the field
-    // checks below, it contradicted them — "this ending should not exist" in
-    // the same breath as "your ending is missing its outcome" — and the model
-    // obeyed both, putting the action in `starting` AND completing the ending
-    // it had just been told to withdraw. That is a duplicate, which is where
-    // it came from, and the tick died three rounds later going round it. Same
-    // reasoning as the addressing failure above: a misfiled entry gets one
-    // instruction, not a field-by-field review of a form it should not be on.
-    return [
-      `this action has not started yet — put it in "starting" with a duration and a bar, and send it ONLY there; its outcome comes on a later tick, when its time is spent`,
-    ];
-  }
-  if (!lookup.endingActionIds.has(entry.actionId)) {
-    return [
-      `this action does not end this tick — drop this ending entry; the trigger's \`stillRunning\` list says it continues without an entry`,
-    ];
-  }
   const trace = occurrencesCiting(entry.actionId, occurrences);
   if (trace.length === 0) {
     // The guarantee the nested `occurrence` slot used to give, now a check.
@@ -790,11 +835,7 @@ function validateEnd(
     );
     return errs;
   }
-  if (typeof entry.outcome !== "string" || !entry.outcome.trim()) {
-    errs.push(
-      "an ending requires an outcome — one objective paragraph of what came of it, which the actor is told"
-    );
-  }
+  errs.push(...validateEndOutcome(entry.outcome));
   return errs;
 }
 
@@ -1316,6 +1357,23 @@ export function validateSanityChecks(
   return errs;
 }
 
+/** Every due structured utterance is delivered, even when its action also
+ * produced an outcome. Shared by the phase validator and final gate. */
+export function missingSpeechActionIds(
+  endingIds: ReadonlySet<string>,
+  rows: RawOccurrence[],
+  lookup: Lookup
+): string[] {
+  return [...endingIds].filter(
+    (id) =>
+      Boolean(lookup.actionById.get(id)?.command.utterance?.trim()) &&
+      !occurrencesCiting(id, rows).some(isSpeechRow)
+  );
+}
+
+export const missingSpeechMessage = (actionId: string): string =>
+  `"${actionId}" ends this tick with an utterance but no speech:true row cites it. Add a separate speech:true row with actionIds ["${actionId}"], targetIds and real perceivers; code supplies the exact words. Keep its speech:false result row if the action also has an outcome`;
+
 export function validateOccurrence(
   occ: RawOccurrence,
   lookup: Lookup,
@@ -1380,6 +1438,15 @@ export function validateOccurrence(
     if (occ.targetIds !== undefined && !Array.isArray(occ.targetIds)) {
       errs.push("targetIds must be an array of character ids");
     }
+  }
+  if (
+    typeof occ.content === "string" &&
+    (/^\s*(?:placeholder|todo|tbd|fixme)\s*[.!]?\s*$/i.test(occ.content) ||
+      /\t[^\t\r\n]+\t/.test(occ.content))
+  ) {
+    errs.push(
+      "content is unfinished placeholder or tab-separated scratch text. Replace it with the complete objective account; on a speech row, omit content if there is no delivery detail. Preserve the row's actionIds, speech flag and real perceivers"
+    );
   }
   if (
     typeof occ.content === "string" &&
@@ -1464,6 +1531,244 @@ export function resolveRefKind(
   return undefined;
 }
 
+// ==================== Shape messages ====================
+//
+// What to say when an element of a list is not an element at all. Shared with
+// the staged phase validator so a malformed row reads the same whether it was
+// caught the moment its phase submitted or at the final gate.
+
+/** An element of `starting` / `ending` / `endings` that is not an object
+ *  naming an action. */
+export function notAnEntryMessage(moment: string, index: number): string {
+  return `${moment}[${index}] is not an entry — every element of "${moment}" is an object naming the action it answers: {"actionId": "<id>", ...}. Send it as one, or leave it out`;
+}
+
+/** An element of a change list that is not an object. */
+export function notAChangeMessages(idField: string): string[] {
+  return [
+    `is not a change — every element is an object {"sourceActionId", "${idField}", "operation": {"kind", ...}}. Send it as one, or leave it out`,
+  ];
+}
+
+/** An element of `occurrences` that is not an object. */
+export function notARowMessage(index: number): string {
+  return `occurrences[${index}] is not a row — every element is an object {"actionIds", "speech", "perceivers", ...}. Send it as one, or leave it out`;
+}
+
+// ==================== Cross-domain checks ====================
+//
+// Each of these reads two domains at once, so the phase that submits the
+// first cannot judge it and the phase that submits the second can. They are
+// functions over plain arrays rather than inlined in the whole-resolution
+// sweep because BOTH callers need them: the staged phase validator runs one
+// the moment its second domain arrives, and `validateRawResolution` runs
+// every one of them again over the assembled draft. Two copies of a rule
+// this shape is exactly how a phase and the final gate come to disagree.
+
+/** A start that drives a vehicle its driver is not inside. */
+export interface VehicleBoardingGap {
+  actionId: string;
+  message: string;
+}
+
+/**
+ * The wheels will not turn for someone standing beside the vehicle: a drive is
+ * only settled when the driver is IN the interior scene — already, or moved
+ * there by a position change in the same resolution. Mechanical (position vs
+ * scene id), so it can live here rather than in the rules prose alone.
+ */
+export function vehicleBoardingGaps(
+  starting: readonly unknown[],
+  characterChanges: readonly unknown[],
+  lookup: Lookup
+): VehicleBoardingGap[] {
+  const gaps: VehicleBoardingGap[] = [];
+  for (const entry of starting) {
+    if (!isRecord(entry) || typeof entry.actionId !== "string") continue;
+    const movement = entry.movement;
+    const vehicleId = isRecord(movement) ? movement.vehicleId : undefined;
+    if (typeof vehicleId !== "string") continue;
+    const interior = lookup.vehicleInteriors.get(vehicleId);
+    if (interior === undefined) continue; // unknown vehicle already reported
+    const actorId = lookup.actionById.get(entry.actionId)?.command.actorId;
+    if (actorId === undefined) continue;
+    const alreadyInside = lookup.characterSceneIds.get(actorId) === interior;
+    const boardedHere = characterChanges.some(
+      (change) =>
+        isRecord(change) &&
+        change.characterId === actorId &&
+        (
+          change.operation as {
+            kind?: string;
+            position?: { sceneId?: string };
+          }
+        )?.kind === "position" &&
+        (change.operation as { position?: { sceneId?: string } }).position
+          ?.sceneId === interior
+    );
+    if (!alreadyInside && !boardedHere) {
+      gaps.push({
+        actionId: entry.actionId,
+        message: `movement.vehicleId "${vehicleId}": the driver ${actorId} is not in its interior scene "${interior}" — add a characterChange position into "${interior}" in this submission (boarding), or drop the vehicle and walk`,
+      });
+    }
+  }
+  return gaps;
+}
+
+/** A one-shot grant and a world-wide unblock naming the same passage. */
+export interface PassVersusUnblock {
+  /** The starting action carrying the grant. */
+  actionId: string;
+  /** Index in the sceneChanges array of the `connectionBlock blocked:false`
+   *  it collides with — the row a scene phase would drop. */
+  sceneChangeIndex: number;
+  message: string;
+}
+
+/**
+ * Never both for one passage: an obstacle is either removed for everyone
+ * (`connectionBlock blocked:false`) or got past by this one walker
+ * (`passBlockedConnectionId`). Compared on the passage, not the id — a two-way
+ * exit is two ids.
+ */
+export function passVersusUnblockConflicts(
+  starting: readonly unknown[],
+  sceneChanges: readonly unknown[],
+  lookup: Lookup
+): PassVersusUnblock[] {
+  const passageKey = (connectionId: string): string => {
+    const edge = lookup.edgeByConnectionId.get(connectionId);
+    return edge ? [edge.from, edge.to].sort().join("::") : connectionId;
+  };
+  const unblocked = new Map<string, { connectionId: string; index: number }>();
+  for (const [index, sc] of sceneChanges.entries()) {
+    if (!isRecord(sc)) continue;
+    const op = sc.operation as
+      | { kind?: string; connectionId?: unknown; blocked?: unknown }
+      | undefined;
+    if (
+      op?.kind === "connectionBlock" &&
+      op.blocked === false &&
+      typeof op.connectionId === "string"
+    ) {
+      unblocked.set(passageKey(op.connectionId), {
+        connectionId: op.connectionId,
+        index,
+      });
+    }
+  }
+  const conflicts: PassVersusUnblock[] = [];
+  if (unblocked.size === 0) return conflicts;
+  for (const entry of starting) {
+    if (!isRecord(entry) || typeof entry.actionId !== "string") continue;
+    const movement = entry.movement;
+    const passId = isRecord(movement)
+      ? movement.passBlockedConnectionId
+      : undefined;
+    if (typeof passId !== "string") continue;
+    const cleared = unblocked.get(passageKey(passId));
+    if (cleared === undefined) continue;
+    conflicts.push({
+      actionId: entry.actionId,
+      sceneChangeIndex: cleared.index,
+      message: `movement.passBlockedConnectionId "${passId}" and a sceneChanges connectionBlock blocked:false on "${cleared.connectionId}" name the same passage — never both for one passage. If the act REMOVED the obstacle, keep the unblock and drop the grant; if the obstacle STAYS and only this walker got past, keep the grant and drop the unblock`,
+    });
+  }
+  return conflicts;
+}
+
+/** An item leaving a place whose prose still points at it. */
+export interface StaleCitation {
+  /** Index in the itemChanges array of the move/destroy that orphans it. */
+  itemChangeIndex: number;
+  /** The place whose description needs rewriting. */
+  placeId: string;
+  message: string;
+}
+
+/**
+ * Prose-coherence: an item CITED by its holder place's description cannot
+ * leave (move/destroy) without the same resolution rewriting that prose — a
+ * stale citation breaks every later render of the place. Mechanical: string
+ * containment vs the Tier-2 snapshot; places outside the involved set are
+ * skipped (their prose is not at hand to check).
+ */
+export function staleCitations(
+  itemChanges: readonly unknown[],
+  sceneChanges: readonly unknown[],
+  lookup: Lookup
+): StaleCitation[] {
+  const stale: StaleCitation[] = [];
+  for (const [index, d] of itemChanges.entries()) {
+    if (!isRecord(d)) continue;
+    const op = d.operation as { kind?: string; from?: string };
+    if (op?.kind !== "move" && op?.kind !== "destroy") continue;
+    const itemId = d.itemId;
+    if (typeof itemId !== "string" || !itemId) continue;
+    const holder =
+      op.kind === "move" ? op.from : lookup.itemHolders.get(itemId);
+    if (typeof holder !== "string" || !holder.startsWith("scene:")) continue;
+    const placeId = holder.slice("scene:".length);
+    const prose = lookup.placeDescriptions.get(placeId);
+    if (prose === undefined || !prose.includes(`[${itemId}]`)) continue;
+    const rewritten = sceneChanges.some(
+      (sc) =>
+        isRecord(sc) &&
+        (sc as { sceneId?: string }).sceneId === placeId &&
+        (sc.operation as { kind?: string })?.kind === "setDescription"
+    );
+    if (rewritten) continue;
+    stale.push({
+      itemChangeIndex: index,
+      placeId,
+      message: `"${itemId}" is cited in the description of "${placeId}" — ${op.kind === "move" ? "moving" : "destroying"} it leaves that prose pointing at nothing and breaks every later render there. Add a sceneChanges setDescription for "${placeId}" in this submission (keep still-true citations, drop this one).`,
+    });
+  }
+  return stale;
+}
+
+/** A character checked for sanity in more than one occurrence. */
+export interface DuplicateSanityCheck {
+  /** The offending row's cited actions — how an occurrence error is
+   *  addressed. */
+  actionIds: string[];
+  message: string;
+}
+
+/**
+ * One shock per character per tick, across EVERY occurrence.
+ * `validateSanityChecks` sees a single occurrence and cannot catch the same
+ * person being checked in two of them. This is the structural replacement for
+ * the deleted session ledger, and it is what makes the old loop impossible:
+ * not "the tool refuses" but "the submission is rejected at an address, and
+ * the correction is one targeted edit".
+ */
+export function duplicateSanityChecks(
+  occurrences: readonly unknown[]
+): DuplicateSanityCheck[] {
+  const duplicates: DuplicateSanityCheck[] = [];
+  const shocked = new Set<string>();
+  for (const o of occurrences) {
+    if (!isRecord(o)) continue;
+    for (const decl of listOf<{ characterId?: unknown } | null | undefined>(
+      o.sanityChecks
+    )) {
+      const id = decl?.characterId;
+      if (typeof id !== "string" || id.length === 0) continue;
+      if (shocked.has(id)) {
+        duplicates.push({
+          actionIds: citedActionIds(o),
+          message: `sanityChecks: "${id}" is already checked elsewhere in this submission — one roll per character per tick, however many occurrences they appear in. Keep the exposure that actually shocked them and drop the other.`,
+        });
+        continue;
+      }
+      shocked.add(id);
+    }
+  }
+  return duplicates;
+}
+
 // ==================== Whole-resolution validation ====================
 
 export function validateRawResolution(
@@ -1498,9 +1803,7 @@ export function validateRawResolution(
         typeof entry.actionId !== "string" ||
         !entry.actionId.trim()
       ) {
-        at({ kind: "resolution" }, [
-          `${moment}[${i}] is not an entry — every element of "${moment}" is an object naming the action it answers: {"actionId": "<id>", ...}. Send it as one, or leave it out`,
-        ]);
+        at({ kind: "resolution" }, [notAnEntryMessage(moment, i)]);
         continue;
       }
       const target: ResolutionError["target"] = {
@@ -1526,77 +1829,23 @@ export function validateRawResolution(
       );
     }
     if (moment === "starting") {
-      // The wheels will not turn for someone standing beside the vehicle:
-      // a drive is only settled when the driver is IN the interior scene —
-      // already, or moved there by a position change in this same
-      // submission. Mechanical (position vs scene id), so it can live here
-      // rather than in the rules prose alone.
-      for (const entry of entries as unknown[]) {
-        if (!isRecord(entry) || typeof entry.actionId !== "string") continue;
-        const movement = entry.movement;
-        const vehicleId = isRecord(movement) ? movement.vehicleId : undefined;
-        if (typeof vehicleId !== "string") continue;
-        const interior = lookup.vehicleInteriors.get(vehicleId);
-        if (interior === undefined) continue; // unknown vehicle already reported
-        const actorId = lookup.actionById.get(entry.actionId)?.command.actorId;
-        if (actorId === undefined) continue;
-        const alreadyInside =
-          lookup.characterSceneIds.get(actorId) === interior;
-        const boardedThisSubmission = (raw.characterChanges ?? []).some(
-          (change) =>
-            isRecord(change) &&
-            change.characterId === actorId &&
-            (
-              change.operation as {
-                kind?: string;
-                position?: { sceneId?: string };
-              }
-            )?.kind === "position" &&
-            (change.operation as { position?: { sceneId?: string } }).position
-              ?.sceneId === interior
-        );
-        if (!alreadyInside && !boardedThisSubmission) {
-          at({ kind: "action", actionId: entry.actionId }, [
-            `movement.vehicleId "${vehicleId}": the driver ${actorId} is not in its interior scene "${interior}" — add a characterChange position into "${interior}" in this submission (boarding), or drop the vehicle and walk`,
-          ]);
-        }
+      // Two domains at once, so neither the starts phase nor the phase that
+      // submits the other half can settle them alone. They run again HERE,
+      // over the assembled draft, even though a phase already ran them:
+      // faster feedback there, final authority here.
+      for (const gap of vehicleBoardingGaps(
+        entries as unknown[],
+        raw.characterChanges ?? [],
+        lookup
+      )) {
+        at({ kind: "action", actionId: gap.actionId }, [gap.message]);
       }
-      // Never both for one passage: an obstacle is either removed for
-      // everyone (`connectionBlock blocked:false`) or got past by this one
-      // walker (`passBlockedConnectionId`). Compared on the passage, not the
-      // id — a two-way exit is two ids.
-      const passageKey = (connectionId: string): string => {
-        const edge = lookup.edgeByConnectionId.get(connectionId);
-        return edge ? [edge.from, edge.to].sort().join("::") : connectionId;
-      };
-      const unblocked = new Map<string, string>();
-      for (const sc of raw.sceneChanges ?? []) {
-        if (!isRecord(sc)) continue;
-        const op = sc.operation as
-          | { kind?: string; connectionId?: unknown; blocked?: unknown }
-          | undefined;
-        if (
-          op?.kind === "connectionBlock" &&
-          op.blocked === false &&
-          typeof op.connectionId === "string"
-        ) {
-          unblocked.set(passageKey(op.connectionId), op.connectionId);
-        }
-      }
-      if (unblocked.size > 0) {
-        for (const entry of entries as unknown[]) {
-          if (!isRecord(entry) || typeof entry.actionId !== "string") continue;
-          const movement = entry.movement;
-          const passId = isRecord(movement)
-            ? movement.passBlockedConnectionId
-            : undefined;
-          if (typeof passId !== "string") continue;
-          const clearedAs = unblocked.get(passageKey(passId));
-          if (clearedAs === undefined) continue;
-          at({ kind: "action", actionId: entry.actionId }, [
-            `movement.passBlockedConnectionId "${passId}" and a sceneChanges connectionBlock blocked:false on "${clearedAs}" name the same passage — never both for one passage. If the act REMOVED the obstacle, keep the unblock and drop the grant; if the obstacle STAYS and only this walker got past, keep the grant and drop the unblock`,
-          ]);
-        }
+      for (const conflict of passVersusUnblockConflicts(
+        entries as unknown[],
+        raw.sceneChanges ?? [],
+        lookup
+      )) {
+        at({ kind: "action", actionId: conflict.actionId }, [conflict.message]);
       }
     }
   }
@@ -1606,16 +1855,32 @@ export function validateRawResolution(
   const pureSpeechAnswer = (actionId: string): boolean => {
     const trace = occurrencesCiting(actionId, raw.occurrences);
     if (trace.length === 0 || !trace.every(isSpeechRow)) return false;
-    const command = lookup.actionById.get(actionId)?.command;
-    return Boolean(command?.utterance?.trim());
+    const known = lookup.actionById.get(actionId);
+    // Action before speech: a check was set at start, so this was an
+    // attempt the dice have answered, and talk alone cannot answer it.
+    if (known?.checkOutcome || known?.check) return false;
+    return Boolean(known?.command.utterance?.trim());
   };
   for (const required of lookup.requiredActionIds) {
     if (seen.has(required)) continue;
     if (endingIds.has(required) && pureSpeechAnswer(required)) continue;
     at({ kind: "resolution" }, [
       endingIds.has(required)
-        ? `triggering action "${required}" was not answered — it ends this tick: give it an "ending" entry with an outcome plus a speech:false occurrence citing it, or, if the whole of it was words said, one occurrence with speech true citing it and no ending entry`
+        ? lookup.actionById.get(required)?.checkOutcome ||
+          lookup.actionById.get(required)?.check
+          ? `triggering action "${required}" was not answered — it ends this tick and it carried a check, so it was an attempt, not talk: give it an "ending" entry with an outcome consistent with its diceRoll plus a speech:false occurrence citing it (its words still get their own speech:true row)`
+          : `triggering action "${required}" was not answered — it ends this tick: give it an "ending" entry with an outcome plus a speech:false occurrence citing it, or, if the whole of it was words said, one occurrence with speech true citing it and no ending entry`
         : `triggering action "${required}" was not answered — it starts this tick and needs a "starting" entry`,
+    ]);
+  }
+
+  for (const actionId of missingSpeechActionIds(
+    endingIds,
+    raw.occurrences ?? [],
+    lookup
+  )) {
+    at({ kind: "occurrence", actionIds: [actionId] }, [
+      missingSpeechMessage(actionId),
     ]);
   }
 
@@ -1623,21 +1888,20 @@ export function validateRawResolution(
   // Ids minted by this submission's `create` operations: occurrences may cite
   // them, so item changes are validated (and the set filled) first.
   const createdItemIds = new Set<string>();
-  const notAChange = (idField: string): string[] => [
-    `is not a change — every element is an object {"sourceActionId", "${idField}", "operation": {"kind", ...}}. Send it as one, or leave it out`,
-  ];
   (raw.characterChanges ?? []).forEach((d, i) => {
     at(
       { kind: "characterChange", index: i },
       isRecord(d)
         ? validateCharacterChange(d, lookup)
-        : notAChange("characterId")
+        : notAChangeMessages("characterId")
     );
   });
   (raw.sceneChanges ?? []).forEach((d, i) => {
     at(
       { kind: "sceneChange", index: i },
-      isRecord(d) ? validateSceneChange(d, lookup) : notAChange("sceneId")
+      isRecord(d)
+        ? validateSceneChange(d, lookup)
+        : notAChangeMessages("sceneId")
     );
   });
   (raw.itemChanges ?? []).forEach((d, i) => {
@@ -1645,42 +1909,24 @@ export function validateRawResolution(
       { kind: "itemChange", index: i },
       isRecord(d)
         ? validateItemChange(d, lookup, movedItemIds, createdItemIds)
-        : notAChange("itemId")
+        : notAChangeMessages("itemId")
     );
   });
-  // Prose-coherence: an item CITED by its holder place's description cannot
-  // leave (move/destroy) without the same submission rewriting that prose —
-  // a stale citation breaks every later render of the place. Mechanical:
-  // string containment vs the Tier-2 snapshot; places outside the involved
-  // set are skipped (their prose is not at hand to check).
-  (raw.itemChanges ?? []).forEach((d, i) => {
-    if (!isRecord(d)) return;
-    const op = d.operation as { kind?: string; from?: string };
-    if (op?.kind !== "move" && op?.kind !== "destroy") return;
-    if (!d.itemId) return;
-    const holder =
-      op.kind === "move" ? op.from : lookup.itemHolders.get(d.itemId);
-    if (typeof holder !== "string" || !holder.startsWith("scene:")) return;
-    const placeId = holder.slice("scene:".length);
-    const prose = lookup.placeDescriptions.get(placeId);
-    if (prose === undefined || !prose.includes(`[${d.itemId}]`)) return;
-    const rewritten = (raw.sceneChanges ?? []).some(
-      (sc) =>
-        isRecord(sc) &&
-        (sc as { sceneId?: string }).sceneId === placeId &&
-        (sc.operation as { kind?: string })?.kind === "setDescription"
-    );
-    if (!rewritten) {
-      at({ kind: "itemChange", index: i }, [
-        `"${d.itemId}" is cited in the description of "${placeId}" — ${op.kind === "move" ? "moving" : "destroying"} it leaves that prose pointing at nothing and breaks every later render there. Add a sceneChanges setDescription for "${placeId}" in this submission (keep still-true citations, drop this one).`,
-      ]);
-    }
-  });
+  // Addressed at the item change, not the scene list: the item leaving is the
+  // decision that orphans the prose, and it is the row the Engine has to
+  // reconsider. The scene phase runs the same check against its own accepted
+  // item changes, addressed at itself, because there the fix IS a new
+  // setDescription.
+  for (const stale of staleCitations(
+    raw.itemChanges ?? [],
+    raw.sceneChanges ?? [],
+    lookup
+  )) {
+    at({ kind: "itemChange", index: stale.itemChangeIndex }, [stale.message]);
+  }
   for (const [i, o] of (raw.occurrences ?? []).entries()) {
     if (!isRecord(o)) {
-      at({ kind: "resolution" }, [
-        `occurrences[${i}] is not a row — every element is an object {"actionIds", "speech", "perceivers", ...}. Send it as one, or leave it out`,
-      ]);
+      at({ kind: "resolution" }, [notARowMessage(i)]);
       continue;
     }
     at(
@@ -1689,55 +1935,32 @@ export function validateRawResolution(
     );
   }
 
-  // One shock per character per tick, across the WHOLE submission.
-  // `validateSanityChecks` sees a single occurrence and cannot catch the same
-  // person being checked in two of them. This is the structural replacement
-  // for the deleted session ledger, and it is what makes the old loop
-  // impossible: not "the tool refuses" but "the submission is rejected at an
-  // address, and the correction is one targeted edit".
-  const shocked = new Set<string>();
-  const noteShocks = (
-    occ: Pick<RawOccurrence, "sanityChecks"> | null | undefined,
-    target: ResolutionError["target"]
-  ): void => {
-    for (const decl of listOf<{ characterId?: unknown } | null | undefined>(
-      occ?.sanityChecks
-    )) {
-      const id = decl?.characterId;
-      if (typeof id !== "string" || id.length === 0) continue;
-      if (shocked.has(id)) {
-        at(target, [
-          `sanityChecks: "${id}" is already checked elsewhere in this submission — one roll per character per tick, however many occurrences they appear in. Keep the exposure that actually shocked them and drop the other.`,
-        ]);
-        continue;
-      }
-      shocked.add(id);
-    }
-  };
-  for (const o of raw.occurrences ?? []) {
-    if (!isRecord(o)) continue;
-    noteShocks(o as unknown as RawOccurrence, {
-      kind: "occurrence",
-      actionIds: citedActionIds(o),
-    });
+  for (const duplicate of duplicateSanityChecks(raw.occurrences ?? [])) {
+    at({ kind: "occurrence", actionIds: duplicate.actionIds }, [
+      duplicate.message,
+    ]);
   }
 
   return errors;
 }
 
 /**
- * Make a model-shaped resolution safe to read.
+ * Make a model-shaped list safe to read.
  *
- * Every list here is declared as an array in both schemas. A provider that
- * honours `strict` cannot send anything else, and that now covers `starting`
- * and `ending` on Anthropic and DeepSeek — but never the effect lists, and
- * never OpenAI, which cannot express either half. The retired patch tool used
- * to take index-keyed
- * OBJECTS for the same fields, so the model was measured sending
+ * Every phase tool declares its one field as an array, and a provider that
+ * honours `strict` cannot send anything else — but a phase whose grammar the
+ * provider refuses is retried against a non-strict copy of the same schema,
+ * and OpenAI cannot express the nested optional fields in strict mode at all,
+ * so the wrong shape stays reachable. The retired patch tool used to take
+ * index-keyed OBJECTS for the same fields, so the model was measured sending
  * `{"0": {...}}` where an array belonged. That used to reach `.filter` and
  * take the whole tick down with a TypeError — a malformed submission must be
  * a correctable error, never a crash. Object form means exactly what the
  * array form means, so read it and move on.
+ *
+ * The staged validator reads one phase's array through this and treats an
+ * empty result for a non-array value as unreadable rather than as an empty
+ * phase, since `[]` on the wire is how an empty phase is actually spelled.
  */
 export function normalizeList<T>(value: unknown, field = "field"): T[] {
   if (value === undefined || value === null) return [];
@@ -1753,19 +1976,21 @@ export function normalizeList<T>(value: unknown, field = "field"): T[] {
       .map(([, item]) => item);
   }
   if (typeof value === "string") {
-    // The whole list, serialized — the failure the split was made to end.
+    // The whole list, serialized — the failure the phase split was made to
+    // end.
     //
     // Without a grammar the model writes a JSON DOCUMENT for the field it is
     // filling instead of the field's value, and it happens at the start of
-    // generation: measured over 66 stored Claude engine calls, `starting` (the
-    // first key it writes) came back as a string in 7 of 55 submissions and
-    // `ending` in 1 of 61, while the four effect lists never did it once. In
-    // every one of those 7 the model had written `starting` first.
+    // generation: measured over 66 stored Claude engine calls under the old
+    // unified tools, `starting` (the first key it wrote) came back as a string
+    // in 7 of 55 submissions and `ending` in 1 of 61, while the four effect
+    // lists never did it once. In every one of those 7 the model had written
+    // `starting` first.
     //
-    // `submit_actions` is strict now, so neither Anthropic nor DeepSeek can
-    // produce this shape for these two fields any more. It stays reachable on
-    // OpenAI, which drops the flag over the nested optional fields, and — for
-    // the effect lists — on every provider.
+    // Each phase tool carries ONE array and asks for `strict: true`, so where
+    // the grammar compiles this shape cannot be produced at all. It stays
+    // reachable on a provider that drops the flag, and on the non-strict
+    // fallback copy of a phase whose grammar was refused.
     //
     // Three shapes were measured. The list as its own JSON text —
     // `"[{...}]"` — and the list wrapped in an object under its own name, or
@@ -1969,15 +2194,20 @@ export function finalizeResolution(
         ...(entry.opposedBy ? { opposedBy: entry.opposedBy } : {}),
       };
     }
-    // A spoken line takes one minute, whatever the Engine wrote: the words
-    // are delivered when the action ends, and a line that "takes" three
-    // minutes is three minutes in which the listener hears nothing and the
-    // Engine keeps trying to deliver it early. Movement keeps its
-    // route-derived clock (the orchestrator overrides it); the words land on
-    // arrival.
+    // Action before speech. Plain talk — an utterance-bearing command the
+    // Engine gave no clock — takes one minute: the words are delivered when
+    // the action ends, and a line left to "take" three minutes is three
+    // minutes in which nobody hears it. But a command that speaks WHILE it
+    // does something is clocked by what the Engine wrote for the attempt (a
+    // five-minute dressing with a "hold still" is five minutes), and the words
+    // land when the attempt ends. Measured before this: an eight-minute
+    // clean-and-dress command was clamped to one minute and judged pure
+    // speech because it carried a sentence. Movement keeps its route-derived
+    // clock (the orchestrator overrides it); the words land on arrival.
     const spoken =
       !entry.movement?.route?.length &&
-      Boolean(known.command.utterance?.trim());
+      Boolean(known.command.utterance?.trim()) &&
+      entry.resolvedDurationTicks === undefined;
     const durationTicks = spoken ? 1 : entry.resolvedDurationTicks;
     transitions.push({
       actionId: entry.actionId,

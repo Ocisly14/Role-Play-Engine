@@ -1,386 +1,162 @@
 // src/engine/resolution/worldActionEngine.ts
 //
-// The unified World Action Engine session (plan Phase 7). Called once per
-// triggered tick with the full EngineResolutionContext. Runs an agentic loop:
-// the model may consult the deterministic damage dice (a roll must never be
-// the model's) and must finish with one terminal TURN carrying both
-// `submit_actions` and `submit_effects` — the resolution is split across two
-// tools because only the first half compiles into a strict grammar (see
-// worldDeltaSchema.ts). The two are merged before validation, so everything
-// downstream still sees one whole resolution. Output is validated in code and
-// gets up to three complete corrective resubmissions; if it remains invalid,
-// the whole tick is rejected without partial application. No action types or
-// per-action prompts — one ordered set of world-rule modules governs everything.
+// The staged World Action Engine (plan Phase 7, six-phase output). Called once
+// per triggered tick with the full EngineResolutionContext. One tick is
+// resolved in six ordered phases — endings, starts, characterChanges,
+// itemChanges, sceneChanges, occurrences — each a request of its own that
+// offers ONLY that phase's submission tool (plus the deterministic damage dice
+// in the endings phase, because a roll must never be the model's). A phase's
+// answer is validated the moment it arrives and retained only when its own
+// validator accepts it; an invalid answer gets an addressed, phase-local
+// rejection. In the two phases whose rows have a key (starts, occurrences)
+// code keeps the rows that passed and asks only for what is still owed,
+// merging before it validates the whole array again; everywhere else the
+// answer is the COMPLETE array for that phase again. There is no patch tool
+// either way. After six accepted phases the draft is assembled into the
+// same RawTickResolution as before and judged whole by the same global gate;
+// a global fault rewinds to the earliest phase that owns it (once), and a tick
+// still invalid after that applies nothing.
+//
+// The one thing a request may change about itself is the `strict` flag, and
+// only when the provider refuses to compile that phase's grammar: see
+// `callPhaseModelWithFallback` and `strictSchemaFallback.ts`.
+//
+// This module changes NO world state. It never touches DGSM, the movement
+// runtime, action state or persistence: its only side effect is
+// `deps.codeTools.run` for the dice (recorded and returned as
+// `codeToolInvocations`), and its only output is the returned value, which the
+// orchestrator applies atomically or not at all.
 
-import { readFileSync } from "node:fs";
-import { ModelClass, generateToolCalls } from "../../models/index.js";
+import {
+  ModelClass,
+  type ToolCallResult,
+  generateToolCalls,
+} from "../../models/index.js";
 import type {
   ModelMessage,
+  ToolCallRecord,
   ToolResultRecord,
+  ToolSpec,
 } from "../../models/providers/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
-import { actionIdForCommand } from "../actions/actionStore.js";
 import type {
-  ActionCommand,
-  ResolvedCheck,
-  SkillRollRecord,
-} from "../actions/types.js";
+  CodeToolInvocation,
+  CodeToolRegistry,
+} from "../tools/codeTool.js";
 import {
-  buildSkillCatalogPrompt,
-  renderSkillGuidance,
-} from "../rules/skillReference.js";
-import type { CodeToolRegistry } from "../tools/codeTool.js";
+  engineModelIdentity,
+  isStrictDowngraded,
+  isStrictSchemaRejection,
+  rememberStrictDowngrade,
+} from "./strictSchemaFallback.js";
 import {
   type EngineResolutionContext,
   type ResolutionError,
   type WorldActionEngineResult,
-  type WorldGraph,
   formatErrorTarget,
 } from "./types.js";
-import {
-  CODE_TOOL_SPECS,
-  type RawTickResolution,
-  SUBMIT_TOOLS,
-  SUBMIT_TOOL_NAMES,
-} from "./worldDeltaSchema.js";
+import { CODE_TOOL_SPECS } from "./worldDeltaSchema.js";
 import {
   exitsFromHere,
   finalizeResolution,
-  normalizeRawResolution,
-  resolutionWorklist,
   validateRawResolution,
 } from "./worldDeltaValidator.js";
+import {
+  renderContext,
+  renderContextSegments,
+  renderPhaseDuplicate,
+  renderPhaseEmpty,
+  renderPhaseInstruction,
+  renderPhaseRejection,
+  renderPhaseSystemPrompt,
+  renderPhaseUnreadable,
+  renderPhaseWrongTool,
+  renderWorldGraph,
+} from "./worldResolutionStagePrompts.js";
+import {
+  type AcceptedResolutionDraft,
+  PHASE_FIELDS,
+  PHASE_TOOLS,
+  PHASE_TOOLS_NON_STRICT,
+  PHASE_TOOL_NAMES,
+  RESOLUTION_PHASES,
+  type ResolutionPhase,
+  schemaFingerprint,
+} from "./worldResolutionStageSchemas.js";
+import {
+  MERGE_PHASES,
+  acceptedPhaseValue,
+  assembleRawResolution,
+  mergeRows,
+  phaseIndex,
+  phaseRows,
+  retainedRows,
+  rewindPhaseFor,
+  validatePhase,
+} from "./worldResolutionStageValidator.js";
 
-// Lives with the validator now, which checks a `passBlockedConnectionId`
-// against the same list the prompt shows; re-exported so callers keep it.
-export { exitsFromHere };
+// `exitsFromHere` lives with the validator now, which checks a
+// `passBlockedConnectionId` against the same list the prompt shows; the three
+// renderers live with the phase prompts, which is the only place that still
+// builds an instruction around them. All four are re-exported here because the
+// engine module is where callers and tests have always reached for them.
+export {
+  exitsFromHere,
+  renderContext,
+  renderContextSegments,
+  renderWorldGraph,
+};
+
+// ==================== Budget ====================
 
 /**
- * Hard ceiling on turns in one session — correction rounds included, since they
- * run in the same loop.
+ * Hard ceiling on provider calls in one tick's resolution. EVERY
+ * `generateToolCalls` invocation counts — a dice turn, a structural refusal, a
+ * local correction, and the reruns after a global rewind alike.
  *
- * 5, down from 8. Measured over two 30-tick full-town runs: at 8 the failing
- * sessions spent every turn fanning out optional tool calls and applied
- * nothing, at ~65k of full-world context per wasted turn — four such ticks
- * were half of that run's entire token spend. Cutting to 3 removed that waste
- * but starved two ticks that needed a fourth turn, so the failure count did
- * not move: 5 either way, for opposite reasons.
+ * Twelve for six phases is two calls a phase: the common path (one) with room
+ * for one correction or one dice turn in most of them, or for the whole
+ * rewound tail once. The single session it replaces had a 5-turn ceiling,
+ * measured over two 30-tick full-town runs: a session that spends every turn
+ * fanning out tool calls and applies nothing costs the whole world context
+ * per turn, so the ceiling exists to bound waste, not to be reached.
  *
- * 5 is the worst honest path — one turn of tools, one submission, three
- * corrective resubmissions — and costs nothing on the common path, where the
- * median session still finishes in under two turns.
+ * The number is also a prompt sentence: `renderPhaseSystemPrompt` templates
+ * it into the protocol document so the guard and the promise cannot drift.
  */
-const MAX_ITERATIONS = 5;
+export const MAX_PROVIDER_CALLS = 12;
+
 /**
- * How many corrective resubmissions a submission gets before the session
- * gives up.
+ * Complete submission attempts one phase gets before the tick is given up.
  *
- * Each round is a full-world request, so this is a real cost ceiling — but a
- * contract the Engine cannot satisfy in a few targeted fixes is a fault to
- * surface, not something to grind at.
+ * Every turn that carries the phase's tool counts, readable or not — so a
+ * model looping on `{}` burns its three and stops. Each attempt re-sends the
+ * world, so this is a real cost ceiling; but a phase that cannot get one array
+ * right in three tries is a fault to surface, not something to grind at.
  */
-const MAX_CORRECTION_ROUNDS = 3;
+export const MAX_PHASE_ATTEMPTS = 3;
+
+/** Global rewinds one tick may take. One: after a rewound tail the phases have
+ *  had their say twice, and a second global failure means they cannot be made
+ *  to agree — the tick is rejected atomically rather than argued further. */
+export const MAX_GLOBAL_REWINDS = 1;
+
+/** The execution order, which is also the rewind order. */
+export const PHASE_ORDER = RESOLUTION_PHASES;
+
+const BUDGET = {
+  maxProviderCalls: MAX_PROVIDER_CALLS,
+  maxPhaseAttempts: MAX_PHASE_ATTEMPTS,
+};
+
 const CODE_TOOL_NAMES = new Set(CODE_TOOL_SPECS.map((t) => t.name));
-
-// ── Rule documents: loaded once. Instructional prose lives in
-//    src/engine/rules/*.md — editable without touching code. The build
-//    ships TS only, so fall back to the repo-relative path when the
-//    URL-relative read misses. ──
-function loadRuleFile(name: string, fallback: string): string {
-  const candidates = [
-    new URL(`../rules/${name}`, import.meta.url),
-    `${process.cwd()}/src/engine/rules/${name}`,
-  ];
-  for (const candidate of candidates) {
-    try {
-      return readFileSync(candidate, "utf8");
-    } catch {
-      // try next
-    }
-  }
-  console.warn(`[WorldActionEngine] ${name} not found; using embedded summary`);
-  return fallback;
-}
-
-/** The root contract, followed by its rule modules in the order the root
- *  names them. The root says "load these documents in this order"; this is
- *  the code that does. A module that is missing is a fault worth a warning,
- *  not a silent gap — the root's list and this list are one contract. */
-const RULE_MODULES = [
-  "world/action-adjudication.md",
-  "world/movement-and-position.md",
-  "world/character-changes.md",
-  "world/item-changes.md",
-  "world/scene-changes.md",
-  "world/perception.md",
-  "world/occurrences-and-dialogue.md",
-] as const;
-const RULES_DOC = [
-  loadRuleFile(
-    "world-action-resolution.md",
-    "Resolve all actions under strict causality, state constraints, locality, engine-owned timing, conservation, roll-first assessment, concurrency consistency, minimal change, and fact/perception separation."
-  ),
-  ...RULE_MODULES.map((name) => loadRuleFile(name, "")),
-]
-  .filter((doc) => doc.trim().length > 0)
-  .join("\n\n");
-const SANITY_RULES_DOC = loadRuleFile(
-  "sanity-check.md",
-  "Sanity checks are involuntary and rare. Declare one under an occurrence's `sanityChecks` naming a character who perceived a concrete horror, with the failure loss and the consequence they will carry. Code rolls it; a passed check costs nothing."
-);
-/** The turn budget is a code constant and a prompt sentence at once. The
- *  document names it with a placeholder so the two cannot drift: a model told
- *  it has four turns when the guard fires at three would spend the difference
- *  every tick, and nobody would see it in either place alone. */
-const SESSION_PROTOCOL = loadRuleFile(
-  "session-protocol.md",
-  "Ground the resolution with the deterministic tools where needed; finish with one turn calling both submit_actions and submit_effects, answering every worklist id."
-).replaceAll("{{MAX_ITERATIONS}}", String(MAX_ITERATIONS));
-
-const SYSTEM_PROMPT = `You are the World Action Engine of a tick-based Call of Cthulhu world
-simulation. You are the sole authority on what actually happens: characters
-submitted intent (ActionCommands). You decide how long each action should
-take, how hard it is, and what it does to the world — for ALL new and
-in-flight actions on one shared world snapshot. You do not decide how much
-time passed, whether an action is finished, or whether a check was passed:
-code owns the clock and the dice, and hands you their results.
-
-${RULES_DOC}
-
-${SANITY_RULES_DOC}
-
-${SESSION_PROTOCOL}
-
-## Skill catalog
-
-What each declarable skill covers — the boundary knowledge for deciding
-whether to check the skill the actor declared at all. An action outside a
-skill's coverage simply gets no \`check\`: the skill grants nothing and the
-action is settled on its own merits. Never raise the bar instead. Declared
-skills additionally get full guidance in the request context.
-
-${buildSkillCatalogPrompt()}`;
 
 export interface WorldActionEngineDeps {
   dgsm: DynamicGameStateManager;
   codeTools: CodeToolRegistry;
 }
 
-/**
- * One id per action, and it is the one the schema addresses.
- *
- * `actionId` is `action_<commandId>`, and the Trigger section lists exactly
- * those. Printing the raw `commandId` alongside puts a SECOND id for the same
- * action in the same prompt — and the model reasonably echoes the one printed
- * next to the action it is resolving, which then fails lookup as "unknown
- * actionId" and burns every correction round on a mismatch it cannot see. So the
- * commandId never reaches the prompt.
- */
-/** The roll code made, as the Engine reads it. Named for what it is — dice —
- *  and not for what it decides: rendered as `checkOutcome`, the Engine kept
- *  echoing it back as the ending's `outcome`, the one field an ending with a
- *  check must not carry (a third of checked solo endings in a measured run).
- *  `met` stays because it is the one bit the Engine cannot safely derive
- *  itself — the success ladder and the tie-to-defender rule live in code.
- *  `fumble` goes: it is `actor.successLevel === "fumble"`, already visible.
- *  Roll ids are bookkeeping and mean nothing to the reader. */
-function diceRollForPrompt(check: ResolvedCheck) {
-  const strip = ({ rollId: _, ...record }: SkillRollRecord) => record;
-  return {
-    actor: strip(check.actor),
-    requiredLevel: check.requiredLevel,
-    ...(check.defenders
-      ? {
-          defenders: check.defenders.map((d) => ({
-            characterId: d.characterId,
-            record: strip(d.record),
-            actorWon: d.actorWon,
-          })),
-        }
-      : {}),
-    met: check.met,
-  };
-}
-
-function commandForPrompt(command: ActionCommand): Record<string, unknown> {
-  const { commandId: _commandId, ...rest } = command;
-  return rest;
-}
-
-/**
- * The context split at the point where its stability changes.
- *
- * Prompt caching matches a prefix from the first byte of the request, so the
- * order here is the whole game. `## Tick` is 114 characters — a tick id and a
- * timestamp — and it used to sit at offset 360 of a 116,000-character prompt.
- * Everything behind it (all 53 scenes, all 295 items: 94% of the request) was
- * byte-identical from tick to tick and got thrown away anyway, because those
- * 114 characters changed. Measured cross-tick common prefix: 0.3%.
- *
- * So the world description goes FIRST and everything about this particular
- * minute goes LAST. Since the two-tier context (M3) the stable half is the
- * world SKELETON — macro locations + geography as a compact adjacency list,
- * no prose — which only changes when an edge is revealed or authored anew;
- * blocked state was moved OUT of it into the volatile Blocked Connections
- * section precisely so a felled tree does not invalidate the cached prefix.
- * The detailed place snapshots and the item list depend on which places this
- * tick's actions involve, so they live in the volatile half with the
- * characters (whom the stamina subsystem moves on most ticks anyway).
- *
- * The model reads titled JSON sections, so nothing about the resolution
- * depends on this order.
- */
-/**
- * The skeleton graph in the module's own authoring shape: each node is its
- * prose description plus a `connections:` reference line — the same
- * description-and-references format as the v2 place files and the Tier-2
- * snapshots, so the Engine reads one format everywhere. Junction/road prose
- * is the authored text and already cites its `[connection.*]` ids; the reference
- * line resolves each id to its (lifted) target and travel time.
- */
-export function renderWorldGraph(graph: WorldGraph): string {
-  const edgesByFrom = new Map<string, WorldGraph["edges"]>();
-  for (const edge of graph.edges) {
-    const list = edgesByFrom.get(edge.from);
-    if (list) list.push(edge);
-    else edgesByFrom.set(edge.from, [edge]);
-  }
-  const renderEdge = (edge: WorldGraph["edges"][number]): string =>
-    [
-      `[${edge.connectionId}] -> ${edge.to}`,
-      ...(edge.travelTimeMinutes !== undefined
-        ? [`${edge.travelTimeMinutes}min`]
-        : []),
-      ...(edge.hidden ? ["(hidden)"] : []),
-    ].join(" ");
-  const nodeLines = (
-    id: string,
-    name: string,
-    description: string | undefined
-  ): string[] => {
-    const prose = description?.replace(/\s*\n\s*/g, " ").trim();
-    const head = `- ${id} (${name})${prose ? `: ${prose}` : ""}`;
-    const edges = edgesByFrom.get(id);
-    if (!edges) return [head];
-    return [head, `  connections: ${edges.map(renderEdge).join("; ")}`];
-  };
-  const lines: string[] = [];
-  for (const kind of ["scene", "road"] as const) {
-    const nodes = graph.places.filter((p) => p.kind === kind);
-    if (nodes.length === 0) continue;
-    lines.push(kind === "scene" ? "Outdoor node scenes:" : "Roads:");
-    for (const node of nodes) {
-      lines.push(...nodeLines(node.id, node.name, node.description));
-    }
-  }
-  return lines.join("\n");
-}
-
-export function renderContextSegments(context: EngineResolutionContext): {
-  stable: string;
-  volatile: string;
-} {
-  const section = (title: string, data: unknown): string =>
-    `## ${title}\n${JSON.stringify(data, null, 1)}`;
-
-  const newCommands = context.actions.newCommands.map((command) => {
-    const exits = exitsFromHere(context, command.actorId);
-    return {
-      actionId: actionIdForCommand(command.commandId),
-      ...commandForPrompt(command),
-      ...(exits ? { exitsFromHere: exits } : {}),
-    };
-  });
-  const activeActions = context.actions.activeActions.map((action) => {
-    const { id, command, checkOutcome, ...rest } = action;
-    return {
-      actionId: id,
-      ...rest,
-      ...(checkOutcome ? { diceRoll: diceRollForPrompt(checkOutcome) } : {}),
-      command: commandForPrompt(command),
-    };
-  });
-
-  // Full guidance for exactly the skills declared this tick (deduplicated):
-  // duration guidance and outcome shading ground the assessment.
-  const declaredSkills = [
-    ...new Set(
-      [
-        ...context.actions.newCommands,
-        ...context.actions.activeActions.map((a) => a.command),
-      ]
-        .map((c) => c.declaredSkillId)
-        .filter((s): s is string => s !== undefined)
-    ),
-  ];
-  const skillGuidance = declaredSkills
-    .map((skillId) => renderSkillGuidance(skillId))
-    .filter((g): g is string => g !== null);
-
-  // The trigger section names the moment each action is in rather than leaving
-  // the Engine to look up `status` in another section and infer it. That
-  // inference was the single largest source of rejected submissions. Computed
-  // by the same function the validator judges against, so the two cannot drift.
-  const worklist = resolutionWorklist(context);
-
-  const stable = [
-    "# Tick Resolution Request",
-    section("World Invariants", context.rules.worldInvariants),
-    `## World Graph (skeleton: macro locations + geography, each as description + connection references; interior scenes appear only under Detailed Places; the [connectionId] references are what connectionBlock/connectionHidden take)\n${renderWorldGraph(context.state.graph)}`,
-  ].join("\n\n");
-
-  const volatile = [
-    section(
-      "Blocked Connections (exact passages only, world-wide, for narrating consequences — a place named here is NOT itself closed, only the one edge between the two named places is; every edge not listed is open; whether a stated route can be walked is code's call, see exitsFromHere on each command)",
-      context.state.blockedEdges
-    ),
-    section(
-      "Detailed Places (the places involved this tick; hidden items/exits are invisible to characters until revealed)",
-      context.state.places
-    ),
-    section(
-      "Vehicles (movable interiors: boarding = a `position` change into interiorSceneId; driving = movement.vehicleId with the route; the vehicle stands at `position` until driven)",
-      context.state.vehicles ?? []
-    ),
-    section(
-      "Items (at the involved places and in the actors' hands)",
-      context.state.items
-    ),
-    section("Characters", context.state.characters),
-    section("Trigger", {
-      ...context.trigger,
-      resolve: {
-        ...worklist,
-        note: "`starting` and `ending` are the ids you must answer, and they are the only ones. `stillRunning` is FYI: those actions keep running by themselves and take no entry. Every id under `starting` gets a `starting` entry. Every id under `ending` is answered ONE of two ways: (a) an `ending` entry with an `outcome` paragraph, cited by at least one occurrence — for anything that was done; or (b) no ending entry, just one occurrence with speech true citing it — for an action that was nothing but words said. `endingWithUtterance` lists the ending actions whose command carries an `utterance`: for these, code attaches the words to your speech row verbatim — never restate them, write in `content` what the words were NOT. If such an action also did something with its hands, that is a second row with speech false, and then it takes an ending entry too. `startingWithUtterance` lists starting actions whose command carries an `utterance`: those words are NOT said yet — code clocks the action at one minute and it returns under `endingWithUtterance` next tick, which is when its speech row is written. Never write a speech row for a `starting` id. A `diceRoll` on an action row is what code rolled, and it is INPUT — write the outcome consistent with it, never contradict it. `startingWithoutSkill` lists actors who declared no skill: those actions take no `check` at all, however obviously one seems called for — the actor chose to stake nothing, and it is settled on its own merits. `replaced` lists endings the actor themselves cut short by issuing a new command this tick (the one in `starting` with a matching `replacesActionId`): account for what was done up to this minute and stop there — never narrate how it would have finished, and never let it and its successor both happen in full.",
-      },
-    }),
-    section("Tick", context.tick),
-    section(
-      "New Commands (this tick — `utterance` is what the actor will have said when the action ends: it is spoken next minute, not now, and gets no occurrence yet; `proposedDurationTicks` is advisory)",
-      newCommands
-    ),
-    section("Active Actions (in flight)", activeActions),
-    section("Objective Events (already effective)", context.events),
-    ...(skillGuidance.length > 0
-      ? [`## Declared Skill Guidance\n\n${skillGuidance.join("\n\n---\n\n")}`]
-      : []),
-    // The old closing — "consult tools as needed, then submit" — read as
-    // "first a tool turn, then the submission". About one session in fourteen
-    // took it literally: a `damageRoll("0")` that rolled nothing, and then a
-    // submission written with that turn in its history, which arrived
-    // malformed three times out of four. Nearly every tick has no damage to
-    // roll, so the first call is the submission.
-    "Resolve now. Unless a blow lands this tick, your FIRST and ONLY turn is submit_actions and submit_effects together — both calls, one turn. Give every `resolve.starting` id a starting entry. Answer every `resolve.ending` id either with an ending entry plus a speech-false occurrence, or, for pure talk, with a speech-true occurrence and no ending entry. No speech row for a `starting` id: its words come next minute. Call damageRoll only for damage that is actually being dealt, with a real formula; there is nothing else to look up.",
-  ].join("\n\n");
-
-  return { stable: `${stable}\n\n`, volatile };
-}
-
-/** The whole user prompt as one string. */
-export function renderContext(context: EngineResolutionContext): string {
-  const { stable, volatile } = renderContextSegments(context);
-  return stable + volatile;
-}
+// ==================== Results ====================
 
 /** The session produced nothing usable. The tick applies no transition, no
  *  delta and no occurrence — actions keep the state they had. */
@@ -397,328 +173,562 @@ function unusable(
 }
 
 /**
- * What the model is told when its own arguments did not survive the wire. The
- * alternative was worse than useless: an unreadable call reached the validator
- * as an EMPTY submission, which answered back "you did not answer any of these
- * seven actions" — seven corrections for a mistake the model had not made,
- * pointing it away from the only thing wrong (the JSON it wrote).
+ * The phase's submission arrived in the same turn as other calls.
+ *
+ * The one refusal the prompts module has no renderer for, because it is about
+ * the turn rather than the array: a submission is a turn of its own. In the
+ * endings phase the other calls are usually the dice, and an outcome written
+ * in the same turn as the roll it depends on was written before the roll came
+ * back — so the rolls are executed and answered (the model has the numbers
+ * now) and the submission is refused with that reason. Anywhere else the
+ * companions are tools this phase does not carry, answered as such.
  */
-function renderUnreadable(toolName: string, rawLength: number): string {
+function renderSubmittedBesideOthers(
+  phase: ResolutionPhase,
+  others: readonly string[],
+  rolled: boolean
+): string {
+  const tool = `\`${PHASE_TOOL_NAMES[phase]}\``;
+  const field = `\`${PHASE_FIELDS[phase]}\``;
+  const beside = others.map((name) => `\`${name}\``).join(", ");
   return [
-    `REJECTED. Your \`${toolName}\` arguments (${rawLength} characters) did not arrive as readable JSON — nothing of what you wrote could be applied.`,
+    `Not applied: ${tool} arrived in the same turn as ${beside}. A submission is a turn of its own — this phase's tool once, and nothing else.`,
     "",
-    "Send the same call again. Keep it well-formed: no trailing commas, no raw",
-    "newlines inside strings, and every bracket closed. If it was long, say the",
-    "same thing more briefly rather than risking the same break.",
+    rolled
+      ? `An outcome written in the same turn as the roll it depends on was written before the roll came back. The roll results are in this turn's other results: read them, then call ${tool} alone, with the complete ${field} array.`
+      : `Call ${tool} again, alone, with the complete ${field} array.`,
   ].join("\n");
 }
 
-/**
- * An argument object with no keys at all. Legal JSON, so it slipped past the
- * unreadable-args check and into the validator, which answered "you did not
- * answer any of these seven actions" — the same misleading correction the
- * unreadable case used to produce, for a call that in truth carried nothing.
- * Measured: DeepSeek sends `{}` most often on the turn right after a
- * rejection, and two ticks died in five-round streaks of it.
- */
-function renderEmpty(toolName: string): string {
-  return [
-    `REJECTED. Your \`${toolName}\` call arrived with NO arguments — an empty object, every field missing.`,
-    "",
-    COMPLETE_SUBMISSION,
-  ].join("\n");
-}
-
-/** The same tool twice in one turn. Merging two copies would drop one of them
- *  without saying so, and there is no basis for preferring either. */
-function renderDuplicate(toolName: string): string {
-  return [
-    `REJECTED. \`${toolName}\` was called more than once in one turn. Each of the two tools is called exactly once per turn.`,
-    "",
-    COMPLETE_SUBMISSION,
-  ].join("\n");
-}
-
-/** What a complete submission is, in one sentence, wherever one is demanded. */
-const COMPLETE_SUBMISSION =
-  "Send the complete resolution as ONE turn containing both calls: `submit_actions` with `starting` and `ending`, `submit_effects` with `occurrences`, `characterChanges`, `sceneChanges` and `itemChanges`. Every starting id belongs in `starting`; every ending id is answered by an ending entry plus a speech-false occurrence, or by a speech-true occurrence alone when it was pure talk; no speech row for a starting id. Use `[]` for every empty array.";
-
-/** True when the provider handed back readable JSON that holds nothing. */
-function hasNoArgs(call: { args: Record<string, unknown> }): boolean {
+/** True when the provider handed back readable JSON that holds nothing. An
+ *  empty object and an unreadable one are different events (see
+ *  `ToolCallRecord.unreadableArgs`) and get different answers. */
+function hasNoArgs(call: ToolCallRecord): boolean {
   return Object.keys(call.args).length === 0;
 }
 
-/** Addressed errors plus the contract for a complete corrective submission.
- *
- *  `missing` names the submission tool that was never called this turn. An
- *  uncalled tool reads as empty lists, which is legitimate on a tick that has
- *  nothing to put in them — so it is not an error by itself, and it is only
- *  worth saying once the resolution turned out to be invalid. Said then, it
- *  usually IS the error: "every ending must be cited by an occurrence" is
- *  unanswerable feedback when the model never sent an occurrence list. */
-function renderErrors(
-  errors: ResolutionError[],
-  missing: string[] = []
-): string {
-  return [
-    "REJECTED. Correct these errors and send the COMPLETE resolution again, both tools in one turn:",
-    ...errors.map((e) => `- ${formatErrorTarget(e.target)} — ${e.message}`),
-    ...(missing.length > 0
-      ? [
-          "",
-          `Note: you did not call ${missing.join(" or ")} this turn, so ${
-            missing.length > 1 ? "those lists were" : "its lists were"
-          } read as empty. If that was not what you meant, the errors above are the consequence.`,
-        ]
-      : []),
-    "",
-    "Send all six arrays, using `[]` for empty arrays. Keep every correct element unchanged, correct or omit the invalid elements, and include every action the trigger requires exactly once in the list where it belongs.",
-  ].join("\n");
+// ==================== The provider seam ====================
+
+/** One system prompt per phase, rendered once. The text is a pure function of
+ *  the phase and the budget constants, and keeping the string byte-identical
+ *  across calls is what lets the provider cache it. */
+const SYSTEM_PROMPTS = new Map<ResolutionPhase, string>();
+function systemPromptFor(phase: ResolutionPhase): string {
+  let prompt = SYSTEM_PROMPTS.get(phase);
+  if (prompt === undefined) {
+    prompt = renderPhaseSystemPrompt(phase, BUDGET);
+    SYSTEM_PROMPTS.set(phase, prompt);
+  }
+  return prompt;
 }
+
+/**
+ * ONE provider call for one phase — the single seam every request of the
+ * runner goes through, and the one place the request envelope is decided.
+ *
+ * `submissionTool` is passed in rather than looked up so a caller can offer a
+ * different copy of the same tool: `callPhaseModelWithFallback` wraps this
+ * function and, on a classified grammar-compilation refusal, calls it again
+ * with `PHASE_TOOLS_NON_STRICT[phase]` and the same messages. Nothing about
+ * the envelope changes with the copy — the two copies share a name, so the
+ * forced `toolChoice` and every downstream filter are the same either way.
+ *
+ * The envelope: the phase's own system prompt (cached); the phase tool alone,
+ * plus the dice in the endings phase; `toolChoice` naming the phase tool
+ * wherever it is the only tool — the structured-output case — and `"any"` in
+ * endings, where the dice must remain callable. Parallel calls are allowed
+ * only in endings, so every roll for the tick arrives in one turn instead of
+ * one full-world round trip each; elsewhere a turn is one submission, and a
+ * provider that ignores the flag is trimmed to its first call by the policy.
+ */
+export async function callPhaseModel(
+  phase: ResolutionPhase,
+  submissionTool: ToolSpec,
+  messages: ModelMessage[]
+): Promise<ToolCallResult> {
+  const endings = phase === "endings";
+  return generateToolCalls({
+    customSystemPrompt: systemPromptFor(phase),
+    cacheSystemPrompt: true,
+    messages,
+    tools: endings ? [submissionTool, ...CODE_TOOL_SPECS] : [submissionTool],
+    toolChoice: endings ? "any" : { name: submissionTool.name },
+    allowParallelCalls: endings,
+    modelClass: ModelClass.MEDIUM,
+    operation: `world-action-engine:${phase}`,
+  });
+}
+
+/**
+ * The phase's call, with the ONE fallback the plan allows (D8): a provider
+ * that refuses to compile the strict tool's grammar is answered by asking the
+ * same question again with the same schema, unstrict.
+ *
+ * That refusal is the only error worth answering differently. It arrives
+ * before a single token is generated, it is a property of the schema rather
+ * than of the moment, and it will arrive again for every tick of this process
+ * — so it is warned about once, remembered by fingerprint (vendor + model +
+ * tool + schema), and skipped over from then on. Every other failure — a rate
+ * limit, an outage, a timeout, an unusable answer — is left exactly where the
+ * runner already puts it: rethrown, and the tick applies nothing. Downgrading
+ * on one of those would trade the grammar away for a blip.
+ *
+ * What is given up is structure enforcement and nothing else. The answer goes
+ * through the same `validatePhase` gate either way; a payload the model
+ * serialized into a JSON string is read back by the validator's own
+ * normalization, and a payload that is genuinely wrong is rejected as any
+ * other wrong payload is.
+ *
+ * Both the failed strict call and its retry count against the shared ceiling —
+ * every invocation does — so a rejection that arrives on the last call of the
+ * budget is not retried at all.
+ */
+async function callPhaseModelWithFallback(
+  session: Session,
+  phase: ResolutionPhase,
+  messages: ModelMessage[]
+): Promise<ToolCallResult> {
+  const { provider, model } = engineModelIdentity();
+  const strictTool = PHASE_TOOLS[phase];
+  const fingerprint = schemaFingerprint(provider, model, strictTool);
+  const downgraded = isStrictDowngraded(fingerprint);
+
+  // One line a tick, not one a phase: after the first refusal every later
+  // tick would otherwise repeat the same sentence six times over.
+  if (downgraded && !session.noticedDowngrade) {
+    session.noticedDowngrade = true;
+    console.log(
+      `[WorldActionEngine] tick ${session.context.tick.tickId}: offering ${strictTool.name} without strict — ${provider}/${model} refused to compile it earlier in this process`
+    );
+  }
+
+  session.calls += 1;
+  try {
+    return await callPhaseModel(
+      phase,
+      downgraded ? PHASE_TOOLS_NON_STRICT[phase] : strictTool,
+      messages
+    );
+  } catch (err) {
+    // Already unstrict, or an error that says nothing about the schema: not
+    // ours to answer. The runner's model-error path takes it from here.
+    if (downgraded || !isStrictSchemaRejection(err)) throw err;
+
+    const reason = err instanceof Error ? err.message : String(err);
+    console.warn(
+      `[WorldActionEngine] strict schema for ${strictTool.name} rejected by ${provider}/${model} (${fingerprint.slice(0, 8)}): ${reason} — retrying this phase once without strict; downgrade cached for this process`
+    );
+    rememberStrictDowngrade(fingerprint, {
+      toolName: strictTool.name,
+      reason,
+    });
+
+    if (session.calls >= MAX_PROVIDER_CALLS) {
+      // The retry is a provider call like any other and there is none left.
+      // The downgrade still stands: the next tick opens unstrict and pays
+      // nothing for what was learned here.
+      throw err;
+    }
+    session.calls += 1;
+    return await callPhaseModel(phase, PHASE_TOOLS_NON_STRICT[phase], messages);
+  }
+}
+
+// ==================== Session state ====================
+
+/** Everything one tick's resolution carries across its phases. */
+interface Session {
+  context: EngineResolutionContext;
+  deps: WorldActionEngineDeps;
+  /** Accepted output, phase by phase. A key is absent until its phase's
+   *  validator accepted it, and a rewind deletes it again. */
+  draft: AcceptedResolutionDraft;
+  /** Every `generateToolCalls` invocation so far, against the ceiling. */
+  calls: number;
+  rewinds: number;
+  /** Dice records, drained out of the registry after every turn that rolled
+   *  and kept here for the whole tick — a later phase's correction, or the
+   *  tick's failure, must not lose the roll that was made. */
+  invocations: CodeToolInvocation[];
+  /** Whether this tick has already said out loud that it is offering a
+   *  downgraded tool. The refusal is warned about once, in the process that
+   *  met it; every later tick says so once and quietly. */
+  noticedDowngrade: boolean;
+}
+
+/** Segments rendered once per tick: the context is phase-neutral, so all six
+ *  requests carry the same two cached blocks. */
+type ContextSegments = ReturnType<typeof renderContextSegments>;
+
+/** The draft key a phase's accepted array is stored under. `PHASE_FIELDS` is
+ *  typed `Record<ResolutionPhase, string>`, so the one cast lives here. */
+function draftKey(phase: ResolutionPhase): keyof AcceptedResolutionDraft {
+  return PHASE_FIELDS[phase] as keyof AcceptedResolutionDraft;
+}
+
+/** Discard the phase and every phase after it; earlier phases stay accepted. */
+function discardFrom(
+  draft: AcceptedResolutionDraft,
+  phase: ResolutionPhase
+): void {
+  for (const later of RESOLUTION_PHASES.slice(phaseIndex(phase))) {
+    delete draft[draftKey(later)];
+  }
+}
+
+type PhaseOutcome =
+  | { accepted: true }
+  | { accepted: false; failed: WorldActionEngineResult };
+
+// ==================== The runner ====================
 
 export async function resolveTick(
   context: EngineResolutionContext,
   deps: WorldActionEngineDeps
 ): Promise<WorldActionEngineResult> {
+  const session: Session = {
+    context,
+    deps,
+    draft: {},
+    calls: 0,
+    rewinds: 0,
+    invocations: [],
+    noticedDowngrade: false,
+  };
+  const segments = renderContextSegments(context);
+  const tickId = context.tick.tickId;
+
+  let from: ResolutionPhase = RESOLUTION_PHASES[0];
+  let globalErrors: ResolutionError[] | undefined;
+
+  for (;;) {
+    for (const phase of RESOLUTION_PHASES.slice(phaseIndex(from))) {
+      // The global gate's verdict goes to the FIRST request of the rewound
+      // phase only: it is why that phase is being decided again. The phases
+      // behind it are rerun because the draft they read changed, and they are
+      // told nothing — a fault that was not theirs is not theirs to fix.
+      const outcome = await runPhase(
+        session,
+        segments,
+        phase,
+        phase === from ? globalErrors : undefined
+      );
+      if (!outcome.accepted) return outcome.failed;
+    }
+
+    // Six accepted phases. The assembled draft is judged whole by the same
+    // gate as before — every phase-local check is a subset of it, and it is
+    // the only authority that lets a resolution reach the Applier.
+    const raw = assembleRawResolution(session.draft);
+    const errors = validateRawResolution(raw, context);
+    if (errors.length === 0) {
+      const finalized = finalizeResolution(raw, context);
+      return {
+        ok: true,
+        resolution: finalized.resolution,
+        movementInits: finalized.movementInits,
+        checkInits: finalized.checkInits,
+        codeToolInvocations: session.invocations,
+      };
+    }
+    if (session.rewinds >= MAX_GLOBAL_REWINDS) {
+      return unusable(
+        `${tickId}: still invalid after ${session.rewinds} global rewind(s), nothing applied`,
+        errors,
+        session.invocations
+      );
+    }
+    session.rewinds += 1;
+    from = rewindPhaseFor(errors, context);
+    discardFrom(session.draft, from);
+    globalErrors = errors;
+    console.warn(
+      `[WorldActionEngine] tick ${tickId}: assembled draft rejected by the global gate (${errors.length} error(s)); rewinding to phase ${from}, ${session.calls}/${MAX_PROVIDER_CALLS} calls spent`
+    );
+  }
+}
+
+/**
+ * One phase, start to acceptance or to the tick's failure.
+ *
+ * Fresh messages: the phase is its own conversation, opened with the two
+ * cached context blocks and this phase's instruction. Within the phase, dice
+ * turns and corrections continue that conversation; the accepted upstream
+ * draft travels inside the instruction as read-only JSON, never as history.
+ */
+async function runPhase(
+  session: Session,
+  segments: ContextSegments,
+  phase: ResolutionPhase,
+  globalErrors: ResolutionError[] | undefined
+): Promise<PhaseOutcome> {
+  const { context } = session;
+  const tickId = context.tick.tickId;
+  // Which copy of the phase's tool a request offers is the fallback's
+  // business; the NAME is the same either way, and the name is all the runner
+  // needs to tell this phase's submission from anything else in a turn.
+  const toolName = PHASE_TOOL_NAMES[phase];
+  const fail = (failed: WorldActionEngineResult): PhaseOutcome => ({
+    accepted: false,
+    failed,
+  });
+
   // Two breakpoints on the opening turn, because it is reused on two
-  // different timescales:
-  //   - after the world description: read by the NEXT tick, whose world is
-  //     usually the same one.
-  //   - after the whole turn: read by every later round of THIS session. A
-  //     tick that needs a correction round or a tool lookup re-sends this same
-  //     116k-character turn verbatim, and used to re-pay for it in full.
-  // The growing tail (assistant turns + tool results) is left uncached: it is
-  // ~1.5k characters a round against a 116k prefix, and the tool-result path
-  // carries no cacheControl field anyway.
-  const { stable, volatile } = renderContextSegments(context);
+  // different timescales: after the world description, read by the NEXT tick,
+  // whose world is usually the same one; and after the volatile half, read by
+  // every later request of THIS tick — five more phases and every correction
+  // re-send the same context verbatim. The instruction that follows is what
+  // differs per phase, and the growing tail (assistant turns + tool results)
+  // is left uncached.
   const messages: ModelMessage[] = [
     {
       role: "user",
       content: [
-        { kind: "text", text: stable, cacheControl: true },
-        { kind: "text", text: volatile, cacheControl: true },
+        { kind: "text", text: segments.stable, cacheControl: true },
+        { kind: "text", text: segments.volatile, cacheControl: true },
+        {
+          kind: "text",
+          text: renderPhaseInstruction(
+            phase,
+            context,
+            session.draft,
+            globalErrors ? { globalErrors } : undefined
+          ),
+        },
       ],
     },
   ];
-  // ONE tool list for the whole session. Tools render ahead of the system
-  // prompt in the cached prefix, so keeping this array stable preserves the
-  // system-prompt cache across tool lookups and corrective submissions.
-  const tools = [...CODE_TOOL_SPECS, ...SUBMIT_TOOLS];
-  let awaitingCorrection = false;
-  let correctionRounds = 0;
+  let attempts = 0;
+  // Rows of a refused submission that passed on their own, in a merge phase.
+  // The next submission is merged over them before it is judged; an empty
+  // list means the next submission stands alone (first attempt, or a phase
+  // that is corrected by the complete array).
+  let retained: unknown[] = [];
 
-  for (let i = 0; i < MAX_ITERATIONS; i++) {
-    const correcting = awaitingCorrection;
-    let toolCalls: Awaited<ReturnType<typeof generateToolCalls>>["toolCalls"];
-    let assistantMessage: ModelMessage;
-    try {
-      const res = await generateToolCalls({
-        customSystemPrompt: SYSTEM_PROMPT,
-        cacheSystemPrompt: true,
-        messages,
-        tools,
-        // `any` throughout: a resolution is now two calls, and `tool_choice`
-        // can name only one tool. Naming `submit_actions` on a correction
-        // round would forbid the very tool that carries the occurrences. So
-        // the envelope guarantee on a correction round is that SOME tool must
-        // be called (`any`) plus the rejection text demanding both; the
-        // intake refuses anything that is not a submission.
-        toolChoice: "any",
-        // Required, not merely allowed: the pair must arrive in ONE turn or
-        // every tick pays a second full-world round trip. `disable_parallel_
-        // tool_use` would make the split strictly more expensive than the
-        // single tool it replaced.
-        allowParallelCalls: true,
-        modelClass: ModelClass.MEDIUM,
-        operation: "world-action-engine",
-      });
-      toolCalls = res.toolCalls;
-      assistantMessage = res.assistantMessage;
-    } catch (err) {
-      console.warn(
-        "[WorldActionEngine] LLM call failed:",
-        err instanceof Error ? err.message : err
-      );
-      return unusable(
-        `${context.tick.tickId}: model error, nothing applied`,
-        [],
-        deps.codeTools.drainInvocations()
+  for (;;) {
+    if (session.calls >= MAX_PROVIDER_CALLS) {
+      return fail(
+        unusable(
+          `${tickId}: call budget of ${MAX_PROVIDER_CALLS} exhausted in phase ${phase} after ${attempts} submission attempt(s), nothing applied`,
+          [],
+          session.invocations
+        )
       );
     }
-
-    const submits = toolCalls.filter((c) => SUBMIT_TOOL_NAMES.has(c.name));
-
-    // ---- a submission, first or corrected --------------------------------
-    // The resolution now arrives as a PAIR of calls in one turn — one strict
-    // (`submit_actions`), one not (`submit_effects`) — because no single
-    // schema covering all six lists compiles into a grammar. They are merged
-    // before anything looks at them, so everything downstream still sees one
-    // whole resolution, validated whole. There is no patch protocol: a
-    // corrected turn replaces the previous one entirely.
-    //
-    // A turn carrying only one of the two is still taken. Omitting a list has
-    // always meant "empty" (`normalizeList(undefined)` returns `[]`), and a
-    // tick of pure starts genuinely has no effects to report — so a lone
-    // `submit_actions` is a complete answer when the worklist asks for
-    // nothing else. When it is NOT complete, the validator says so on its own
-    // terms, and `renderErrors` names the tool that never came.
-    // `submits.length === toolCalls.length`, not `codeCalls.length === 0`: a
-    // turn holding a submission plus anything else — a lookup, a tool name
-    // that does not exist — falls through to the path that answers EVERY
-    // call. Every tool_use in a turn must be answered or the next request is
-    // rejected outright, and a submission taken here would leave its
-    // companion unanswered.
-    if (submits.length > 0 && submits.length === toolCalls.length) {
-      // Duplicates: the same tool twice in one turn. Neither copy can be
-      // trusted over the other, and merging them would silently drop one.
-      const duplicated = [...SUBMIT_TOOL_NAMES].filter(
-        (name) => submits.filter((c) => c.name === name).length > 1
+    let turn: ToolCallResult;
+    try {
+      turn = await callPhaseModelWithFallback(session, phase, messages);
+    } catch (err) {
+      console.warn(
+        `[WorldActionEngine] LLM call failed in phase ${phase}:`,
+        err instanceof Error ? err.message : err
       );
-      const unreadable = submits.filter((c) => c.unreadableArgs);
-      // Emptiness is judged over the TURN, not over each call. `{}` from
-      // `submit_effects` beside a real `submit_actions` says "nothing came of
-      // it", which is the same thing omitting the call says and is often
-      // true. Only a turn that carries no argument anywhere is the mistake
-      // this answer was written for.
-      const sentNothing = submits.every(hasNoArgs);
-      if (duplicated.length > 0 || unreadable.length > 0 || sentNothing) {
-        messages.push(assistantMessage);
-        messages.push({
-          role: "tool",
-          // Every tool_use in a turn must be answered or the next request is
-          // rejected outright — so each call gets a result, the faulty ones
-          // naming their fault and the rest told the turn is being resent.
-          results: submits.map((call) => ({
-            toolCallId: call.id,
-            content: duplicated.includes(call.name)
-              ? renderDuplicate(call.name)
-              : call.unreadableArgs
-                ? renderUnreadable(call.name, call.unreadableArgs.rawLength)
-                : sentNothing
-                  ? renderEmpty(call.name)
-                  : "Not applied: another call in this turn could not be read. Send the whole resolution again, both tools, in one turn.",
-          })),
-        });
-        continue;
-      }
-
-      const merged: Record<string, unknown> = {};
-      for (const call of submits) Object.assign(merged, call.args);
-      const missing = [...SUBMIT_TOOL_NAMES].filter(
-        (name) => !submits.some((c) => c.name === name)
+      return fail(
+        unusable(
+          `${tickId}: model error in phase ${phase} after ${attempts} submission attempt(s), nothing applied`,
+          [],
+          session.invocations
+        )
       );
+    }
+    const { toolCalls, assistantMessage } = turn;
+    const phaseCalls = toolCalls.filter((c) => c.name === toolName);
+    const others = toolCalls.filter((c) => c.name !== toolName);
 
-      const raw = normalizeRawResolution(
-        merged as unknown as RawTickResolution
-      );
-      const invocationsSoFar = deps.codeTools.drainInvocations();
-      const errors = validateRawResolution(raw, context);
-      requeueInvocations(deps.codeTools, invocationsSoFar);
-      if (errors.length === 0) {
-        const finalized = finalizeResolution(raw, context);
-        return {
-          ok: true,
-          resolution: finalized.resolution,
-          movementInits: finalized.movementInits,
-          checkInits: finalized.checkInits,
-          codeToolInvocations: deps.codeTools.drainInvocations(),
-        };
-      }
-      if (correcting) {
-        correctionRounds += 1;
-        if (correctionRounds >= MAX_CORRECTION_ROUNDS) {
-          return unusable(
-            `${context.tick.tickId}: still invalid after ${correctionRounds} correction round(s), nothing applied`,
-            errors,
-            deps.codeTools.drainInvocations()
-          );
-        }
-      }
-      awaitingCorrection = true;
+    // ---- (a) a dice turn: endings only, no submission in it ---------------
+    // Every call is answered — the rolls executed, anything else refused —
+    // and the phase continues. Not a submission attempt: the model has not
+    // yet said anything about the tick. The call budget bounds this.
+    if (
+      phaseCalls.length === 0 &&
+      phase === "endings" &&
+      toolCalls.some((c) => CODE_TOOL_NAMES.has(c.name))
+    ) {
       messages.push(assistantMessage);
-      const rejection = renderErrors(errors, missing);
       messages.push({
         role: "tool",
-        results: submits.map((call) => ({
-          toolCallId: call.id,
-          content: rejection,
-        })),
+        results: await answerNonPhaseCalls(session, phase, toolCalls),
       });
       continue;
     }
 
-    if (correcting) {
-      // A correction turn that brought no submission (or mixed one with a
-      // tool lookup). There is nothing to answer that would help — a lookup
-      // now is a turn spent on a resolution that has already been written —
-      // so the session ends here.
-      return unusable(
-        `${context.tick.tickId}: expected a corrected submission, got ${
-          toolCalls.length === 0
-            ? "none"
-            : toolCalls.map((c) => c.name).join(", ")
-        } — nothing applied`,
-        [],
-        deps.codeTools.drainInvocations()
+    // ---- (c) no submission and no dice: a wrong tool, or nothing ----------
+    // Counts as an attempt: the model was asked for this phase's array and
+    // answered with something else. A provider that returns no call at all
+    // is already a thrown error at the policy layer, so the empty case is a
+    // nudge for completeness rather than a path that runs.
+    if (phaseCalls.length === 0) {
+      attempts += 1;
+      if (toolCalls.length === 0) {
+        messages.push({
+          role: "user",
+          content: [
+            { kind: "text", text: renderPhaseWrongTool(phase, "(no call)") },
+          ],
+        });
+      } else {
+        messages.push(assistantMessage);
+        messages.push({
+          role: "tool",
+          results: await answerNonPhaseCalls(session, phase, toolCalls),
+        });
+      }
+      if (attempts >= MAX_PHASE_ATTEMPTS) {
+        return fail(
+          unusable(
+            `${tickId}: phase ${phase} still invalid after ${attempts} attempts, nothing applied`,
+            [],
+            session.invocations
+          )
+        );
+      }
+      continue;
+    }
+
+    // ---- (b) a turn carrying the submission -------------------------------
+    attempts += 1;
+    const call = phaseCalls[0];
+    // Structural refusals, judged before the validator sees anything. Each
+    // is its own event with its own answer: a duplicate cannot be merged
+    // without silently dropping a copy; a mixed turn cannot be taken without
+    // leaving its companions unanswered (an unanswered tool_use is a 400 on
+    // the next request); unreadable arguments reaching the validator as an
+    // EMPTY submission used to answer back "you did not answer any of these
+    // seven actions" — seven corrections for a mistake the model had not made;
+    // and `{}` is legal JSON that would produce the same misleading
+    // correction for a call that in truth carried nothing (measured: DeepSeek
+    // sends it most often on the turn right after a rejection, and two ticks
+    // died in five-round streaks of it).
+    const rolled =
+      phase === "endings" && others.some((c) => CODE_TOOL_NAMES.has(c.name));
+    const structural =
+      phaseCalls.length > 1
+        ? renderPhaseDuplicate(phase)
+        : others.length > 0
+          ? renderSubmittedBesideOthers(
+              phase,
+              others.map((c) => c.name),
+              rolled
+            )
+          : call.unreadableArgs
+            ? renderPhaseUnreadable(phase, call.unreadableArgs.rawLength)
+            : hasNoArgs(call)
+              ? renderPhaseEmpty(phase)
+              : undefined;
+    if (structural !== undefined) {
+      const companions = await answerNonPhaseCalls(session, phase, others);
+      const byId = new Map(companions.map((r) => [r.toolCallId, r]));
+      messages.push(assistantMessage);
+      messages.push({
+        role: "tool",
+        results: toolCalls.map(
+          (c) => byId.get(c.id) ?? { toolCallId: c.id, content: structural }
+        ),
+      });
+      if (attempts >= MAX_PHASE_ATTEMPTS) {
+        return fail(
+          unusable(
+            `${tickId}: phase ${phase} still invalid after ${attempts} attempts, nothing applied`,
+            [],
+            session.invocations
+          )
+        );
+      }
+      continue;
+    }
+
+    // The readable submission. The arguments are the model's and untrusted;
+    // the phase validator judges them against the world and the accepted
+    // draft, and only an empty verdict lets them into the draft. In a merge
+    // phase the rows code kept from the refused attempt come first, and the
+    // submission is read as the answer to what was still owed.
+    const submitted = phaseRows(phase, call.args);
+    const merged =
+      submitted !== undefined && retained.length > 0
+        ? mergeRows(phase, retained, submitted, context, session.draft)
+        : submitted;
+    const payload =
+      merged !== undefined ? { [PHASE_FIELDS[phase]]: merged } : call.args;
+    const errors = validatePhase(phase, payload, context, session.draft);
+    if (errors.length === 0) {
+      Object.assign(session.draft, {
+        [draftKey(phase)]: acceptedPhaseValue(phase, payload),
+      });
+      console.log(
+        `[WorldActionEngine] tick ${tickId} phase ${phase} accepted after ${attempts} attempt(s), ${session.calls}/${MAX_PROVIDER_CALLS} calls${retained.length ? ` (${retained.length} row(s) kept from the refused attempt, ${submitted?.length ?? 0} sent)` : ""}`
+      );
+      return { accepted: true };
+    }
+    let repair: Parameters<typeof renderPhaseRejection>[2] = {
+      context,
+      draft: session.draft,
+      previousPayload: call.args,
+      ...(MERGE_PHASES.has(phase) ? { retained } : {}),
+    };
+    if (MERGE_PHASES.has(phase) && merged !== undefined) {
+      const split = retainedRows(phase, merged, context, session.draft);
+      retained = split.retained;
+      repair = { ...repair, retained, faulty: split.faulty };
+    }
+    messages.push(assistantMessage);
+    messages.push({
+      role: "tool",
+      results: [
+        {
+          toolCallId: call.id,
+          content: renderPhaseRejection(phase, errors, repair),
+        },
+      ],
+    });
+    if (attempts >= MAX_PHASE_ATTEMPTS) {
+      return fail(
+        unusable(
+          `${tickId}: phase ${phase} still invalid after ${attempts} attempts, nothing applied`,
+          errors,
+          session.invocations
+        )
       );
     }
-
-    // Otherwise: answer every call; code tools execute, a mixed-in submit is
-    // rejected so the model resubmits it alone.
-    messages.push(assistantMessage);
-    const results: ToolResultRecord[] = [];
-    for (const call of toolCalls) {
-      if (SUBMIT_TOOL_NAMES.has(call.name)) {
-        results.push({
-          toolCallId: call.id,
-          content: `Error: ${call.name} was NOT accepted — a submission turn carries submit_actions and submit_effects and nothing else. Finish your damageRoll lookups first, then submit both together in one turn.`,
-        });
-        continue;
-      }
-      if (!CODE_TOOL_NAMES.has(call.name)) {
-        results.push({
-          toolCallId: call.id,
-          content: `Error: unknown tool "${call.name}".`,
-        });
-        continue;
-      }
-      try {
-        const actionId =
-          typeof call.args.actionId === "string"
-            ? call.args.actionId
-            : undefined;
-        const output = await deps.codeTools.run(call.name, call.args, {
-          dgsm: deps.dgsm,
-          ...(actionId !== undefined ? { actionId } : {}),
-        });
-        results.push({ toolCallId: call.id, content: JSON.stringify(output) });
-      } catch (err) {
-        results.push({
-          toolCallId: call.id,
-          content: `Error: ${err instanceof Error ? err.message : String(err)}`,
-        });
-      }
-    }
-    messages.push({ role: "tool", results });
   }
-
-  return unusable(
-    `${context.tick.tickId}: iteration cap reached without a valid resolution, nothing applied`,
-    [],
-    deps.codeTools.drainInvocations()
-  );
 }
 
-/** Put drained invocation records back so a later drain still includes them
- *  (used when a corrective retry keeps the session going). */
-function requeueInvocations(
-  registry: CodeToolRegistry,
-  invocations: WorldActionEngineResult["codeToolInvocations"]
-): void {
-  const target = (
-    registry as unknown as {
-      invocations: WorldActionEngineResult["codeToolInvocations"];
+/**
+ * Answer every call that is not this phase's submission. A code tool is
+ * executed only in the phase that offers it (endings); anywhere else, and for
+ * any name that is not a tool at all, the answer is the phase's refusal. The
+ * dice records are drained into the session straight away, so no later turn
+ * or phase can lose them.
+ */
+async function answerNonPhaseCalls(
+  session: Session,
+  phase: ResolutionPhase,
+  calls: readonly ToolCallRecord[]
+): Promise<ToolResultRecord[]> {
+  const { deps } = session;
+  const results: ToolResultRecord[] = [];
+  for (const call of calls) {
+    if (phase !== "endings" || !CODE_TOOL_NAMES.has(call.name)) {
+      results.push({
+        toolCallId: call.id,
+        content: renderPhaseWrongTool(phase, call.name),
+      });
+      continue;
     }
-  ).invocations;
-  target.unshift(...invocations);
+    try {
+      const actionId =
+        typeof call.args.actionId === "string" ? call.args.actionId : undefined;
+      const output = await deps.codeTools.run(call.name, call.args, {
+        dgsm: deps.dgsm,
+        ...(actionId !== undefined ? { actionId } : {}),
+      });
+      results.push({ toolCallId: call.id, content: JSON.stringify(output) });
+    } catch (err) {
+      results.push({
+        toolCallId: call.id,
+        content: `Error: ${err instanceof Error ? err.message : String(err)}`,
+      });
+    }
+  }
+  session.invocations.push(...deps.codeTools.drainInvocations());
+  return results;
 }

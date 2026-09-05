@@ -4,22 +4,49 @@ This module decides when an action is assessed, whether it needs a check, and
 what objective result it earns. It does not define movement or domain-specific
 state operations.
 
+## Action before speech
+
+A command is judged by what it ATTEMPTS, never by whether it carries words.
+Most commands say something while doing something: a hand on a wound and a
+"hold still", a lie told while sizing up the room, a question asked to pry
+loose a fact. The words are delivered by code when the action ends; what you
+judge is the attempt behind them.
+
+- A command whose whole content is its words — a greeting, a remark, an answer
+  that stakes nothing — is talk. It takes one minute and no check.
+- A command that also attempts something is an action. Clock the attempt, not
+  the sentence; check it where the declared skill covers it. The `utterance`
+  rides along and lands when the action ends.
+- Prying, deceiving, stalling, intimidating, persuading and reading a person
+  are attempts, not talk. Declared `Social`, they take a `check`, and the person
+  they work on is `opposedBy` with the skill they resist with. Whether the
+  probe got anything, whether the lie held, whether the bluff was read — that
+  is the outcome, and code's dice decide it, not your prose.
+- The same holds for every other declared skill: treating a wound, forcing a
+  lock, edging into a doorway unnoticed, reading a room. If success is in any
+  doubt, it is checked; if the declared skill does not cover the attempt, it is
+  not, and no substitute is named.
+
 ## Starting an action
 
-Every id listed by the trigger under `starting` gets exactly one `starting`
-entry and never an `ending` entry in the same tick. Even the shortest action
-takes at least one minute and resolves on a later tick.
+Every id listed by the trigger under `starting` gets exactly one entry in the
+starts phase, and is never also answered as an ending in the same tick. Even
+the shortest action takes at least one minute and resolves on a later tick.
 
 - Always write `actionId`.
 - For a non-movement action, write `resolvedDurationTicks` as a whole number of
-  minutes, at least 1. The actor's proposal is advisory. An action whose
-  command carries an `utterance` takes one minute — code sets it, so the value
-  is optional there.
+  minutes, at least 1. The actor's proposal is advisory. Talk — a command that
+  is nothing but its words — takes 1. A command that also attempts something
+  takes the attempt's minutes, whatever it says while doing it.
 - For movement, provide `movement` as described in
   `movement-and-position.md`; code derives its duration from the route.
-- When the declared skill applies and uncertainty warrants a roll, write a
-  `check` with `requiredLevel`: `regular`, `hard` or `extreme`.
-- When someone actively resists, list them in `opposedBy` with the skill they
+- When the declared skill covers the attempt and success is in doubt, write a
+  `check` with `requiredLevel`: `regular`, `hard` or `extreme`. A declared
+  skill is a stake the actor chose to put down: the default is to check it,
+  and to omit the check only when the attempt cannot fail or the skill does
+  not cover it.
+- When someone actively resists — the person being pried, deceived, stalled,
+  restrained or slipped past — list them in `opposedBy` with the skill they
   use to defend. `opposedBy` requires a `check`. Code rolls and compares both
   sides; ties go to the defender. The defense `skillId` must be one of the
   ability domains named in the skill reference, and never `Languages` — a
@@ -36,14 +63,20 @@ its speech row is written on that later tick.
 
 When an action is due or interrupted, decide the finished objective account.
 
-- A non-speech result gets one `ending` entry with `actionId` and `outcome`.
+- An action that produced something to account for is decided
+  `mode: "outcome"`, with its `actionId` and that `outcome`.
 - `outcome` is objective prose: what was achieved, where the attempt stopped,
   and what the actor can objectively know. It is not an enum, an explanation of
   your reasoning or a restatement of the dice.
-- A pure speech action has no `ending` entry. Its complete answer is a
-  `speech:true` occurrence as defined in `occurrences-and-dialogue.md`.
-- Every non-speech ending must be referenced by at least one non-speech
-  occurrence. The ending is the result account; the occurrence is what was
+- An action that was nothing but words said is decided `mode: "pure_speech"`
+  and writes no outcome at all. Its complete answer is the `speech:true`
+  occurrence defined in `occurrences-and-dialogue.md`. An action that carried
+  a `check` is never pure speech: it attempted something, the dice answered,
+  and what came of the attempt is its `outcome` — the probe that got nothing,
+  the lie that held or did not, the wound that closed or kept bleeding. Its
+  words still get their speech row.
+- Every `mode: "outcome"` decision must be referenced by at least one non-speech
+  occurrence. The decision is the result account; the occurrence is what was
   objectively perceptible.
 - Do not emit duration, a new difficulty, progress or status at ending time.
   Code already knows whether elapsed time makes it completed or interrupted.

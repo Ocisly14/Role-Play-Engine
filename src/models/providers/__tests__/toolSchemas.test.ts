@@ -1,17 +1,53 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import { CODE_TOOL_SPECS } from "../../../engine/resolution/worldDeltaSchema.js";
 import {
-  CODE_TOOL_SPECS,
-  submitActionsTool,
-  submitEffectsTool,
-} from "../../../engine/resolution/worldDeltaSchema.js";
+  PHASE_TOOLS,
+  PHASE_TOOLS_NON_STRICT,
+  RESOLUTION_PHASES,
+} from "../../../engine/resolution/worldResolutionStageSchemas.js";
 import { TOOL_CAPS, VALID_TOOLS } from "../../../roleSim/toolDispatcher.js";
 import { AGENT_TOOLS } from "../../../roleSim/tools/schemas.js";
+import { AnthropicAdapter } from "../anthropic.js";
 import {
   canBeStrict,
   toDeepSeekStrictSchema,
 } from "../deepseekStrictSchema.js";
 import { allPropertiesRequired } from "../openai.js";
 import type { ToolSpec } from "../types.js";
+
+/**
+ * The Anthropic SDK, stubbed down to the one thing these tests are about:
+ * what the adapter puts on the wire. No key, no network — `messages.stream`
+ * records its parameters and hands back an empty message.
+ */
+const { anthropicCalls } = vi.hoisted(() => ({
+  anthropicCalls: [] as Array<{ tools?: Array<Record<string, unknown>> }>,
+}));
+vi.mock("@anthropic-ai/sdk", () => ({
+  default: class {
+    messages = {
+      stream: (params: { tools?: Array<Record<string, unknown>> }) => {
+        anthropicCalls.push(params);
+        return {
+          finalMessage: async () => ({ content: [], usage: {} }),
+        };
+      },
+    };
+  },
+}));
+
+/** The tool definitions one request would carry to Anthropic. */
+async function anthropicWireTools(
+  tools: ToolSpec[]
+): Promise<Array<Record<string, unknown>>> {
+  anthropicCalls.length = 0;
+  await new AnthropicAdapter().chatWithTools({
+    modelName: "claude-sonnet-5",
+    messages: [{ role: "user", content: [{ kind: "text", text: "go" }] }],
+    tools,
+  });
+  return anthropicCalls[0].tools ?? [];
+}
 
 /**
  * `strict: true` is only expressible when every property is also required —
@@ -112,12 +148,46 @@ describe("strict across providers", () => {
     }
   });
 
-  it("keeps the strict flag on the half that compiles, and off the other", () => {
-    // The action half asks for a grammar: no `anyOf`, six optionals. The
-    // effect half carries all 19 operation branches, which Anthropic refuses
-    // to compile, so it stays unstrict and is held to its contract in code.
-    expect(submitActionsTool.strict).toBe(true);
-    expect(submitEffectsTool.strict).toBe(false);
+  it("asks for strict on every phase tool, and the Anthropic adapter forwards the flag as is", () => {
+    // The Anthropic adapter copies `strict: true` onto the wire definition
+    // whenever the spec carries it (anthropic.ts, `chatWithTools`) and adds
+    // no gate of its own — the flag on the spec IS what that API sees. Six
+    // phase tools, six grammars: the split exists so each compiles where the
+    // four effect lists together (19 `anyOf` branches) did not. The one
+    // legitimate way a phase reaches the wire unstrict is the fallback copy
+    // (`PHASE_TOOLS_NON_STRICT`), after a classified compilation refusal.
+    for (const phase of RESOLUTION_PHASES) {
+      expect(PHASE_TOOLS[phase].strict).toBe(true);
+    }
+  });
+
+  it("puts strict on the wire for every phase tool", async () => {
+    // Read off the request the adapter actually builds, not off the spec:
+    // `strict` is a property of the tool definition Anthropic compiles, and
+    // this is the only place in the codebase where that definition exists.
+    const wire = await anthropicWireTools(
+      RESOLUTION_PHASES.map((phase) => PHASE_TOOLS[phase])
+    );
+    expect(wire).toHaveLength(RESOLUTION_PHASES.length);
+    for (const tool of wire) expect(tool.strict).toBe(true);
+  });
+
+  it("sends the non-strict copies without the flag at all — the downgrade is expressible", async () => {
+    // The fallback (strictSchemaFallback.ts) answers a grammar-compilation
+    // refusal by offering the same schema under the same name with
+    // `strict: false`. It is only a fallback if that reaches the wire as a
+    // tool carrying NO strict flag — a `strict: false` sent to a vendor that
+    // reads the key at all would be a second thing to be wrong about.
+    const wire = await anthropicWireTools(
+      RESOLUTION_PHASES.map((phase) => PHASE_TOOLS_NON_STRICT[phase])
+    );
+    for (const [i, tool] of wire.entries()) {
+      expect(tool).not.toHaveProperty("strict");
+      // Same name, same schema: only the flag was given up.
+      const phase = RESOLUTION_PHASES[i];
+      expect(tool.name).toBe(PHASE_TOOLS[phase].name);
+      expect(tool.input_schema).toBe(PHASE_TOOLS[phase].inputSchema);
+    }
   });
 
   // The DeepSeek adapter sends EVERY tool strict, ignoring the flag, so this
@@ -128,16 +198,15 @@ describe("strict across providers", () => {
   //
   // Four rules, all of them learned from a rejection: every property required,
   // every object closed, no size keywords, and every node declaring a type —
-  // that last one is UNDOCUMENTED (a bare `{const: "hp"}` is what kept
-  // submit_effects out of strict mode, with an error that read like Anthropic's
-  // grammar-size refusal and was nothing of the kind).
-  // The engine's session is what actually goes strict on DeepSeek: both
-  // submission halves and the one code tool. The agent tools opt out — see
-  // the `noGrammar` block below — so holding them to a grammar's rules would
-  // be a false alarm on a schema nobody compiles.
+  // that last one is UNDOCUMENTED (a bare `{const: "hp"}` is what kept the
+  // character-change union out of strict mode, with an error that read like
+  // Anthropic's grammar-size refusal and was nothing of the kind).
+  // The engine's phases are what actually go strict on DeepSeek: the six
+  // phase tools and the one code tool. The agent tools opt out — see the
+  // `noGrammar` block below — so holding them to a grammar's rules would be
+  // a false alarm on a schema nobody compiles.
   const TOOLS_SENT_STRICT = [
-    submitActionsTool,
-    submitEffectsTool,
+    ...RESOLUTION_PHASES.map((phase) => PHASE_TOOLS[phase]),
     ...CODE_TOOL_SPECS,
   ];
 
@@ -160,8 +229,8 @@ describe("strict across providers", () => {
     // and bought nothing — their schemas are three optional strings deep and
     // have never produced a structural failure.
     for (const tool of AGENT_TOOLS) expect(tool.noGrammar).toBe(true);
-    // And the engine's tools must NOT carry it, or the half that most needs a
-    // closed union goes back to being the unconstrained one.
+    // And the engine's tools must NOT carry it, or the phase that most needs
+    // a closed union goes back to being the unconstrained one.
     for (const tool of TOOLS_SENT_STRICT)
       expect(tool.noGrammar).toBeUndefined();
   });
@@ -169,17 +238,38 @@ describe("strict across providers", () => {
   it("changes nothing about the schema the other two providers are sent", () => {
     // The derivation is a pure function of the shared table. If it ever
     // mutated in place, Anthropic would start receiving DeepSeek's shape.
-    const before = JSON.stringify(submitActionsTool.inputSchema);
-    toDeepSeekStrictSchema(submitActionsTool.inputSchema);
-    expect(JSON.stringify(submitActionsTool.inputSchema)).toBe(before);
+    const tool = PHASE_TOOLS.sceneChanges;
+    const before = JSON.stringify(tool.inputSchema);
+    toDeepSeekStrictSchema(tool.inputSchema);
+    expect(JSON.stringify(tool.inputSchema)).toBe(before);
   });
 
-  it("sends neither half strict to OpenAI, which demands every field required", () => {
-    // OpenAI's strict mode is narrower than Anthropic's. `submit_actions`
-    // asks for strict, but its optional nested fields mean the OpenAI adapter
-    // must drop the flag rather than 400 the request.
-    expect(allPropertiesRequired(submitActionsTool.inputSchema)).toBe(false);
-    expect(allPropertiesRequired(submitEffectsTool.inputSchema)).toBe(false);
+  it("lets OpenAI's all-required gate decide strict per phase — and it splits them", () => {
+    // OpenAI's strict mode is narrower than Anthropic's: every property must
+    // be required. Its adapter forwards `strict` only where
+    // `allPropertiesRequired` holds (openai.ts), so the six phases do NOT all
+    // go strict there, and nothing else decides it. The truth, phase by
+    // phase: an endings decision and a character-change row have no optional
+    // field anywhere — both decision branches are fully required, and so is
+    // every character operation — so those two are sent strict. The other
+    // four carry genuinely optional fields (a start's `check`, an item
+    // `set`'s five knobs, a scene condition's `featureId`, an occurrence's
+    // `content`) and are sent unstrict rather than 400ing.
+    expect(
+      Object.fromEntries(
+        RESOLUTION_PHASES.map((phase) => [
+          phase,
+          allPropertiesRequired(PHASE_TOOLS[phase].inputSchema),
+        ])
+      )
+    ).toEqual({
+      endings: true,
+      starts: false,
+      characterChanges: true,
+      itemChanges: false,
+      sceneChanges: false,
+      occurrences: false,
+    });
   });
 
   it("allPropertiesRequired looks into nested objects and arrays", () => {

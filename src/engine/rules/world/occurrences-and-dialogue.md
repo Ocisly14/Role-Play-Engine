@@ -57,9 +57,10 @@ A `speech:true` occurrence cites exactly ONE action, and only one listed
 under `endingWithUtterance` this tick: its command carries the words and it
 ends now. Two people speaking are two rows, each with its own `targetIds` and
 `perceivers` — code places a row where its cited actor stands. A starting
-action's utterance is not delivered yet and takes no speech row; code clocks a
-spoken line at one minute, so it returns under `endingWithUtterance` next
-tick.
+action's utterance is not delivered yet and takes no speech row; it is spoken
+when the action ends — after one minute for plain talk, after the attempt's
+own minutes for a command that also does something — and returns under
+`endingWithUtterance` on that tick.
 
 - Code copies that utterance verbatim onto the occurrence. Never restate,
   summarize, translate or quote it in `content`.
@@ -70,16 +71,17 @@ tick.
   no placeable source. Target and perceiver are not interchangeable.
 - `content` is optional and, when present, describes only what lies outside the
   words: delivery, posture, accompanying gesture or another objective detail.
-- A pure speech action is answered entirely by its `speech:true` occurrence
-  and has no `ending` entry or outcome prose.
+- A pure speech action is answered entirely by its `speech:true` occurrence.
+  It was decided `mode: "pure_speech"` in the endings phase and so has no
+  outcome prose anywhere.
 
 If a command that both speaks and changes the world—handing over a cup while
 speaking, for example—ENDS this tick, emit a speech occurrence for the words
-and a separate `speech:false` occurrence for the physical result. The action
-then also needs its non-speech ending outcome; an ending entry cited only by a
-speech row is rejected. While it is still under `starting`, the words are not
-delivered and no speech row exists; a `speech:false` row may record the
-visible attempt.
+and a separate `speech:false` occurrence for the physical result. Such an
+action is a `mode: "outcome"` decision, never a pure-speech one, and an
+outcome decision cited only by a speech row is rejected. While it is still
+under `starting`, the words are not delivered and no speech row exists; a
+`speech:false` row may record the visible attempt.
 
 ## Other characters retain agency
 

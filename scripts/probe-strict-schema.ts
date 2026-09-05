@@ -2,48 +2,80 @@
 //
 // scripts/probe-strict-schema.ts
 //
-// Which shape of the Engine's submission tool will Anthropic compile?
+// Which shape of the Engine's submission will Anthropic compile a grammar for?
 //
-// `submit_resolution` is `strict: false` (worldDeltaSchema.ts) because a live
-// Sonnet 5 run got back, before any generation:
+// A resolution is submitted in SIX phases, one tool per phase
+// (`worldResolutionStageSchemas.ts`): endings → starts → characterChanges →
+// itemChanges → sceneChanges → occurrences. Each request offers exactly ONE of
+// them — plus the non-strict `damageRoll` in the endings phase — each tool takes
+// one required top-level array and nothing else, and every one of them asks for
+// `strict: true`. This script measures whether the API actually grants that.
 //
-//   400 invalid_request_error — "The compiled grammar is too large, which
-//   would cause performance issues. Simplify your tool schemas or reduce the
-//   number of strict tools."
-//
-// and without a grammar the model hands `starting` back as a JSON string —
-// measured at 7/55 submissions across the stored Claude traces, and 3/3 in the
-// 2026-09-03 grayhaven run. There are two published ceilings and one that is
-// not published:
+// Three ceilings are in play:
 //
 //   * at most 20 strict tools per request                     (documented)
 //   * at most 24 OPTIONAL parameters across every strict tool (documented; the
 //     400 reports the offending count, e.g. "too many optional parameters (80)")
 //   * compiled grammar size                                   (NO number given)
 //
-// The rejection happens at request validation, before a single output token,
-// so probing costs input tokens and nothing else. This script sends one
-// minimal request per variant and reports which ceiling each one hits — and,
-// when the API names a number, what that number was.
+// The rejection happens at request validation, before a single output token, so
+// probing costs input tokens and nothing else. This script sends one minimal
+// request per variant and reports which ceiling each one hits — and, when the
+// API names a number, what that number was.
 //
-// Both questions it was written for are answered, and the answers are recorded
-// in schemaAgreement.test.ts beside the assertions they justify:
-//   1. A non-strict tool counts toward neither ceiling — it is compiled into no
-//      grammar at all. That is what makes the production pairing legal.
-//   2. `starting` + `ending` alone compiles; the effect lists do not, at any
-//      arrangement tried. What is bounded is total grammar mass rather than
-//      branch count, and the budget runs out at roughly "the action half plus
-//      one small thing".
+// What the table measures:
 //
-// `--sweep` walks a union from 1 to 7 branches beside the action half;
-// `--sweep-occ` does the same with `occurrences` also strict, which is where
-// the ceiling bites (5 branches fit, 6 do not). Re-run either when the model
+//   (a) each of the six phase tools ALONE, strict — the per-phase question, one
+//       row each. This is the shape the runner sends for five of six phases.
+//   (b) all six together, strict — a request the Engine never sends, but it
+//       bounds the total and says whether the staging is what buys the grammar.
+//   (c) `submit_endings` strict beside the non-strict `damageRoll` — the
+//       endings-phase request exactly as the runner sends it.
+//
+// Plus one control: all six NON-strict, which must be accepted. If it is not,
+// the probe itself is malformed and nothing below it means anything.
+//
+// ─── History: the pre-phase measurements (2026-09-03, claude-sonnet-5) ───
+//
+// Before the staged rewrite, a resolution was submitted by two terminal tools
+// called together in one turn: `submit_actions` (`starting` + `ending`) and
+// `submit_effects` (`occurrences` + the three `*Changes` lists). Neither tool
+// exists any more; these are the numbers that were measured against them, and
+// they are the reason the phase split was made:
+//
+//   the whole submission, one strict tool   23 optional / 19 branches  REJECTED
+//   `submit_effects` alone, strict          17 optional / 19 branches  REJECTED
+//   both unions merged, one strict tool     29 optional / 16 branches  REJECTED
+//                                           (died on the optional count first,
+//                                            so 16 branches was never measured)
+//   `submit_actions` alone, strict           6 optional /  0 branches  ACCEPTED
+//
+// The rejection was always the same 400, and always before any generation:
+//
+//   400 invalid_request_error — "The compiled grammar is too large, which
+//   would cause performance issues. Simplify your tool schemas or reduce the
+//   number of strict tools."
+//
+// A branch sweep beside the accepted action half put the unpublished ceiling at
+// roughly "the action half plus one small union" — 5 branches fit, 6 did not —
+// so what is bounded is total grammar mass rather than branch count. The other
+// settled question: a NON-strict tool counts toward neither ceiling; it is
+// compiled into no grammar at all, which is what made a mixed request legal.
+// Those measurements are why `submit_effects` shipped unconstrained, and an
+// unconstrained submission is why the model serialized `starting` into a JSON
+// string re-wrapping its own array — 7 of 55 stored Claude submissions, each
+// costing a full-world correction round.
+//
+// `--sweep` still walks a union from 1 to 7 branches to put a number on the
+// ceiling a single phase tool may grow into; `--sweep-endings` does the same
+// with the real endings request also on the wire. Re-run either when the model
 // changes — every number here was taken on claude-sonnet-5.
 //
 // Usage:
 //   pnpm tsx scripts/probe-strict-schema.ts
-//   pnpm tsx scripts/probe-strict-schema.ts --only split-actions-strict
+//   pnpm tsx scripts/probe-strict-schema.ts --only endings-request
 //   pnpm tsx scripts/probe-strict-schema.ts --model claude-opus-5
+//   pnpm tsx scripts/probe-strict-schema.ts --sweep
 //
 // No tick is run, no resolution is generated, no session is touched.
 
@@ -52,14 +84,17 @@ import "dotenv/config";
 import Anthropic from "@anthropic-ai/sdk";
 
 import {
+  CHARACTER_CHANGES_LIST,
   CHARACTER_OPS,
   CODE_TOOL_SPECS,
-  SCENE_OPS,
-  SUBMIT_TOOLS,
   opSchema,
-  submitActionsTool,
-  submitEffectsTool,
 } from "../src/engine/resolution/worldDeltaSchema.js";
+import {
+  PHASE_TOOL_NAMES,
+  PHASE_TOOLS,
+  PHASE_TOOLS_NON_STRICT,
+  RESOLUTION_PHASES,
+} from "../src/engine/resolution/worldResolutionStageSchemas.js";
 import type { ToolSpec } from "../src/models/providers/types.js";
 
 // =========================================================================
@@ -79,148 +114,6 @@ const flag = (name: string): string | undefined => {
 const MODEL =
   flag("model") ?? process.env.MEDIUM_ANTHROPIC_MODEL ?? "claude-sonnet-5";
 const ONLY = flag("only");
-
-// =========================================================================
-// Schema surgery
-// =========================================================================
-
-type Schema = Record<string, unknown>;
-
-/** The six lists as one object again — the shape that existed before the
- *  split, so the probe can still ask what the API makes of it. */
-const SUBMIT = {
-  type: "object",
-  properties: {
-    ...(submitActionsTool.inputSchema as { properties: Record<string, Schema> })
-      .properties,
-    ...(submitEffectsTool.inputSchema as { properties: Record<string, Schema> })
-      .properties,
-  },
-  required: [
-    ...((submitActionsTool.inputSchema as { required: string[] }).required ??
-      []),
-    ...((submitEffectsTool.inputSchema as { required: string[] }).required ??
-      []),
-  ],
-  additionalProperties: false as const,
-};
-
-/** One tool carrying exactly the named top-level fields of the submission. */
-function partition(name: string, fields: string[], strict: boolean): ToolSpec {
-  const properties: Record<string, Schema> = {};
-  for (const f of fields) {
-    if (!SUBMIT.properties[f]) throw new Error(`no such field: ${f}`);
-    properties[f] = SUBMIT.properties[f];
-  }
-  return {
-    name,
-    description: `Probe partition carrying ${fields.join(", ")}.`,
-    inputSchema: {
-      type: "object",
-      properties,
-      // Same contract as today: every list required, empty domains send `[]`.
-      required: fields,
-      additionalProperties: false,
-    },
-    strict,
-  };
-}
-
-/** The pre-split tool: all six lists in one schema, `strict` forced either
- *  way. Kept so the rejection that motivated the split stays reproducible. */
-function whole(strict: boolean): ToolSpec {
-  return {
-    name: "submit_resolution",
-    description: "The pre-split single-tool submission.",
-    inputSchema: SUBMIT,
-    strict,
-  };
-}
-
-/** SCENE_OPS with the three connection kinds folded into one and the two
- *  environment kinds into one — the "merge the unions" proposal. Branches
- *  8 -> 5; every field that was required in its own kind becomes optional. */
-const MERGED_SCENE_OPS = [
-  ...SCENE_OPS.filter(
-    (o) =>
-      !o.kinds[0].startsWith("connection") &&
-      !o.kinds[0].startsWith("environment")
-  ),
-  {
-    kinds: ["connection"],
-    fields: "",
-    schema: {
-      properties: {
-        connectionId: { type: "string" },
-        blocked: { type: "boolean" },
-        reason: { type: "string" },
-        hidden: { type: "boolean" },
-        characterIds: { type: "array", items: { type: "string" } },
-      },
-      required: ["connectionId"],
-    },
-  },
-  {
-    kinds: ["environment"],
-    fields: "",
-    schema: {
-      properties: {
-        quantity: {
-          type: "string",
-          enum: ["temperature", "illumination", "oxygen", "noise"],
-        },
-        value: { type: "number" },
-        add: { type: "array", items: { type: "string" } },
-        remove: { type: "array", items: { type: "string" } },
-      },
-      required: [],
-    },
-  },
-];
-
-/** Just the three change lists, with the merged scene union swapped in and
- *  `strict` on. Optionals land at 19 — under the 24 ceiling — so the grammar
- *  check actually runs. The whole-tool merged variant never got that far: it
- *  died on the optional count (29) first, which is why 16 branches has never
- *  been measured. */
-function mergedChangesOnly(): ToolSpec {
-  const scene = structuredClone(SUBMIT.properties.sceneChanges) as {
-    items: { properties: { operation: unknown } };
-  };
-  scene.items.properties.operation = opSchema(MERGED_SCENE_OPS as never);
-  return {
-    name: "submit_changes",
-    description: "The three change lists, operation unions merged.",
-    strict: true,
-    inputSchema: {
-      type: "object",
-      properties: {
-        characterChanges: SUBMIT.properties.characterChanges,
-        sceneChanges: scene,
-        itemChanges: SUBMIT.properties.itemChanges,
-      },
-      required: ["characterChanges", "sceneChanges", "itemChanges"],
-      additionalProperties: false,
-    },
-  };
-}
-
-/** The whole tool with the merged scene union swapped in, strict. */
-function mergedUnions(): ToolSpec {
-  const scene = structuredClone(SUBMIT.properties.sceneChanges) as {
-    items: { properties: { operation: unknown } };
-  };
-  scene.items.properties.operation = opSchema(MERGED_SCENE_OPS as never);
-  return {
-    name: "submit_resolution",
-    description: "The pre-split single-tool submission, unions merged.",
-    strict: true,
-    inputSchema: {
-      ...SUBMIT,
-      properties: { ...SUBMIT.properties, sceneChanges: scene },
-    },
-  };
-}
 
 // =========================================================================
 // The two limits, counted locally, so the API's number can be checked
@@ -264,116 +157,39 @@ function countBranches(node: unknown): number {
 // Variants
 // =========================================================================
 
-const ACTION_FIELDS = ["starting", "ending"];
-const EFFECT_FIELDS = [
-  "occurrences",
-  "characterChanges",
-  "sceneChanges",
-  "itemChanges",
-];
-
 interface Variant {
   name: string;
   what: string;
   tools: ToolSpec[];
 }
 
+/** (a) One phase tool, strict, alone — five of the six phases send exactly
+ *  this, and the sixth (endings) sends it plus `damageRoll`. */
+const ALONE: Variant[] = RESOLUTION_PHASES.map((phase) => ({
+  name: `alone-${phase}`,
+  what: `${PHASE_TOOL_NAMES[phase]} alone, strict — the ${phase} phase's request`,
+  tools: [PHASE_TOOLS[phase]],
+}));
+
 const VARIANTS: Variant[] = [
   {
-    name: "production",
-    what: "the tool set the Engine actually sends, exactly as exported",
-    tools: [...CODE_TOOL_SPECS, ...SUBMIT_TOOLS],
+    name: "baseline-all-six-nonstrict",
+    what: "CONTROL: all six phase tools, none strict — must be accepted, or the probe itself is malformed",
+    tools: [...CODE_TOOL_SPECS, ...RESOLUTION_PHASES.map((p) => PHASE_TOOLS_NON_STRICT[p])],
   },
+  // (c) The one request in the whole runner that carries two tools.
   {
-    name: "baseline-nonstrict",
-    what: "today's request, unchanged — proves the probe itself is well-formed",
-    tools: [...CODE_TOOL_SPECS, whole(false)],
+    name: "endings-request",
+    what: "PRODUCTION: submit_endings strict beside the non-strict damageRoll — the endings phase exactly as sent",
+    tools: [...CODE_TOOL_SPECS, PHASE_TOOLS.endings],
   },
+  ...ALONE,
+  // (b) Never sent. It bounds the total, and it says whether staging is what
+  //     buys the grammar or whether the schemas would have compiled together.
   {
-    name: "whole-strict",
-    what: "one tool, strict — the shape that was rejected on 2026-09-03",
-    tools: [...CODE_TOOL_SPECS, whole(true)],
-  },
-  {
-    name: "merged-unions-strict",
-    what: "one tool, strict, connection×3→1 and environment×2→1",
-    tools: [...CODE_TOOL_SPECS, mergedUnions()],
-  },
-  {
-    name: "split-actions-strict",
-    what: "THE PROPOSAL: starting+ending strict, the rest non-strict",
-    tools: [
-      ...CODE_TOOL_SPECS,
-      partition("submit_actions", ACTION_FIELDS, true),
-      partition("submit_effects", EFFECT_FIELDS, false),
-    ],
-  },
-  {
-    name: "split-both-strict",
-    what: "both halves strict — does the grammar bill just move?",
-    tools: [
-      ...CODE_TOOL_SPECS,
-      partition("submit_actions", ACTION_FIELDS, true),
-      partition("submit_effects", EFFECT_FIELDS, true),
-    ],
-  },
-  {
-    name: "actions-strict-alone",
-    what: "starting+ending strict, no second tool — isolates the cheap half",
-    tools: [
-      ...CODE_TOOL_SPECS,
-      partition("submit_actions", ACTION_FIELDS, true),
-    ],
-  },
-  // ─── Bisecting the grammar ceiling. Nobody has published a number, and
-  //     the earlier merged-union probe never reached the grammar check: the
-  //     optional count (29) rejected it first. These four walk the branch
-  //     count up with the optional budget kept legal throughout.
-  {
-    name: "bisect-0br-occurrences",
-    what: "occurrences alone, strict — 4 optional, 0 branches (control)",
-    tools: [
-      ...CODE_TOOL_SPECS,
-      partition("submit_actions", ACTION_FIELDS, true),
-      partition("submit_occurrences", ["occurrences"], true),
-    ],
-  },
-  {
-    name: "bisect-7br-occ-char",
-    what: "THE CANDIDATE: occurrences + characterChanges strict — 7 branches, 0 extra optionals",
-    tools: [
-      ...CODE_TOOL_SPECS,
-      partition("submit_actions", ACTION_FIELDS, true),
-      partition("submit_effects", ["occurrences", "characterChanges"], true),
-      partition("submit_world", ["sceneChanges", "itemChanges"], false),
-    ],
-  },
-  {
-    name: "bisect-11br-plus-item",
-    what: "…plus itemChanges — 11 branches, 12 optionals",
-    tools: [
-      ...CODE_TOOL_SPECS,
-      partition("submit_actions", ACTION_FIELDS, true),
-      partition(
-        "submit_effects",
-        ["occurrences", "characterChanges", "itemChanges"],
-        true
-      ),
-      partition("submit_world", ["sceneChanges"], false),
-    ],
-  },
-  {
-    name: "bisect-16br-merged-changes",
-    what: "the three change lists with merged unions — 16 branches, 19 optionals",
-    tools: [...CODE_TOOL_SPECS, mergedChangesOnly()],
-  },
-  {
-    name: "effects-strict-alone",
-    what: "the three unions strict, no action tool — isolates the 19 branches",
-    tools: [
-      ...CODE_TOOL_SPECS,
-      partition("submit_effects", EFFECT_FIELDS, true),
-    ],
+    name: "all-six-strict",
+    what: "all six phase tools strict in ONE request — never sent; bounds the total",
+    tools: RESOLUTION_PHASES.map((p) => PHASE_TOOLS[p]),
   },
 ];
 
@@ -382,28 +198,25 @@ const VARIANTS: Variant[] = [
 // =========================================================================
 
 /**
- * `submit_actions` (0 branches, accepted) plus a change list whose operation
- * union has been truncated to exactly N branches. Walking N up from 1 puts a
- * number on the ceiling nobody publishes — the schema is not a real one, it is
- * a ruler.
+ * A change list whose operation union has been truncated to exactly N branches,
+ * sent strict and alone (or beside the real endings request). Walking N up from
+ * 1 puts a number on the ceiling nobody publishes — the schema is not a real
+ * one, it is a ruler, and what it measures is how far a single phase tool could
+ * grow before the grammar compiler refuses it.
  */
-function sweepVariant(branches: number, withOccurrences = false): Variant {
+function sweepVariant(branches: number, withEndings = false): Variant {
   const ops = CHARACTER_OPS.flatMap((op) =>
     op.kinds.map((kind) => ({ ...op, kinds: [kind] }))
   ).slice(0, branches);
-  const changes = structuredClone(
-    SUBMIT.properties.characterChanges
-  ) as { items: { properties: { operation: unknown } } };
+  const changes = structuredClone(CHARACTER_CHANGES_LIST) as unknown as {
+    items: { properties: { operation: unknown } };
+  };
   changes.items.properties.operation = opSchema(ops as never);
   return {
-    name: `sweep${withOccurrences ? "+occ" : ""}-${branches}br`,
-    what: `${withOccurrences ? "actions + occurrences + " : "actions + "}a change list whose operation union has exactly ${branches} branch(es)`,
+    name: `sweep${withEndings ? "+endings" : ""}-${branches}br`,
+    what: `${withEndings ? "the endings request + " : ""}a change list whose operation union has exactly ${branches} branch(es)`,
     tools: [
-      ...CODE_TOOL_SPECS,
-      partition("submit_actions", ACTION_FIELDS, true),
-      ...(withOccurrences
-        ? [partition("submit_occurrences", ["occurrences"], true)]
-        : []),
+      ...(withEndings ? [...CODE_TOOL_SPECS, PHASE_TOOLS.endings] : []),
       {
         name: "submit_changes",
         description: `Ruler: ${branches} branch(es).`,
@@ -492,13 +305,13 @@ async function main(): Promise<void> {
     throw new Error("ANTHROPIC_API_KEY is not set");
   }
   const client = new Anthropic();
-  const chosen = has("sweep-occ")
+  const chosen = has("sweep-endings")
     ? [1, 2, 3, 4, 5, 6, 7].map((n) => sweepVariant(n, true))
     : has("sweep")
-    ? [1, 2, 3, 4, 5, 6, 7].map((n) => sweepVariant(n))
-    : ONLY
-      ? VARIANTS.filter((v) => v.name === ONLY)
-      : VARIANTS;
+      ? [1, 2, 3, 4, 5, 6, 7].map((n) => sweepVariant(n))
+      : ONLY
+        ? VARIANTS.filter((v) => v.name === ONLY)
+        : VARIANTS;
   if (chosen.length === 0) {
     throw new Error(
       `no variant named ${ONLY}. Known: ${VARIANTS.map((v) => v.name).join(", ")}`
@@ -536,25 +349,39 @@ async function main(): Promise<void> {
     console.log("");
   }
 
-  // The two questions this script exists to settle.
-  const proposal = results.find(
-    (r) => r.variant.name === "split-actions-strict"
+  // The three questions this script exists to settle.
+  const byName = (name: string): Result | undefined =>
+    results.find((r) => r.variant.name === name);
+
+  const alone = ALONE.map((v) => byName(v.name)).filter(
+    (r): r is Result => r !== undefined
   );
-  const bothStrict = results.find(
-    (r) => r.variant.name === "split-both-strict"
-  );
-  if (proposal) {
+  if (alone.length > 0) {
+    const failed = alone.filter((r) => r.verdict !== "compiled");
     console.log(
-      proposal.verdict === "compiled"
-        ? "→ 拆分方案可编译：starting+ending 可以拿到 strict 保证。"
-        : "→ 拆分方案仍被拒；上面那条 400 说明卡在哪个上限。"
+      failed.length === 0
+        ? `→ every phase tool probed (${alone.length}/6) compiles alone: each phase gets its strict grammar.`
+        : `→ these phase tools do NOT compile alone: ${failed
+            .map((r) => r.variant.tools.filter((t) => t.strict)[0]?.name)
+            .join(", ")} — the 400 above says which ceiling. They must fall back to non-strict.`
     );
   }
-  if (proposal && bothStrict) {
+
+  const endings = byName("endings-request");
+  if (endings) {
     console.log(
-      proposal.verdict === "compiled" && bothStrict.verdict === "rejected"
-        ? "→ 非 strict 的 tool 不进语法/optional 的账（两者只差 submit_effects 的 strict 标志）。"
-        : "→ 关于非 strict tool 是否计入，这两个变体没有分出差别，见上面各自的 400。"
+      endings.verdict === "compiled"
+        ? "→ the production endings request compiles: a non-strict tool (damageRoll) beside a strict one costs the grammar nothing."
+        : "→ the production endings request was REJECTED — the endings phase cannot run strict as sent; see its 400 above."
+    );
+  }
+
+  const together = byName("all-six-strict");
+  if (together) {
+    console.log(
+      together.verdict === "compiled"
+        ? "→ all six together also compile, so the staging is not what buys the grammar — one request per phase is bought by the prompt design, not by this ceiling."
+        : "→ all six together are rejected, so staging IS what buys the grammar: the schemas only compile when a request carries one phase at a time."
     );
   }
 }

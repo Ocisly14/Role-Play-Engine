@@ -67,11 +67,11 @@ export interface ToolSpec {
    * required, so its adapter forwards the flag only when that holds.
    *
    * DeepSeek IGNORES this flag entirely and sends every tool strict. The flag
-   * records an Anthropic constraint — `submit_effects` is `false` because that
-   * compiler refuses its 19 `anyOf` branches — and DeepSeek has no such
-   * ceiling, so honouring it there would leave the half that most needs a
-   * closed union unconstrained for another vendor's reason. Its adapter
-   * rewrites each schema into DeepSeek's narrower subset
+   * records an Anthropic constraint — a phase tool's fallback copy is `false`
+   * only because that compiler refused to compile the strict one — and
+   * DeepSeek has no such ceiling, so honouring it there would leave the phase
+   * that most needs a closed union unconstrained for another vendor's reason.
+   * Its adapter rewrites each schema into DeepSeek's narrower subset
    * (`deepseekStrictSchema.ts`) and moves the request to the beta channel,
    * which is the only one that honours `strict` at all.
    *
@@ -93,10 +93,10 @@ export interface ToolSpec {
    *
    * Nothing was bought for it. These schemas are flat, three optional strings
    * deep, and have never produced the structural failure a grammar prevents —
-   * unlike `submit_effects`, whose 19-branch `operation` union is exactly that
-   * failure waiting to happen. The trust boundary absorbs the `""` (it trims
-   * all three fields), so the cost lands as noise rather than breakage; that
-   * is a reason to stop generating it, not a reason to keep it.
+   * unlike the engine's change-list tools, whose `operation` unions are
+   * exactly that failure waiting to happen. The trust boundary absorbs the
+   * `""` (it trims all three fields), so the cost lands as noise rather than
+   * breakage; that is a reason to stop generating it, not a reason to keep it.
    */
   noGrammar?: boolean;
 }

@@ -568,18 +568,21 @@ describe("validateRawResolution — outcome, talk and the bar", () => {
     expect(text(errors)).toContain("Leave this row out of the resubmission");
   });
 
-  it("lets a spoken line start without a duration — code clocks it at one minute", () => {
-    const errors = validateRawResolution(
-      { starting: [start({ resolvedDurationTicks: undefined })] },
-      makeContext({ newCommands: [command({ utterance: "喂。" })] })
-    );
-    expect(errors).toEqual([]);
-    // A silent action still has to say how long it takes.
-    const silent = validateRawResolution(
-      { starting: [start({ resolvedDurationTicks: undefined })] },
-      makeContext({ newCommands: [command()] })
-    );
-    expect(text(silent)).toContain("needs resolvedDurationTicks");
+  it("requires explicit duration for spoken and silent non-travel starts", () => {
+    for (const utterance of [undefined, "Hello."]) {
+      const context = makeContext({ newCommands: [command({ utterance })] });
+      const errors = validateRawResolution(
+        { starting: [start({ resolvedDurationTicks: undefined })] },
+        context
+      );
+      expect(text(errors)).toContain("needs resolvedDurationTicks");
+      expect(
+        validateRawResolution(
+          { starting: [start({ resolvedDurationTicks: 1 })] },
+          context
+        )
+      ).toEqual([]);
+    }
   });
 
   it("lists a starting action's utterance under startingWithUtterance, not endingWithUtterance", () => {
@@ -745,19 +748,33 @@ describe("validateRawResolution — deltas and occurrences", () => {
 });
 
 describe("finalizeResolution", () => {
-  it("clocks a spoken line at one minute whatever the Engine wrote", () => {
-    // Words are delivered when the action ends. A line the Engine gave three
-    // minutes was three minutes of nobody hearing it — and of the Engine
-    // trying to deliver it early. Measured: 26 rejected speech rows in one
-    // run cited an id the Engine had just placed under `starting`.
-    const { resolution } = finalizeResolution(
-      { starting: [start({ resolvedDurationTicks: 3 })] },
-      makeContext({ newCommands: [command({ utterance: "喂。" })] })
+  it("clocks plain talk at one minute when the Engine wrote no clock, and keeps the Engine's clock when it wrote one", () => {
+    // Action before speech. Words are delivered when the action ends: plain
+    // talk the Engine left unclocked takes one minute (a line left to "take"
+    // three minutes is three minutes of nobody hearing it). But a command
+    // that speaks WHILE it does something is clocked by the attempt — an
+    // eight-minute clean-and-dress with a "hold still" used to be clamped to
+    // one minute and judged pure speech because it carried a sentence.
+    const spoken = makeContext({
+      newCommands: [command({ utterance: "喂。" })],
+    });
+    const talk = finalizeResolution(
+      { starting: [start({ resolvedDurationTicks: undefined })] },
+      spoken
     );
-    const t = resolution.transitions.find((x) => x.actionId === ACTION_ID);
+    const t = talk.resolution.transitions.find((x) => x.actionId === ACTION_ID);
     expect(t?.resolvedDurationTicks).toBe(1);
     expect(t?.timingReason).toBe("a spoken line takes one minute");
     expect(t?.nextWakeAt).toBe("1923-04-02T09:16:00");
+    const attempt = finalizeResolution(
+      { starting: [start({ resolvedDurationTicks: 3 })] },
+      spoken
+    );
+    const a = attempt.resolution.transitions.find(
+      (x) => x.actionId === ACTION_ID
+    );
+    expect(a?.resolvedDurationTicks).toBe(3);
+    expect(a?.timingReason).toBeUndefined();
     // A silent action keeps the Engine's clock.
     const silent = finalizeResolution(
       { starting: [start({ resolvedDurationTicks: 3 })] },
@@ -1469,13 +1486,12 @@ describe("operations are checked against the fields they advertise", () => {
 });
 
 // `input_schema` is a description the provider does not enforce unless
-// `strict` is on, and it is on for only half the submission: `submit_actions`
-// is compiled into a grammar, `submit_effects` is not (its 19 operation
-// branches are what the compiler refuses). So the effect lists can still
-// arrive in shapes the schema does not describe, and dropping a whole list
-// takes a resolution with it. The action lists are covered now — but these
-// normalizations stay, because OpenAI drops the flag over the nested optional
-// fields and both halves reach this code the same way.
+// `strict` is on, and `strict` is not everywhere: each phase tool asks for it,
+// but OpenAI cannot express the nested optional fields in strict mode, and a
+// phase whose grammar a provider refuses is deliberately retried against a
+// non-strict copy of the same schema rather than failing the tick. So a list
+// can still arrive in a shape the schema does not describe, and dropping a
+// whole list takes a resolution with it.
 describe("normalizeRawResolution reads what the schema did not guarantee", () => {
   const entry = { actionId: "action_c1", outcome: "the lock gives" };
 
@@ -1830,12 +1846,12 @@ describe("normalizeList reads a list the model wrapped in a string", () => {
 });
 
 describe("the validator is a total function over model output", () => {
-  // `submit_actions` is strict, so on Anthropic and DeepSeek the action lists
-  // cannot arrive like this; `submit_effects` is not, and OpenAI drops the
-  // flag over the nested optional fields, so every shape below is still
-  // reachable. Each one used
-  // to reach a `.entries()`, a `for…of` or a `.trim()` and take the tick down
-  // with a TypeError instead of coming back as an error the Engine can fix.
+  // Where a provider compiles the phase tool's grammar these shapes cannot be
+  // produced at all; they stay reachable on a provider that drops the strict
+  // flag, and on the non-strict fallback copy of a phase whose grammar was
+  // refused. Each one used to reach a `.entries()`, a `for…of` or a `.trim()`
+  // and take the tick down with a TypeError instead of coming back as an error
+  // the Engine can fix.
   const noThrow = (raw: unknown): ResolutionError[] => {
     let errors: ResolutionError[] = [];
     expect(() => {

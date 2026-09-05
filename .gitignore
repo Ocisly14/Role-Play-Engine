@@ -73,3 +73,9 @@ deployment/.env.production
 client/coc-deploy.tar.gz
 /Asset
 data/*.dump
+
+_bmad
+_bmad-output
+.agents
+.claude
+

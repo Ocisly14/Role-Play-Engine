@@ -38,7 +38,7 @@ Further limits, all of which still apply on top of the list:
   or nurse at a bedside, an undertaker at a body, a sheriff at a known death.
   The rule bites when the thing is outside what their work prepared them for.
 - One check per character per tick, however many occurrences they appear in.
-  A submission that checks the same person twice is rejected; keep the
+  A resolution that checks the same person twice is rejected; keep the
   exposure that actually shocked them. A continuing sight does not cause
   another check until it materially escalates or reveals something new.
 - If an objective event already carries an explicit SAN result, it has
@@ -49,7 +49,8 @@ Further limits, all of which still apply on top of the list:
 ## How to declare
 
 Put a `sanityChecks` entry on the occurrence in which that character
-perceived the thing, in this same submission. Name the `characterId` and the
+perceived the thing, in the occurrence phase itself — there is nowhere else it
+can go. Name the `characterId` and the
 `failureLoss`. Code reads their current SAN, rolls d100 and settles it. Never
 invent, estimate or reroll any of those numbers, and never call a tool for
 this — there is none.

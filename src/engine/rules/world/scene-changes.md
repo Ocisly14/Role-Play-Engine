@@ -42,9 +42,11 @@ A connection id identifies one exact passage, not a whole place.
   records the objective reason. One flag per passage, three writers — the
   weather engine, scripted events and you — and the last write wins: clearing
   it opens the passage whoever shut it. Use `blocked:false` only when an act
-  actually removes the obstacle; a person getting past an obstacle that stays
-  is `movement.passBlockedConnectionId` on their movement (see
-  `movement-and-position.md`).
+  actually removes the obstacle. A person merely getting past an obstacle that
+  stays is `movement.passBlockedConnectionId` on their accepted start — a
+  one-walker grant that leaves the passage shut for everybody else. Never both
+  for the same passage in one tick: the grant already got that walker through,
+  and `blocked:false` beside it says the obstacle is gone when it is not.
 - `connectionDiscovered` records which characters learned about a still-hidden
   passage. Include everyone who could discover it from the event, not only the
   actor.

@@ -111,35 +111,58 @@ them through one `Applier` per tick.
 
 ### World Action Engine
 
-`src/engine/resolution/worldActionEngine.ts` runs one agentic session per
-tick that has resolution triggers, over the full world context built by
-the context builder. A tick with no triggers makes no model calls.
+`src/engine/resolution/worldActionEngine.ts` runs a fixed pipeline of six
+ordered phases per tick that has resolution triggers, over the full world
+context built by the context builder: `endings → starts →
+characterChanges → itemChanges → sceneChanges → occurrences`. A tick with
+no triggers makes no model calls.
 
 - **No action types, no per-action prompts.** One rule document,
   `src/engine/rules/world-action-resolution.md`, governs every action;
-  `src/engine/rules/session-protocol.md` is the session contract.
-- **Validated output.** The session ends with one terminal turn carrying
-  both `submit_actions` (the action lifecycle) and `submit_effects`
-  (occurrences and world changes). They are merged into one resolution and
-  checked in code by `worldDeltaValidator.ts`; a rejected payload gets up to
-  `MAX_CORRECTION_ROUNDS` (3) corrective rounds, each a complete resubmission
-  through the same two tools (there is no patch tool), and a tick still
-  invalid after that applies nothing. The submission is two tools rather than
-  one because only `submit_actions` fits inside Anthropic's grammar limits
-  for `strict` — see the comment above `SUBMISSION_PROPERTIES` in
-  `src/engine/resolution/worldDeltaSchema.ts`.
+  `src/engine/rules/session-protocol.md` is rendered per phase (by
+  `worldResolutionStagePrompts.ts`) as that phase's own contract.
+- **Six small strict tools, one phase at a time.** Each phase is a
+  separate request carrying only its own array and its own strict
+  submission tool — `submit_endings`, `submit_starts`,
+  `submit_character_changes`, `submit_item_changes`,
+  `submit_scene_changes`, `submit_occurrences`
+  (`worldResolutionStageSchemas.ts`); the endings phase alone also offers
+  `damageRoll`. A phase's array is validated as soon as it lands
+  (`worldResolutionStageValidator.ts`) and then becomes read-only input to
+  every later phase. There is no patch tool; a rejection is answered
+  through the same tool, up to `MAX_PHASE_ATTEMPTS` (3) attempts. In the
+  two phases whose rows have a key — `starts` (by actionId) and
+  `occurrences` (by cited actions + speech flag) — code keeps the rows that
+  passed on their own, lists what is still owed, and merges the answer
+  before validating the whole array again; the other four phases resubmit
+  their complete array.
+- **One global gate, one atomic result.** Once all six phases are
+  accepted, the assembled draft still passes `validateRawResolution` then
+  `finalizeResolution` exactly once before anything reaches the Applier;
+  no phase mutates state on its own. A global failure rewinds to the
+  earliest phase that owns it, discards that phase and everything
+  downstream, and reruns forward — at most one rewind
+  (`MAX_GLOBAL_REWINDS` = 1) per tick. The whole resolution shares one
+  ceiling of `MAX_PROVIDER_CALLS` (12) provider calls; exhausting it, or
+  failing the global gate after a rewind, applies nothing.
 - **One code tool.** `damageRoll` (`src/engine/tools/diceTools.ts`) is the
-  only tool the session can call, because a roll must never be the
+  only tool any phase can call, because a roll must never be the
   model's. The request already carries the place graph, the places and the
   items, so pathfinding, movement cost and inventory lookups are read from
   the context rather than queried.
-- **Bounded turns.** Every turn re-sends the whole request, so a turn
-  costs about what the resolution costs. `MAX_ITERATIONS` caps the
-  session; after the force point the tools are withdrawn and a submission
-  is demanded.
+- **Strict by default, with one narrow fallback.** Six small schemas
+  replace the old two-tool split (`submit_actions` was strict-compatible;
+  `submit_effects` was not — its three operation unions carried 19
+  `anyOf` branches the grammar compiler refused); each phase schema is
+  small enough to stay strict on its own. Only a genuine provider-side
+  grammar/schema compilation rejection (never a transport error, a rate
+  limit, malformed output, or a validation failure) retries that phase
+  once with a non-strict copy of its tool, with a warning; the downgrade
+  is then remembered for the process by provider/model/schema
+  fingerprint.
 - **Sanity is judgement, not a tool.** `src/engine/rules/sanity-check.md`
-  tells the session when a check is warranted (rarely) and it is reported
-  as part of the resolution.
+  tells the occurrences phase when a check is warranted (rarely) and it
+  is reported as part of the resolution.
 
 ### RoleSimAgent
 

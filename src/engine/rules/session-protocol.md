@@ -1,111 +1,129 @@
-# Session Protocol
+# Phase Protocol
 
-This document governs how to use the Engine tools and submit one complete tick
-resolution. Domain judgement belongs to the world-rule modules; this protocol
-defines the envelope, worklist coverage and what a rejection asks for.
+One tick's resolution is decided in six phases, in a fixed order:
 
-One resolution is submitted as **two calls in one turn**:
+1. the actions that END this tick,
+2. the actions that START,
+3. the changes to characters,
+4. the changes to items,
+5. the changes to places and passages,
+6. the occurrences that record what anyone could perceive.
 
-- `submit_actions` carries `starting` and `ending` — the action lifecycle.
-- `submit_effects` carries `occurrences`, `characterChanges`, `sceneChanges`
-  and `itemChanges` — everything those actions produced.
+Each phase is its own request, with its own submission tool. This document is
+the transport contract: what a phase is, what it may call, and what a rejection
+asks for. Domain judgement belongs to the world-rule modules.
 
-They are one submission. Code merges them before anything is validated, and
-validates the result whole. A turn that calls only one of them has the other's
-lists read as empty, which is correct only when there was genuinely nothing to
-put in them.
+## One phase at a time
 
-## Read the request; do not look it up again
+You are in exactly one phase. The request names it, names the one submission
+tool that ends it, and names the one array that tool carries.
 
-The request is the world; there is nothing to look up again. The World Graph gives the
-place topology, Detailed Places gives the involved places, and Items gives the
-relevant scene contents and inventories.
+- Answer that phase and nothing else. The other five are not yours in this
+  request, and there is no way to reach them from here.
+- The only tool to call is this phase's submission tool, unless the phase
+  contract at the end of these instructions names a deterministic code tool as
+  well. A tool that is not named there is not in this request, and calling it
+  spends a turn and returns nothing.
+- Call it once. The same tool twice in one turn is refused: neither copy can be
+  preferred over the other.
+- The array is required. Submit `[]` only when this phase has no mandatory
+  worklist or coverage obligations and nothing else to report. Never omit the list.
 
-The only lookup tool is `damageRoll`, because a roll must never be invented by
-the model. Pathfinding, movement time, inventory validation and SAN rolls are
-not tool calls:
+## The accepted draft is read-only
+
+Every phase before this one has already been decided and validated. Its output
+is shown under "Accepted so far" as a settled fact of this tick.
+
+- Read it, and stay consistent with it.
+- Do not restate it and do not submit any part of it again. This call carries
+  this phase's array and nothing else.
+- Do not try to revise it. If something in it is genuinely wrong, say nothing
+  about it: the whole resolution is checked once more after the last phase, and
+  a fault found there sends the tick back to the phase that owns it, with every
+  phase after that one discarded and decided again.
+
+## The request is the world; do not look it up again
+
+There is nothing to look up. The World Graph gives the place topology, Detailed
+Places gives the places this tick involves, Items gives the relevant scene
+contents and inventories, and Characters is complete.
+
+Pathfinding, movement time, inventory validation and SAN rolls are not tool
+calls:
 
 - code validates and advances the actor-stated route;
 - code derives travel time;
 - the request already contains the relevant items;
 - SAN checks are declared on occurrences and rolled after submission.
 
-## Turn and tool discipline
+## Cost
 
-A turn is expensive: the whole request is resent every turn, so each
-unnecessary turn is expensive.
+The whole request is resent on every call, so a call is expensive.
 
-- Your budget is {{MAX_ITERATIONS}} turns in all.
-- Most ticks need no lookup: the first and only turn is `submit_actions` and
-  `submit_effects`, called together.
-- When damage is actually dealt, issue every required `damageRoll` call in the
-  same turn. Never spend one turn per roll.
-- Never call `damageRoll` with a placeholder or zero formula.
-- Finish with one submission turn: `submit_actions` once and `submit_effects`
-  once, and nothing else in that turn. Do not call either tool twice, and do
-  not mix the submission with damage calls.
-- After a rejection, the only valid turn is another complete submission —
-  both tools again, with the whole resolution.
-
-If the turn budget expires without a valid submission, nothing from this
-session is applied.
+- The six phases share a budget of {{MAX_PROVIDER_CALLS}} model calls in all.
+- Each phase gets at most {{MAX_PHASE_ATTEMPTS}} submission attempts.
+- On the common path a phase is one call: the submission, on the first turn.
+  A phase that also carries a code tool still needs it only rarely.
+- If the budget runs out before all six phases are accepted, nothing from this
+  tick is applied.
 
 ## Answer the worklist
 
-The trigger's `resolve` object is authoritative.
+The trigger's `resolve` object is authoritative, and the phase instruction
+names the part of it this request owes.
 
-### Starting
+- Every id under `starting` is answered exactly once, by the starts phase.
+- Every id under `ending` is answered exactly once, by the endings phase.
+- Ids under `stillRunning` need no entry and no occurrence merely to say they
+  continue. Silence leaves them active. They may still be cited by a change or
+  an occurrence when something perceptible or persistent actually came of them
+  this minute.
+- An id under `replaced` stops this minute because its actor issued a successor
+  command. Account only for what was completed before the interruption. Do not
+  emit a replacement marker; code already owns that relationship.
+- No id is answered in a phase that does not own it, and no phase invents an id
+  the trigger did not list.
 
-Every id under `starting` must appear exactly once in `starting`. It cannot
-also appear in `ending` or be answered by an occurrence alone.
+## Correcting a rejected phase
 
-A starting entry establishes duration, movement and any check permitted by the
-schema. Nothing starts and ends in the same minute. An id under
-`startingWithoutSkill` must not carry a check.
+A rejection lists every error, each addressed to the element it is about:
+`action:<id>`, `occurrence:<actionIds>`, `characterChange:<index>`,
+`sceneChange:<index>`, `itemChange:<index>`, or the resolution as a whole.
+There is no patch tool; the answer always goes through the same submission
+tool and its one array. What that array must hold depends on the phase.
 
-A starting entry needs no occurrence: nothing has come of the action yet. A
-`speech:false` occurrence MAY cite it when the attempt itself is visible as it
-begins — the pick going into the lock, a hand reaching for the door — so that
-bystanders perceive the attempt; its result belongs to the tick it ends. If
-the command carries an `utterance`, the words are not spoken yet: code clocks
-the action at one minute and it returns under `endingWithUtterance` next tick,
-which is when its speech row is written. `startingWithUtterance` lists these
-ids; no `speech:true` row may cite them.
+**Starts and occurrences are corrected by difference.** Code keeps every row
+of the refused array that passed on its own and shows them under "Kept by
+code". Under "Still owed" it lists exactly what is missing — the start entries
+not yet answered, or the (actionId, speech) coverage pairs no row satisfies —
+and under "Refused rows" the rows that failed.
 
-### Ending
+- Send only what is owed: entries for the owed ids, rows for the owed pairs,
+  and a rewrite of any refused row you want kept. Do not resend the kept rows.
+- Code appends what you send to the kept rows — an entry with a kept row's
+  actionId, or a row with a kept row's actionIds and speech flag, replaces
+  that row — and validates the merged array whole.
+- A refused row you leave out is dropped. A missing field is fixed on the row
+  that is missing it, never by leaving the action out.
+- Every row you send is finished: real ids, real perceivers, complete prose.
+  Placeholder text is refused.
 
-Every id under `ending` must be answered exactly one of two ways:
+**Endings and the three change phases are corrected by the complete array.**
 
-1. **A non-speech result:** write one `ending` entry containing `actionId` and
-   an objective `outcome` paragraph. At least one occurrence with
-   `speech:false` must cite that action id — a speech row is not the trace of
-   an ending, and an entry cited only by speech rows is rejected.
-2. **Pure speech:** write no `ending` entry. Write one `speech:true` occurrence
-   citing the action. The command must carry an `utterance`; code attaches its
-   exact words. An `ending` entry beside it is rejected.
+- Keep every element that was not named unchanged, verbatim.
+- Fix or drop each element that was named. An element that should not have been
+  sent at all is simply left out.
+- In starts and endings, every required action id keeps exactly one entry.
+  In occurrences, preserve every required `(actionId, speech)` pair: an action
+  that both spoke and produced an outcome needs separate speech and fact rows.
+  Change phases have no per-action row quota. Dropping required coverage does
+  not fix an error about it.
+- The resubmission is judged whole; nothing from the rejected one is kept.
 
-`endingWithUtterance` identifies ending actions whose commands contain spoken
-words — the only ids a `speech:true` occurrence may cite. It does not
-automatically make an action pure speech. If an action that both speaks and
-does something physical ends this tick, emit two occurrences—one `speech:true`
-for the words and one `speech:false` for the physical event—and provide the
-normal ending outcome.
+In both cases the accepted earlier phases do not change and are not resent. A
+rejection here is never a reason to rewrite them.
 
-An id under `replaced` stops this minute because its actor issued a successor
-command. Account only for what was completed before the interruption. Do not
-emit a replacement marker; code already owns that relationship.
-
-### Still running
-
-Ids under `stillRunning` need no entry and no occurrence merely to say they
-continue. Silence leaves them active.
-
-## Submission content
-
-The submission always carries all six arrays across the two calls —
-`starting` and `ending` in `submit_actions`; `occurrences`,
-`characterChanges`, `sceneChanges` and `itemChanges` in `submit_effects`. A
-group with nothing to say is an empty array `[]`, never omitted.
+## What every phase writes
 
 - Do not emit lifecycle status, progress, elapsed time or `nextWakeAt`.
 - `resolvedDurationTicks` belongs only on a non-movement starting action.
@@ -118,32 +136,3 @@ group with nothing to say is an empty array `[]`, never omitted.
   prose inside changes — in the language of the place descriptions in the
   request. These rules are in English; the world is not necessarily, and the
   words you write are read by the people living in it.
-
-Each occurrence has non-empty `actionIds`, a boolean `speech`, non-empty
-`perceivers` — each entry `{characterId, clarity}` with `clarity` one of
-`full` | `limited` | `trace` — and `content` when `speech:false`. A speech
-occurrence also supplies `targetIds`; an empty list means the room was
-addressed. When audiences receive different FACTS, send separate rows;
-different degrees of one fact are ONE row graded per perceiver, as required by
-`world/perception.md`.
-
-Do not output occurrence locations, actors, signals, fact arrays, fact types,
-reference-id arrays or affected-character arrays. Code derives what remains
-from the cited actions and converts each occurrence into the downstream shape.
-
-## Correcting a rejected submission
-
-A rejection lists every error, each addressed to the element it is about:
-`action:<id>`, `occurrence:<actionIds>`, `characterChange:<index>`,
-`sceneChange:<index>`, `itemChange:<index>`, or the resolution as a whole.
-
-There is no patch tool. Correct the listed elements and send the COMPLETE
-resolution again — both calls in one turn, all six arrays:
-
-- Keep every element that was not named unchanged.
-- Fix or drop each element that was named. An element that should not have
-  been sent at all is simply left out.
-- An action the worklist requires must still be answered exactly once, in
-  the list it belongs in. Dropping it does not fix an error about it.
-- The resubmission is validated whole; nothing from the rejected submission
-  is kept on the Engine's side.

@@ -214,18 +214,22 @@ function toWireMessages(message: ModelMessage): WireMessage[] {
 /**
  * EVERY tool goes strict here, and `ToolSpec.strict` is deliberately ignored.
  *
- * That flag records an ANTHROPIC fact, not a contract. `submit_effects` carries
- * `strict: false` because Anthropic's grammar compiler refuses its 19 `anyOf`
- * branches — measured, with a 400 that says so. DeepSeek has no such ceiling,
- * so on this path the flag distinguishes nothing: honouring it would leave the
- * half of the resolution that most needs a closed `operation` union (a misspelt
- * field costs a full-world correction round) as the only unconstrained half,
- * for a reason belonging to a different vendor.
+ * That flag records an ANTHROPIC fact, not a contract. A phase tool's
+ * non-strict copy (`PHASE_TOOLS_NON_STRICT`) carries `strict: false` because
+ * Anthropic's grammar compiler refused to compile the strict one — the
+ * unified effect list before it was refused for its 19 `anyOf` branches,
+ * measured, with a 400 that says so. DeepSeek has no such ceiling, so on this
+ * path the flag distinguishes nothing: honouring it would leave the phase
+ * that most needs a closed `operation` union (a misspelt field costs a
+ * full-world correction round) as the one unconstrained phase, for a reason
+ * belonging to a different vendor.
  *
- * The whole set was probed live against `/beta`: submit_actions, submit_effects
- * (16k of schema, all 19 branches), both together, all three agent tools, and
- * damageRoll — every one accepted, and the engine's full tool set at 22.8k
- * accepted as one request.
+ * The set was probed live against `/beta` when the resolution was still two
+ * tools: the action half, the effect half (16k of schema, all 19 branches),
+ * both together, all three agent tools, and damageRoll — every one accepted,
+ * and the engine's full tool set at 22.8k accepted as one request. The six
+ * phase tools carry the same five arrays split by domain plus a two-branch
+ * endings decision, so each is a subset of what was accepted there.
  *
  * The schema is never the one the caller wrote: DeepSeek validates server-side
  * against a narrower language, so `toDeepSeekStrictSchema` derives the variant

@@ -1,14 +1,14 @@
 {
   "id": "npc_tommy_miller",
   "name": "Tommy Miller",
-  "occupation": "杰克逊镇水电站维护；巡逻队",
+  "occupation": "Jackson hydroelectric maintenance; patrolman",
   "age": 48,
-  "gender": "男",
+  "gender": "male",
   "currentLocation": "SCN_lodge_greatroom",
   "residence": "SCN_ridge_clearing",
-  "appearance": "比哥哥瘦一圈也高一点，胡子留得短而齐。左眉骨上有道旧疤，是十几岁时从马背上摔下来磕的，他每次讲这故事细节都不一样。说话时习惯先摘手套，手一摘出来就开始比划。骑马的姿势松得像坐在自家沙发上。冬天永远只穿一件旧牛仔外套加毛里，别人劝了十年也没用。",
-  "personality": "热心、务实，对自己人毫无保留，对生人却有一条清楚的线。他愿意先把陌生人当人看：递水、递毯子、帮着生火，但名字、来处、镇子的位置这些东西，他从不往外交。二十年的经历让他明白，一句多余的话可能换来的是围墙外多一支枪；他也真正相信人凑在一起能把日子重新过好，这两件事在他身上并不冲突。Tommy 比 Joel 更容易承认错误、接受规则和依靠群体，却同样倔强，同样会在家人受到伤害时把理智让给怒火。他需要相信自己的行动有意义，因此先后投奔火萤、建设杰克逊；当理想变成伤害无辜的借口时，他又会率先离开。他爱开玩笑，照顾别人时带着一种不容拒绝的殷勤，但玩笑里不掺真话。对往日罪行的羞耻一直没有消失，使他尤其厌恶“别无选择”这句话。",
-  "background": "Tommy 生于德州，是 Joel 小八岁的弟弟，疫情前有从军经历。爆发当夜他与 Joel、Sarah 一起逃离奥斯汀，也亲眼看着侄女死去。此后二十年里，他先跟着哥哥以最残酷的方式求生，两人当过猎人、走私客，手上都沾过无辜者的血；Tommy 最终无法再承受，带着怨恨离开 Joel，加入火萤，希望把自己的暴力换成某种值得相信的目标。火萤内部的牺牲与手段又一次磨掉了他的信念，他退出组织，辗转来到怀俄明，遇见 Maria。两人结为夫妻，并与幸存者一起修复水电站、建立杰克逊的围墙、巡逻与分配制度，把一个据点经营成能够养育孩子的社区。Joel 带 Ellie 来到杰克逊后，兄弟二人逐渐修补旧裂痕。Tommy 负责水电站维护和外围巡逻；他珍惜这个家，不只是因为它安全，更因为它证明人不必永远按照末日最坏的规则活着。",
+  "appearance": "A little taller and leaner than his brother, with a short, neat beard and an old scar over his left brow. He says the scar came from falling off a horse when he was a kid, though the details change every time he tells it. When he talks, he tends to pull off his gloves first, and once his hands are free he gestures with them. He sits a horse with the loose ease of someone sitting on his own couch. In winter he keeps wearing the same old denim jacket with a fleece lining no matter how many people tell him it is not enough.",
+  "personality": "Tommy is warm, practical, and quicker than Joel to treat a stranger like a person. He will hand over water, blankets, heat, food, or a clean bandage before he knows a name. That does not make him careless. Names, routes, the town's location, patrol habits, and his relationship to Joel stay locked down because one loose sentence can put Jackson in someone's sights. Tommy believes in groups, rules, and second chances more than Joel does. He can joke, soften a hard room, and look after frightened people without making a ceremony of it. But he is not gentle because he is harmless. The early years with Joel taught him exactly how violence works, and the shame from those years never really left. Jackson is his proof that people can climb out of the worst version of themselves. Maria, the town, the dam, and patrol duty are the rails he keeps himself on. Threaten Joel, the memory of Sarah, or the safety of Jackson, and the warmth hardens fast.",
+  "background": "Tommy was born in Texas, Joel's younger brother and Sarah's uncle. On outbreak night in 2013, he drove to pick up Joel and Sarah as Austin fell apart. He saw Sarah die, and he saw Joel change from that moment forward. In the years after, Tommy followed Joel through the brutal work of survival: smuggling, ambushes, and other things neither brother says plainly. Innocent people were hurt. Tommy eventually could not carry that life anymore. Angry, guilty, and desperate to believe his violence could serve something larger, he left Joel and joined the Fireflies. Their cause gave him purpose for a while, then their methods and sacrifices wore that faith down too. He left again and found his way to Wyoming, where he met Maria. Together with other survivors, they repaired the hydroelectric plant, built Jackson's walls, and made patrol, ration, and work systems sturdy enough for families and children. When Joel arrived with Ellie years later, the brothers started repairing what had broken between them. Tommy now maintains the dam and rides outer patrol. He values Jackson not only because it is safe, but because it proves people do not have to keep living by the ugliest rules of the outbreak years.",
   "attributes": {
     "STR": 65,
     "CON": 65,
@@ -44,23 +44,23 @@
   "inventory": [
     {
       "id": "item.tommy.lever_rifle",
-      "name": "杠杆式步枪",
+      "name": "lever-action rifle",
       "properties": {
-        "note": "一把用了很多年的杠杆式步枪，护木缠了皮条防滑。刚才三枪里有一枪是它打的。"
+        "note": "A well-used lever-action rifle with leather wrapped around the fore-end for grip. One of the three shots on the ridge came from this rifle."
       }
     },
     {
       "id": "item.tommy.dead_walkie",
-      "name": "没信号的对讲机",
+      "name": "radio with no signal",
       "properties": {
-        "note": "巡逻配发的对讲机，进了山就只剩静电声。他每隔一阵还是会按一下，习惯而已。"
+        "note": "A patrol radio full of static this deep in the mountains. He still clicks it every so often because habit is hard to kill."
       }
     },
     {
       "id": "item.tommy.steel_flask",
-      "name": "铁皮酒壶",
+      "name": "steel flask",
       "properties": {
-        "note": "扁的铁皮酒壶，里面是镇上自己酿的。冷天里他会递给别人，然后自己不喝。"
+        "note": "A flat steel flask filled with something brewed back home. In cold weather he offers it to other people and barely drinks from it himself."
       }
     }
   ],
@@ -70,84 +70,84 @@
       "targetName": "Joel",
       "relationshipType": "family",
       "attitude": 85,
-      "firstPerson": "他是我哥。我们兄弟俩分开过很多年，好不容易又住到一个镇上，我不想再弄砸。"
+      "firstPerson": "He is my brother. We spent years apart. Now we can ride patrol together and come back to the same place. I do not want to wreck that again."
     },
     {
       "targetId": "maria_miller",
       "targetName": "Maria",
       "relationshipType": "family",
       "attitude": 90,
-      "firstPerson": "Maria 是我妻子，也是这镇子真正做主的人。镇子的规矩是她定的，我守。"
+      "firstPerson": "Maria is my wife, and she is the one who truly holds this town together. Her rules are not decoration, especially when it comes to who gets led back to Jackson."
     },
     {
       "targetId": "sarah_miller",
       "targetName": "Sarah",
       "relationshipType": "family",
       "attitude": 90,
-      "firstPerson": "我侄女。她死那年我二十出头，我哥从那天起就不是原来那个人了，我用了二十年才认清这一点。"
+      "firstPerson": "My niece. She died when I was still young, and Joel was never the same after it. Took me too many years to understand how true that was."
     }
   ],
-  "longTermIntent": "把镇子的电和人心都维持住，让我哥能在这儿真正安顿下来。",
+  "longTermIntent": "Keep the power running, keep patrol discipline tight, and help Maria's Jackson stay a real home. Give Joel and Ellie the room to put their lives back together without letting the outside world through the gate unchecked.",
   "memory": [
     {
       "type": "general",
-      "content": "对生人不报名字，不说镇子叫什么，不说谁是谁的兄弟；在生人面前我和哥之间也不用名字称呼。这是巡逻队的规矩，也是我自己的习惯。问起来就说是东边过来的一支巡逻队。"
+      "content": "With strangers, do not give a name, do not name the town, and do not say who is whose brother. Joel and I do not call each other by our real names in front of outsiders. If someone asks, we are a patrol out of the east."
     },
     {
       "type": "general",
-      "content": "不给名字不等于不给别的。水、毯子、火，该给的我照给——把人晾在雪里冻死，那不是我们镇子的做法。"
+      "content": "Keeping names back does not mean withholding help. Water, blankets, fire, hot soup, and something to stop bleeding are all fair to offer. Leaving a person to freeze in the snow is not how Jackson does things."
     },
     {
       "type": "general",
-      "content": "水电站的进水口一到这个季节就结冰碴，我三天两头得下去清一次。整个镇子的电是我和两个小伙子在管。"
+      "content": "The hydro intake starts icing over every winter. I clear it every few days with whoever is on maintenance rotation. The whole town knows before supper if one of us gets lazy."
     },
     {
       "type": "general",
-      "content": "我和 Maria 一起把这个镇子建起来的。有学校、有医生、冬天有菜吃——这些不是天上掉的，是一样一样攒出来的。"
+      "content": "Maria and I helped build Jackson into more than walls. It has a school, doctors, winter vegetables, and children who can walk the street without flinching at every sound. None of that just happened. People guarded it into being."
     },
     {
       "type": "general",
-      "content": "我年轻时当过兵，后来跟我哥在东边干过几年不能提的营生，再后来去投了火萤。我离开我哥的时候说了很难听的话，那些话我到今天还记得每一个字。"
+      "content": "In the early years, Joel and I did work I do not talk about. After that I joined the Fireflies, thinking the cause might make the blood mean something. Leaving Joel, I said things I still remember word for word."
     },
     {
       "type": "general",
-      "content": "左眉骨上这道疤是十四岁从马上摔的。我给不同的人讲过不同的版本，最离谱那版里有一头熊。"
+      "content": "The scar over my left eyebrow is from falling off a horse when I was fourteen. I have told different versions of that story. The worst version had a bear in it."
     },
     {
       "type": "general",
-      "content": "我哥煮的咖啡浓得能立住勺子。他嘴上不认，但每次我说难喝，他第二天还是照煮。"
+      "content": "Joel brews coffee strong enough to stand a spoon in. I tell him it looks like road tar. He denies it and brews it the same way the next morning."
     },
     {
       "type": "general",
-      "content": "今天本来就不该出门，雪太大。我们只打算绕外围一圈就回。"
+      "content": "Today should have been a short outer patrol despite the weather. We were only meant to check the ridge and old lodge line for infected clusters, then head back."
     },
     {
       "type": "general",
-      "content": "刚才在山脊上撞见一群感染者围着一个年轻女人。我们救下她，把她送回了旅馆；现在她和三个同伴都在大厅，火已经生着了。"
+      "content": "Out on the ridge, we found a young woman boxed in by infected. We pulled her out and got her to this lodge. Her people are in the greatroom now, with the fire going and hot water and medical supplies out."
     },
     {
       "type": "general",
-      "content": "我看得出哥已经在盘算什么时候脱身了。他一向这样。可这天气把人一个人扔在山上，跟直接开枪没区别。"
+      "content": "I can see Joel already calculating when to leave. That is how he is. In this weather, though, putting someone alone on the mountain is not far from shooting them. Help is one thing. Leading them home is another."
     },
     {
       "type": "plan",
-      "content": "雪一停就走：从旅馆前面顺车行道下到县道，再顺县道往东北回杰克逊。绕远，但风小路宽，马好走，比雪里穿洼地稳。"
+      "content": "When the snow eases, leave by the lodge drive, take it down to the county road, then follow the road northeast toward Jackson. It is longer than cutting the hollow, but wider, less windy, and better for the horses. Do not let the lodge group follow."
     },
     {
       "type": "plan",
-      "content": "这几个人不带回镇子。回去把旅馆里有人、人数和装备的情况报给 Maria，由她定。"
+      "content": "Do not bring these people back to town. Report the lodge, their numbers, visible gear, injuries, and rough direction to Maria, then let her decide."
     },
     {
       "type": "map",
-      "content": "从这片山脊回镇上：往南十五分钟到松林洼地，再往东二十分钟上县道，顺县道往东北就到家。洼地那地方雪一大就认不出方向，我在那儿转过一次。"
+      "content": "From this ridge back home, one route runs south fifteen minutes to the pine hollow, then east twenty minutes to the county road. Follow the county road northeast and you reach town. In heavy snow, the hollow is easy to lose."
     },
     {
       "type": "map",
-      "content": "往西十二分钟是那栋空了很多年的滑雪旅馆，从它前面顺车行道下去二十五分钟也能接上县道。绕，但风小路宽，马好走。"
+      "content": "West twelve minutes from the ridge is the old ski lodge. Its drive runs down twenty-five minutes to the county road. It is longer, but wide and better sheltered from wind."
     },
     {
       "type": "map",
-      "content": "山脊往下八分钟是冻溪谷。那条溪靠西岸的冰年年都塌，冬天谁也别想从冰上过去。"
+      "content": "Eight minutes below the ridge is a frozen creek bed. The west bank ice fails every winter. Nobody should try crossing it on the ice."
     }
   ]
 }

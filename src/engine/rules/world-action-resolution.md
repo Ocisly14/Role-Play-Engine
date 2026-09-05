@@ -7,7 +7,11 @@ recipes.
 
 ## Rule modules
 
-Load these documents in this order after this root contract:
+One tick's resolution is decided in six ordered phases, one request each. This
+root contract is present in every one of them. The domain modules are not:
+each phase receives only the documents its own judgement needs, so a module
+absent from this request is not this phase's concern — and never a gap it
+should fill by guessing.
 
 1. `world/action-adjudication.md` — action timing, checks, outcomes and
    concurrency.
@@ -23,8 +27,9 @@ Load these documents in this order after this root contract:
    character agency.
 8. `sanity-check.md` — involuntary horror exposure and SAN loss.
 
-`session-protocol.md` is the transport contract for tool use and submission;
-it is not a world-rule module.
+`session-protocol.md` is the transport contract — what a phase is, what it may
+call, and what a rejection asks for. It is present in every phase and is not a
+world-rule module.
 
 ## Cross-domain invariants
 
