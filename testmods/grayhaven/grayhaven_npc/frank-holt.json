@@ -33,7 +33,6 @@
     "Land Vehicle Operation": 75,
     "Repair & Engineering": 60,
     "Athletics": 60,
-    "Social": 30,
     "Survival & Navigation": 40
   },
   "languages": {
@@ -67,7 +66,6 @@
       "id": "item.frank.labor_agreement",
       "name": "雷德利站后勤合同与保密协议",
       "properties": {
-        "hidden": true,
         "note": "雷德利站后勤雇佣合同及保密协议，规定他不得谈论站内物资和工作内容。"
       }
     }
@@ -162,19 +160,19 @@
   "memory": [
     {
       "type": "secret",
-      "content": "1977 年起我给雷德利站送货，八年没见过一个人：大门会自己开，机械自行收货，签收单从铁盒出来时已经盖好章；这些我连 Susan 都没说。"
+      "content": "1977 年起我给雷德利站送货，八年没见过一个人：大门 [SCN_gate] 会自己开，机械自行收货，签收单从铁盒 [item.station_dock.receipt_box] 出来时已经盖好章；这些我连 Susan 都没说。"
     },
     {
       "type": "secret",
-      "content": "合同和保密协议来自萨克拉门托的邮政信箱；支票按月来，我从没见过对方。中转棚的板条箱也总在我没看见时出现。"
+      "content": "合同和保密协议 [item.frank.labor_agreement] 来自萨克拉门托的邮政信箱；支票按月来，我从没见过对方。中转棚 [SCN_freight_shed] 的板条箱 [item.freight_shed.crates] 也总在我没看见时出现。"
     },
     {
       "type": "secret",
-      "content": "1984 年我在装卸区认出一只 1979 年亲手送去的板条箱：封条没拆，却像新的一样。这件事最让我睡不着。"
+      "content": "1984 年我在装卸区 [SCN_station_dock] 认出一只 1979 年亲手送去的板条箱 [item.station_dock.old_crate_1979]：封条没拆，却像新的一样。这件事最让我睡不着。"
     },
     {
       "type": "general",
-      "content": "1974 年锯木厂关闭，我是最后一批被遣散的装卸工；1977 年那份差事撑起了这个家八年。"
+      "content": "1974 年锯木厂 [SCN_sawmill] 关闭，我是最后一批被遣散的装卸工；1977 年那份差事撑起了这个家八年。"
     },
     {
       "type": "general",
@@ -182,11 +180,11 @@
     },
     {
       "type": "general",
-      "content": "Glen 1984 年参军去圣迭戈。送他上长途巴士那天我没说什么，回家把他的自行车修好挂进车库。"
+      "content": "Glen 1984 年参军去圣迭戈。送他上长途巴士那天我没说什么，回家把他的自行车 [item.holt_backyard.glen_bicycle] 修好挂进车库。"
     },
     {
       "type": "general",
-      "content": "Denny 暑假总往林道口跑，膝盖上全是林子里的泥；我让他别进林子，他答应得太快。"
+      "content": "Denny 暑假总往林道口 [SCN_trailhead] 跑，膝盖上全是林子里的泥；我让他别进林子，他答应得太快。"
     },
     {
       "type": "general",
@@ -194,7 +192,7 @@
     },
     {
       "type": "plan",
-      "content": "明天照常：七点半到中转棚提货，上山，晌午前回来。"
+      "content": "明天照常：七点半到中转棚 [SCN_freight_shed] 提货，上山，晌午前回来。"
     },
     {
       "type": "plan",
@@ -202,27 +200,27 @@
     },
     {
       "type": "map",
-      "content": "主街南北一条道，十五分钟走到头。北头蓝鸟餐馆、杂货店兼邮局、爸的办公室都在路边；南头是星港游戏厅、Dev 家维修铺、诊所——挨得近，顺路能全走一遍。"
+      "content": "主街 [ROAD_main_street] 南北一条道，十五分钟走到头。北头蓝鸟餐馆 [SCN_bluebird_dining]、杂货店兼邮局 [SCN_grocery_store]、爸的办公室 [SCN_sheriff_front] 都在路边；南头是星港游戏厅 [SCN_arcade]、Dev 家维修铺 [SCN_batra_shop]、诊所 [SCN_clinic_waiting]——挨得近，顺路能全走一遍。"
     },
     {
       "type": "map",
-      "content": "主街北口出去，旧海岸公路二十五分钟到汽车旅馆；霍尔特巷二十分钟到家；林道口就在同一个岔口，十分钟能到，不过我没进去过，只知道那个口子在哪儿。"
+      "content": "主街北口 [SCN_main_north] 出去，旧海岸公路 [ROAD_old_coast_road] 二十五分钟到汽车旅馆 [SCN_motel]；霍尔特巷 [ROAD_holt_lane] 二十分钟到家 [SCN_holt_gate]；林道口 [SCN_trailhead] 就在同一个岔口，十分钟能到，不过我没进去过，只知道那个口子在哪儿。"
     },
     {
       "type": "map",
-      "content": "主街南口下坡道十五分钟到码头/海滩；后巷抄近路八分钟到雷耶斯家——Marisol 店里有活要修，我走后巷，不绕主街。"
+      "content": "主街南口 [SCN_main_south] 下坡道 [ROAD_dock_slope] 十五分钟到码头/海滩 [SCN_dock]；后巷 [ROAD_backstreet] 抄近路八分钟到雷耶斯家 [SCN_reyes_gate]——Marisol 店里 [SCN_grocery_store] 有活要修，我走后巷，不绕主街。"
     },
     {
       "type": "map",
-      "content": "码头往崖间小径走三十分钟到灯塔崖，唯一的路，中途岔一条小道通老 Earl 的小屋。灯塔从八二年起锁着，没人再上去。"
+      "content": "码头 [SCN_dock] 往崖间小径 [ROAD_cliff_path] 走三十分钟到灯塔崖 [SCN_lighthouse_cliff]，唯一的路，中途岔一条小道通老 Earl 的小屋 [SCN_earl_cabin]。灯塔从八二年起锁着，没人再上去。"
     },
     {
       "type": "map",
-      "content": "我这条路：主街北口上旧海岸公路，二十五分钟到汽车旅馆；旅馆边有个货运中转棚，是我的提货点；从那儿岔进车行道，货车三十分钟到自动大门——门自己感应，不用我下车；过门再五分钟到装卸区。一个钟头出头，天天这个点。"
+      "content": "我这条路：主街北口 [SCN_main_north] 上旧海岸公路 [ROAD_old_coast_road]，二十五分钟到汽车旅馆 [SCN_motel]；旅馆边有个货运中转棚 [SCN_freight_shed]，是我的提货点；从那儿岔进车行道 [ROAD_station_drive]，货车 [VEH_frank_truck] 三十分钟到自动大门 [SCN_gate]——门自己感应，不用我下车；过门再五分钟到装卸区 [SCN_station_dock]。一个钟头出头，天天这个点。"
     },
     {
       "type": "map",
-      "content": "车行道跟林子基本平行，可两边不通——从林子里走不上车行道，步行上大门要小半天，没人那么走。"
+      "content": "车行道 [ROAD_station_drive] 跟林子基本平行，可两边不通——从林子里走不上车行道，步行上大门 [SCN_gate] 要小半天，没人那么走。"
     }
   ]
 }

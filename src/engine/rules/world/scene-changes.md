@@ -9,8 +9,7 @@ Each entry names the causing `sourceActionId` and its `sceneId`.
 - `removeCondition {predicate:{id?, featureId?}}`
 - `setDescription {description}`
 - `connectionBlock {connectionId, blocked, reason}`
-- `connectionDiscovered {connectionId, characterIds}`
-- `connectionHidden {connectionId, hidden}`
+- `connectionConcealed {connectionId, concealed}`
 - `environmentContribute {quantity, value}`, where quantity is `temperature`,
   `illumination`, `oxygen` or `noise`
 - `environmentHazard {add?, remove?}` — at least one of the two; an
@@ -61,13 +60,12 @@ A connection id identifies one exact passage, not a whole place.
   one-walker grant that leaves the passage shut for everybody else. Never both
   for the same passage in one tick: the grant already got that walker through,
   and `blocked:false` beside it says the obstacle is gone when it is not.
-- `connectionDiscovered` records which characters learned about a still-hidden
-  passage. Include everyone who could discover it from the event, not only the
-  actor.
-- `connectionHidden {hidden:false}` reveals the passage to the world, as when a
-  wall is broken or a concealed door is left openly exposed.
-- `connectionHidden {hidden:true}` conceals a passage only when an action truly
-  restores or creates concealment.
+- `connectionConcealed {concealed:false}` lays a concealed passage open for
+  everyone, as when a wall is broken or the bookshelf is left pushed aside;
+  rewrite the place's description to cite where it leads.
+- `connectionConcealed {concealed:true}` covers a passage again only when an
+  action truly restores or creates concealment.
 
-Private discovery and public revelation are different changes. Do not reveal a
-passage globally merely because one character found it.
+Finding a concealed passage is not a change here. It is an occurrence the
+finder perceives, naming the place it leads to — their own knowledge. Do not
+lay a passage open for everyone merely because one character found it.

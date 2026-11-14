@@ -31,6 +31,7 @@ import {
   CHARACTER_CHANGES_LIST,
   ITEM_CHANGES_LIST,
   OCCURRENCES_LIST,
+  OCCURRENCES_LIST_CODE_PERCEIVERS,
   type RawActionStart,
   type RawCharacterChange,
   type RawItemChange,
@@ -288,6 +289,27 @@ export const PHASE_TOOLS: Record<ResolutionPhase, ToolSpec> = byPhase(
  */
 export const PHASE_TOOLS_NON_STRICT: Record<ResolutionPhase, ToolSpec> =
   byPhase((phase) => ({ ...PHASE_TOOLS[phase], strict: false }));
+
+/**
+ * The occurrences tool without `perceivers` (DECISIONS_PERCEIVERS=on): the
+ * model writes what happened; code and the Decisions API decide who
+ * perceives each row. A schema of its own, with its own fingerprint.
+ */
+export const OCCURRENCES_TOOL_CODE_PERCEIVERS: ToolSpec = {
+  name: PHASE_TOOL_NAMES.occurrences,
+  strict: true,
+  description: `${PHASE_DESCRIPTIONS.occurrences} Perceivers are NOT part of your answer here: code decides who perceives each row, and how clearly, after you submit. ${PHASE_CONTRACT}`,
+  inputSchema: {
+    type: "object",
+    properties: { occurrences: OCCURRENCES_LIST_CODE_PERCEIVERS },
+    required: ["occurrences"],
+    additionalProperties: false,
+  },
+};
+export const OCCURRENCES_TOOL_CODE_PERCEIVERS_NON_STRICT: ToolSpec = {
+  ...OCCURRENCES_TOOL_CODE_PERCEIVERS,
+  strict: false,
+};
 
 export function phaseTool(
   phase: ResolutionPhase,

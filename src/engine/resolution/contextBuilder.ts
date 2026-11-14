@@ -21,11 +21,13 @@
 // reference. They are never rendered into the prompt.
 
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
+import { citedIds } from "../../state/perceivedLocation.js";
 import type { RoadNode } from "../../state/topologyTypes.js";
 import type { DynamicScene, Item, SceneConnection } from "../../state/types.js";
 import type { ActionCommand, EngineAction } from "../actions/types.js";
 import { ACTION_SCHEMA_VERSION } from "../actions/types.js";
 import type { GameTime } from "../core/types.js";
+import { catalogSkillName } from "../rules/skillCatalog.js";
 import type {
   BlockedEdge,
   CharacterSnapshot,
@@ -129,9 +131,11 @@ export function buildEngineResolutionContext(
     placeKinds[placeId] = entry.kind;
   }
   const connectionIds: string[] = [];
+  const concealedConnectionIds: string[] = [];
   for (const entry of placeById.values()) {
     for (const connection of entry.place.connections ?? []) {
       connectionIds.push(connection.id);
+      if (connection.concealed) concealedConnectionIds.push(connection.id);
     }
   }
 
@@ -192,7 +196,7 @@ export function buildEngineResolutionContext(
       from,
       to,
       ...(travelTimeMinutes !== undefined ? { travelTimeMinutes } : {}),
-      ...(connection.hidden !== undefined ? { hidden: connection.hidden } : {}),
+      ...(connection.concealed ? { concealed: true } : {}),
     });
   };
   for (const scene of scenes.values()) {
@@ -288,13 +292,16 @@ export function buildEngineResolutionContext(
   const items: ItemSnapshot[] = [];
   for (const placeId of involvedPlaceIds) {
     const entry = placeById.get(placeId);
+    const inPlainView = citedIds(entry?.place.description);
     for (const item of entry?.place.items ?? []) {
-      items.push(snapshotItem(item, `scene:${placeId}`));
+      items.push(
+        snapshotItem(item, `scene:${placeId}`, !inPlainView.has(item.id))
+      );
     }
   }
   for (const actorId of involvedActorIds) {
     for (const item of state.npcInventories?.[actorId] ?? []) {
-      items.push(snapshotItem(item, actorId));
+      items.push(snapshotItem(item, actorId, false));
     }
   }
 
@@ -309,7 +316,11 @@ export function buildEngineResolutionContext(
       ...(npc.appearance !== undefined ? { appearance: npc.appearance } : {}),
       alive: dgsm.isNpcAlive(npc.id),
       attributes: { ...npc.attributes } as unknown as Record<string, number>,
-      skills: { ...npc.skills },
+      skills: Object.fromEntries(
+        Object.entries(npc.skills ?? {}).filter(([name]) =>
+          catalogSkillName(name)
+        )
+      ),
       hp: npc.status.hp,
       maxHp: npc.status.maxHp,
       san: npc.status.san,
@@ -354,6 +365,7 @@ export function buildEngineResolutionContext(
       itemHolders,
       placeKinds,
       connectionIds,
+      concealedConnectionIds,
       vehicles: (dgsm.getVehicles?.() ?? []).map((v) => ({
         id: v.id,
         name: v.name,
@@ -402,7 +414,7 @@ function snapshotPlace(
         connectionId: c.id,
         targetId: c.targetId,
         ...(c.description !== undefined ? { description: c.description } : {}),
-        ...(c.hidden !== undefined ? { hidden: c.hidden } : {}),
+        ...(c.concealed ? { concealed: true } : {}),
         ...(blockedReason !== undefined ? { blockedReason } : {}),
       };
     }),
@@ -417,7 +429,11 @@ function snapshotPlace(
   };
 }
 
-function snapshotItem(item: Item, holder: string): ItemSnapshot {
+function snapshotItem(
+  item: Item,
+  holder: string,
+  unnoticed: boolean
+): ItemSnapshot {
   return {
     id: item.id,
     name: item.name,
@@ -425,6 +441,6 @@ function snapshotItem(item: Item, holder: string): ItemSnapshot {
       ? { description: item.description }
       : {}),
     holder,
-    ...(item.hidden !== undefined ? { hidden: item.hidden } : {}),
+    ...(unnoticed ? { unnoticed: true } : {}),
   };
 }

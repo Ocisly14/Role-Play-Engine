@@ -5,12 +5,6 @@
  */
 export const SKILL_CATALOG = [
   {
-    name: "Social",
-    base: 15,
-    description:
-      "Influence, deceive, intimidate, negotiate with, or read people.",
-  },
-  {
     name: "Knowledge & Craft",
     base: 5,
     description:
@@ -106,7 +100,7 @@ export type CanonicalSkillName = (typeof SKILL_CATALOG)[number]["name"];
 
 /**
  * Resolve a name to the catalog's exact spelling, case-insensitively.
- * Returns undefined for anything that is not one of the 17 domains — there
+ * Returns undefined for anything that is outside the catalog — there
  * is no legacy-name fallback: pre-consolidation skill names ("Locksmith",
  * "Spot Hidden", …) are authoring errors, rejected at intake and inert in
  * penalty maps, not silently folded.

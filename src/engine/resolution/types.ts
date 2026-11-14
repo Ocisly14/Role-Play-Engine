@@ -31,9 +31,10 @@ export interface ItemSnapshot {
   type?: string;
   /** "scene:<placeId>" or a character id — same grammar as DGSM item moves. */
   holder: string;
-  /** The Engine is all-knowing: hidden items appear here (that is what makes
-   *  revealing them possible), flagged so it knows characters cannot see them. */
-  hidden?: boolean;
+  /** The Engine is all-knowing: an item its place's description does not
+   *  cite is listed too, flagged — it is there, but nobody has noticed it.
+   *  Characters see it only by noticing it or finding it. */
+  unnoticed?: boolean;
   damaged?: boolean;
   properties?: Record<string, unknown>;
 }
@@ -62,7 +63,7 @@ export interface WorldGraph {
   }>;
   edges: Array<{
     /** The authored connection id (`connection.*`) — the handle connectionBlock /
-     *  connectionHidden operations take. */
+     *  connectionConcealed operations take. */
     connectionId: string;
     /** Skeleton node: the declaring place, lifted to its macro location when
      *  the declaring place is an interior scene. */
@@ -70,7 +71,8 @@ export interface WorldGraph {
     to: string;
     /** Full-length walk time; set on road endpoint edges. */
     travelTimeMinutes?: number;
-    hidden?: boolean;
+    /** Physically obscured (a door behind a bookshelf). */
+    concealed?: boolean;
   }>;
 }
 
@@ -99,7 +101,8 @@ export interface PlaceSnapshot {
     connectionId: string;
     targetId: string;
     description?: string;
-    hidden?: boolean;
+    /** Physically obscured (a door behind a bookshelf). */
+    concealed?: boolean;
     blockedReason?: string;
   }>;
   environment: {
@@ -223,8 +226,12 @@ export interface EngineResolutionContext {
       position: unknown;
     }>;
     /** Every authored connection id in the world. Validation lookup for
-     *  connectionBlock/connectionHidden targets. Not rendered. */
+     *  connectionBlock/connectionConcealed targets. Not rendered. */
     connectionIds: string[];
+    /** The subset of `connectionIds` physically concealed right now. Not
+     *  rendered (the places carry the flag); validation lookup for
+     *  `viaConcealedConnectionId`. */
+    concealedConnectionIds?: string[];
     /** ALL characters, untrimmed. */
     characters: CharacterSnapshot[];
   };
@@ -303,6 +310,7 @@ export type WorldActionEngineResult =
           route: string[];
           vehicleId?: string;
           passBlockedConnectionId?: string;
+          viaConcealedConnectionId?: string;
         }
       >;
       /** The bar the Engine set for an action as it starts, per actionId. */

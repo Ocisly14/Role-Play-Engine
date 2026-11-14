@@ -6,7 +6,10 @@
 // re-trigger via nextWakeAt, replacement and interruption triggers,
 // dead-actor rejection, lifecycle commit, and persistence round-trips.
 
-import { describe, expect, it, vi } from "vitest";
+import { mkdtempSync, readFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { DynamicGameStateManager } from "../../../state/DynamicGameState.js";
 import { buildTopology } from "../../../state/topologyTypes.js";
 import type { RoadNode } from "../../../state/topologyTypes.js";
@@ -674,6 +677,92 @@ describe("a route that does not join up", () => {
   });
 });
 
+/** A two-ended street, R_MAIN from J_A to J_B, with the walker standing on
+ *  it — one tenth of the way down unless `position` says otherwise. */
+function makeRoadDgsm(position = 0.1) {
+  const base = makeDgsm();
+  const scenes = new Map([
+    ["J_A", { id: "J_A", name: "主街北口", connections: [] }],
+    ["J_B", { id: "J_B", name: "主街南口", connections: [] }],
+  ]);
+  const roads = new Map([
+    [
+      "R_MAIN",
+      {
+        id: "R_MAIN",
+        name: "主街",
+        endpointA: "J_A",
+        endpointB: "J_B",
+        travelTimeMinutes: 15,
+        alongConnections: [],
+        connections: [],
+      },
+    ],
+  ]);
+  return {
+    ...base,
+    getState: () => ({
+      ...base.getState(),
+      scenes,
+    }),
+    getScene: (id: string) => scenes.get(id) ?? null,
+    getTopology: () =>
+      buildTopology(
+        scenes as unknown as Map<string, DynamicScene>,
+        roads as unknown as Map<string, RoadNode>
+      ),
+    // Walking back to J_A.
+    getCharacterPosition: () => ({
+      type: "road",
+      roadId: "R_MAIN",
+      position,
+    }),
+    setCharacterPosition: () => undefined,
+    getBlockedConnections: () => new Map<string, string>(),
+    getConnectionBlockReason: () => undefined,
+  } as unknown as DynamicGameStateManager;
+}
+
+/** A start that walks to J_A (with a bar, when `check` is set) and a
+ *  settlement that writes the arrival as an outcome. */
+function stubResolveWithWalk(opts: { check?: boolean } = {}) {
+  const calls: EngineResolutionContext[] = [];
+  const fn = vi.fn(async (context: EngineResolutionContext) => {
+    calls.push(context);
+    const raw: RawTickResolution = { starting: [], ending: [] };
+    // An action both due and interrupted is named by two triggers; it still
+    // ends once.
+    const ended = new Set<string>();
+    for (const t of context.trigger.triggers) {
+      for (const actionId of t.actionIds) {
+        if (t.reason === "new_action") {
+          raw.starting?.push({
+            actionId,
+            resolvedDurationTicks: 4,
+            movement: { route: ["J_A"] },
+            ...(opts.check ? { check: { requiredLevel: "regular" } } : {}),
+          });
+        } else if (
+          (t.reason === "duration_reached" || t.reason === "interrupted") &&
+          !ended.has(actionId)
+        ) {
+          ended.add(actionId);
+          raw.ending?.push({ actionId, outcome: "arrived at J_A" });
+        }
+      }
+    }
+    const finalized = finalizeResolution(raw, context);
+    return {
+      ok: true as const,
+      resolution: finalized.resolution,
+      movementInits: finalized.movementInits,
+      checkInits: finalized.checkInits,
+      codeToolInvocations: [],
+    };
+  });
+  return { fn, calls };
+}
+
 describe("a walk that starts partway along a road", () => {
   // Observed live (grayhaven gh-cross-town, DeepSeek run 2026-09-01):
   // "addMinutes expects an integer minute delta, got 2.5."
@@ -685,80 +774,6 @@ describe("a walk that starts partway along a road", () => {
   // takes 2 ticks. `resolvedDurationTicks` agreed (ceil(1.5) = 2). Only
   // `nextWakeAt` disagreed, being handed the raw 1.5, and the clock refused
   // it. The two numbers describe the same thing and must not diverge.
-  function makeRoadDgsm() {
-    const base = makeDgsm();
-    const scenes = new Map([
-      ["J_A", { id: "J_A", name: "主街北口", connections: [] }],
-      ["J_B", { id: "J_B", name: "主街南口", connections: [] }],
-    ]);
-    const roads = new Map([
-      [
-        "R_MAIN",
-        {
-          id: "R_MAIN",
-          name: "主街",
-          endpointA: "J_A",
-          endpointB: "J_B",
-          travelTimeMinutes: 15,
-          alongConnections: [],
-          connections: [],
-        },
-      ],
-    ]);
-    return {
-      ...base,
-      getState: () => ({
-        ...base.getState(),
-        scenes,
-      }),
-      getScene: (id: string) => scenes.get(id) ?? null,
-      getTopology: () =>
-        buildTopology(
-          scenes as unknown as Map<string, DynamicScene>,
-          roads as unknown as Map<string, RoadNode>
-        ),
-      // Standing one tenth of the way down the road, walking back to J_A.
-      getCharacterPosition: () => ({
-        type: "road",
-        roadId: "R_MAIN",
-        position: 0.1,
-      }),
-      setCharacterPosition: () => undefined,
-      getBlockedConnections: () => new Map<string, string>(),
-      getConnectionBlockReason: () => undefined,
-    } as unknown as DynamicGameStateManager;
-  }
-
-  function stubResolveWithWalk() {
-    const calls: EngineResolutionContext[] = [];
-    const fn = vi.fn(async (context: EngineResolutionContext) => {
-      calls.push(context);
-      const raw: RawTickResolution = { starting: [], ending: [] };
-      for (const t of context.trigger.triggers) {
-        for (const actionId of t.actionIds) {
-          if (t.reason === "new_action") {
-            raw.starting?.push({
-              actionId,
-              resolvedDurationTicks: 4,
-              movement: { route: ["J_A"] },
-            });
-          } else if (t.reason === "duration_reached") {
-            raw.ending?.push({ actionId, outcome: "arrived at J_A" });
-          }
-        }
-      }
-      const finalized = finalizeResolution(raw, context);
-      return {
-        ok: true as const,
-        resolution: finalized.resolution,
-        movementInits: finalized.movementInits,
-        checkInits: finalized.checkInits,
-        codeToolInvocations: [],
-      };
-    });
-    return { fn, calls };
-  }
-
   it("does not hand the clock a fractional minute", async () => {
     const { engine } = makeEngine(makeRoadDgsm(), stubResolveWithWalk());
     await engine.submitCommand(
@@ -827,6 +842,115 @@ describe("a walk that starts partway along a road", () => {
   });
 });
 
+describe("a plain arrival closes in code (ENGINE_ARRIVAL_SKIP)", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  /** Standing right next to J_A: the walk is judged, stepped and due in one
+   *  tick. Returns the engine, its stub and every report it emitted. */
+  async function walkOneTick(
+    opts: {
+      check?: boolean;
+      overrides?: Partial<ActionCommand>;
+      interrupt?: boolean;
+    } = {}
+  ) {
+    const { engine, resolve } = makeEngine(
+      makeRoadDgsm(0.05),
+      stubResolveWithWalk({ check: opts.check })
+    );
+    const reports: import("../types.js").TickReport[] = [];
+    engine.on("tickCompleted", (r) => {
+      reports.push(r);
+    });
+    const id = receiptActionId(
+      await engine.submitCommand(
+        command({ description: "我沿主街往回走到北口。", ...opts.overrides })
+      )
+    );
+    if (opts.interrupt) engine.requestInterruption(id, "actor died");
+    await engine.tick();
+    return { engine, resolve, report: reports[0], id };
+  }
+
+  it("on: a plain walk is closed by code — one Engine call (the start), completed, committed", async () => {
+    vi.stubEnv("ENGINE_ARRIVAL_SKIP", "on");
+    const { engine, resolve, report, id } = await walkOneTick();
+
+    expect(resolve.fn).toHaveBeenCalledTimes(1);
+    expect(engine.getAction(id)).toMatchObject({ status: "completed" });
+    expect(report.transitions).toContainEqual(
+      expect.objectContaining({ actionId: id, to: "completed" })
+    );
+    expect(report.commits.map((c) => c.handleId)).toContain(id);
+    // Closed with nothing to say: no fallback "it ended" event for the actor.
+    expect(report.occurrences.some((o) => o.sourceActionIds.includes(id))).toBe(
+      false
+    );
+  });
+
+  it("off: the same walk is settled by the Engine (two calls)", async () => {
+    const { engine, resolve, id } = await walkOneTick();
+    expect(resolve.fn).toHaveBeenCalledTimes(2);
+    expect(engine.getAction(id)).toMatchObject({ status: "completed" });
+  });
+
+  it("a walk that carries an utterance is still settled by the Engine", async () => {
+    vi.stubEnv("ENGINE_ARRIVAL_SKIP", "on");
+    const { resolve, id } = await walkOneTick({
+      overrides: { utterance: "到了。" },
+    });
+    expect(resolve.fn).toHaveBeenCalledTimes(2);
+    expect(
+      resolve.calls[1].trigger.triggers.flatMap((t) => t.actionIds)
+    ).toContain(id);
+  });
+
+  it("a walk with a check is still settled by the Engine", async () => {
+    vi.stubEnv("ENGINE_ARRIVAL_SKIP", "on");
+    const { resolve, id } = await walkOneTick({
+      check: true,
+      overrides: { declaredSkillId: "Athletics" },
+    });
+    expect(resolve.fn).toHaveBeenCalledTimes(2);
+    expect(
+      resolve.calls[1].trigger.triggers.flatMap((t) => t.actionIds)
+    ).toContain(id);
+  });
+
+  it("an interrupted arrival still goes to the Engine", async () => {
+    vi.stubEnv("ENGINE_ARRIVAL_SKIP", "on");
+    // Requested while the command is still queued: it takes effect once the
+    // start judgement has made the action active, in this same tick.
+    const { resolve, id } = await walkOneTick({ interrupt: true });
+    expect(resolve.fn).toHaveBeenCalledTimes(2);
+    const interrupted = resolve.calls[1].trigger.triggers.find(
+      (t) => t.reason === "interrupted"
+    );
+    expect(interrupted?.actionIds).toContain(id);
+  });
+
+  it("shadow: settled by the Engine, and one shadow line records the disagreement", async () => {
+    const file = join(mkdtempSync(join(tmpdir(), "arrival-")), "shadow.jsonl");
+    vi.stubEnv("ENGINE_ARRIVAL_SKIP", "shadow");
+    vi.stubEnv("DECISIONS_SHADOW_LOG", file);
+    const { resolve, id } = await walkOneTick();
+
+    expect(resolve.fn).toHaveBeenCalledTimes(2);
+    const lines = readFileSync(file, "utf8").trim().split("\n");
+    expect(lines).toHaveLength(1);
+    // The stub wrote the arrival as an outcome, so the Engine disagreed.
+    expect(JSON.parse(lines[0])).toMatchObject({
+      fastPath: "ENGINE_ARRIVAL_SKIP",
+      actionId: id,
+      predicted: "no_change",
+      llm: "result",
+      agree: false,
+    });
+  });
+});
+
 describe("conditions reach the dice", () => {
   /** A stub that sets a bar when the action starts, so code rolls when its
    *  time is spent — the only place in the engine a skill is actually rolled. */
@@ -865,16 +989,58 @@ describe("conditions reach the dice", () => {
     mechanicalEffect: { globalSkillPenalty: -20 },
   };
 
+  it("resumes an in-flight social action from an old save without its check", async () => {
+    const dgsm = makeDgsm();
+    const actionId = "action_c1";
+    const resolve = stubResolve();
+    const engine = createTickEngine({
+      dgsm,
+      scriptedEvents: [],
+      subsystemRegistry: new SubsystemRegistry(),
+      tickDurationMinutes: 1,
+      codeTools: new CodeToolRegistry(),
+      resolveTickFn: resolve.fn,
+      persistedState: {
+        actionSchemaVersion: ACTION_SCHEMA_VERSION,
+        inbox: [],
+        actions: [
+          {
+            id: actionId,
+            command: command({
+              description: "I ask him where he was last night.",
+              utterance: "Where were you last night?",
+              declaredSkillId: "Social",
+            }),
+            status: "active",
+            submittedAt: "1923-04-02T09:00:00",
+            startedAt: "1923-04-02T09:00:00",
+            nextWakeAt: "1923-04-02T09:01:00",
+            progressMinutes: 0,
+            resolvedDurationTicks: 1,
+            check: { skillId: "Social", requiredLevel: "regular" },
+          },
+        ],
+      },
+    });
+    await engine.tick();
+    expect(engine.getAction(actionId)?.status).toBe("completed");
+    expect(engine.getAction(actionId)?.check).toBeUndefined();
+    expect(engine.getAction(actionId)?.checkOutcome).toBeUndefined();
+    expect(resolve.calls[0].actions.activeActions[0].command.utterance).toBe(
+      "Where were you last night?"
+    );
+  });
+
   it("rolls the actor against a value their conditions lowered", async () => {
     // The handicap lives in the deterministic dice, NOT in the trust boundary:
     // the command was accepted exactly as it would have been for a steady
     // character, and only the roll knows the difference.
     const { engine } = makeEngine(
-      makeDgsm({ skills: { Social: 60 }, conditions: [shaken] }),
+      makeDgsm({ skills: { Athletics: 60 }, conditions: [shaken] }),
       stubResolveWithCheck()
     );
     const receipt = await engine.submitCommand(
-      command({ declaredSkillId: "Social" })
+      command({ declaredSkillId: "Athletics" })
     );
     expect(receipt.accepted).toBe(true);
 
@@ -882,7 +1048,7 @@ describe("conditions reach the dice", () => {
 
     const action = engine.getAction(receiptActionId(receipt));
     expect(action?.checkOutcome?.actor).toMatchObject({
-      skillId: "Social",
+      skillId: "Athletics",
       skillValue: 40,
       skillValueBase: 60,
     });
@@ -890,11 +1056,11 @@ describe("conditions reach the dice", () => {
 
   it("leaves a steady character's roll untouched, and says so by omission", async () => {
     const { engine } = makeEngine(
-      makeDgsm({ skills: { Social: 60 } }),
+      makeDgsm({ skills: { Athletics: 60 } }),
       stubResolveWithCheck()
     );
     const receipt = await engine.submitCommand(
-      command({ declaredSkillId: "Social" })
+      command({ declaredSkillId: "Athletics" })
     );
     await engine.tick(); // judged at 09:00, spent and rolled at 09:01
 
@@ -914,11 +1080,11 @@ describe("conditions reach the dice", () => {
       mechanicalEffect: { globalSkillPenalty: -20 },
     };
     const { engine } = makeEngine(
-      makeDgsm({ skills: { Social: 55 }, conditions: [exhausted] }),
+      makeDgsm({ skills: { Athletics: 55 }, conditions: [exhausted] }),
       stubResolveWithCheck()
     );
     const receipt = await engine.submitCommand(
-      command({ declaredSkillId: "Social" })
+      command({ declaredSkillId: "Athletics" })
     );
     await engine.tick(); // judged at 09:00, spent and rolled at 09:01
 

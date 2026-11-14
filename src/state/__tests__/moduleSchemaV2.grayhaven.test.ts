@@ -104,12 +104,14 @@ describe("grayhaven module data", () => {
     expect(fenceRoads).toEqual(["ROAD_redwood_fence"]);
   });
 
-  it("seeds the hidden clue items uncited", () => {
+  it("seeds the clue items uncited — there, but not yet noticed", () => {
+    // No hidden flag: being absent from the prose is what unnoticed means.
     const room4 = module.scenes.get("SCN_motel_room4");
     const liner = room4?.items.find(
       (i: { id: string }) => i.id === "item.motel_room4.suitcase_liner"
     );
-    expect(liner?.hidden).toBe(true);
+    expect(liner).toBeTruthy();
+    expect(liner && "hidden" in liner).toBe(false);
     expect(room4?.description.includes("item.motel_room4.suitcase_liner")).toBe(
       false
     );
@@ -117,7 +119,11 @@ describe("grayhaven module data", () => {
     const bills = store?.items.find(
       (i: { id: string }) => i.id === "item.grocery_store.duplicate_bills"
     );
-    expect(bills?.hidden).toBe(true);
+    expect(bills).toBeTruthy();
+    expect(bills && "hidden" in bills).toBe(false);
+    expect(
+      store?.description.includes("item.grocery_store.duplicate_bills")
+    ).toBe(false);
   });
 
   it("scripted events load through the real loader and point at real places", () => {
@@ -188,20 +194,21 @@ describe("grayhaven module data", () => {
     ).toBeUndefined();
   });
 
-  it("the truth space exists but stays sealed behind a hidden connection", () => {
+  it("the truth space exists but stays sealed behind a concealed connection", () => {
     const dock = module.scenes.get("SCN_station_dock");
     expect(dock?.connections).toHaveLength(2);
     const inner = dock?.connections.find(
       (c) => c.targetId === "SCN_station_hall"
     );
-    // The door is a VISIBLE item (Frank can point at it); the passage is
-    // hidden — filtered from perception, uncitable, unciteable in prose.
-    expect(inner?.hidden).toBe(true);
+    // The door is an item in plain view — cited in the prose, so Frank can
+    // point at it; the passage is concealed — filtered from perception,
+    // uncitable, its target never cited in prose.
+    expect(inner?.concealed).toBe(true);
     expect(
-      dock?.items.some(
-        (i) => i.id === "item.station_dock.inner_door" && !i.hidden
-      )
+      dock?.items.some((i) => i.id === "item.station_dock.inner_door")
     ).toBe(true);
+    expect(dock?.description).toContain("[item.station_dock.inner_door]");
+    expect(dock?.description).not.toContain("[SCN_station_hall]");
     // The three base rooms are real scenes, closed at start.
     for (const id of [
       "SCN_station_hall",

@@ -7,7 +7,7 @@
 //
 //   gh-street-node    顶层街面场景：可站立、可感知、可相遇（junction 已并入场景）
 //   gh-cross-town     跨场景寻路：室内 → 街面节点 → 另一栋楼（抬升边/新拓扑）
-//   gh-hidden-clue    hidden 物品：揭示前不可引用，Engine 全知可揭示
+//   gh-hidden-clue    没被注意到的物品（描述未引用）：找到前不可引用，Engine 全知
 //   gh-skill-17       17 域技能声明，无 legacy 兜底
 //   gh-stranger-alias 陌生人别名（stranger_a）：Vance 对全镇、全镇对 Vance
 //   gh-write-memory   异常刺激 → writeMemory（opening event 走 scripted-event 路径）
@@ -96,7 +96,7 @@ export const GRAYHAVEN_SCENARIOS: SimScenario[] = [
   {
     id: "gh-hidden-clue",
     group: "world",
-    title: "hidden 物品：账对不上,店堂里藏着重复的进货单",
+    title: "没被注意到的物品：账对不上,店堂里藏着重复的进货单",
     targetDefs: ["Investigation"],
     cases: [
       {
@@ -137,7 +137,7 @@ export const GRAYHAVEN_SCENARIOS: SimScenario[] = [
     id: "gh-stranger-alias",
     group: "multi",
     title: "陌生人别名：外来者走进蓝鸟餐馆",
-    targetDefs: ["Social"],
+    targetDefs: [],
     cases: [
       {
         label: "Vance+Dolores｜互不相识（stranger_a 引用）",

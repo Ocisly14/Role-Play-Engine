@@ -33,7 +33,7 @@ const dgsm = {
   getGameDateTime: () => "1923-04-02T09:15:00",
   getCharacterPosition: () => ({ kind: "scene", sceneId: "SCN_1" }),
   resolveLocationId: () => "SCN_1",
-  getNpcProfile: () => ({ skills: { Social: 55 }, languages }),
+  getNpcProfile: () => ({ skills: { Athletics: 55 }, languages }),
   getState: () => ({ scenes: new Map(), npcInventories: {} }),
   getScene: (id: string) => (id === "SCN_1" ? {} : null),
   getJunction: () => null,
@@ -117,8 +117,8 @@ describe("resolving the fluency the dice use", () => {
   });
 
   it("leaves every other domain alone", () => {
-    expect(resolveSkillValue("Social", { Social: 55 })).toEqual({
-      canonicalSkillId: "Social",
+    expect(resolveSkillValue("Athletics", { Athletics: 55 })).toEqual({
+      canonicalSkillId: "Athletics",
       value: 55,
     });
   });

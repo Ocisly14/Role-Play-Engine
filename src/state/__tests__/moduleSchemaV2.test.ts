@@ -71,7 +71,7 @@ function rawNodeScene(overrides: Record<string, unknown> = {}) {
         {
           id: "connection.main_north.cellar",
           targetId: "SCN_cellar",
-          hidden: true,
+          concealed: true,
         },
       ],
     },
@@ -262,6 +262,54 @@ describe("parsePlaceFileV2", () => {
     expect(error.problems.join("\n")).toContain("no longer supported");
     expect(error.problems.join("\n")).toContain("Record");
   });
+
+  it("rejects an item hidden flag — an uncited item is simply unnoticed", () => {
+    const bad = rawScene();
+    (bad.references as Record<string, unknown>).items = [
+      { id: "item.library.archives", name: "Archive shelves", hidden: true },
+    ];
+    const error = expectSchemaError(() => parsePlaceFileV2("SCN_library", bad));
+    expect(error.problems.join("\n")).toContain(
+      "items have no hidden flag"
+    );
+  });
+
+  it("rejects a connection hidden flag (renamed to concealed)", () => {
+    const error = expectSchemaError(() =>
+      parsePlaceFileV2(
+        "SCN_main_north",
+        rawNodeScene({
+          references: {
+            connections: [
+              { id: "connection.main_north.cellar", targetId: "SCN_cellar", hidden: true },
+            ],
+          },
+        })
+      )
+    );
+    expect(error.problems.join("\n")).toContain('renamed to "concealed"');
+  });
+
+  it("rejects a connection discoveredBy list", () => {
+    const error = expectSchemaError(() =>
+      parsePlaceFileV2(
+        "SCN_main_north",
+        rawNodeScene({
+          references: {
+            connections: [
+              {
+                id: "connection.main_north.cellar",
+                targetId: "SCN_cellar",
+                concealed: true,
+                discoveredBy: ["npc_1"],
+              },
+            ],
+          },
+        })
+      )
+    );
+    expect(error.problems.join("\n")).toContain("discoveredBy: removed");
+  });
 });
 
 // ─── derivation ────────────────────────────────────────────────────
@@ -298,11 +346,15 @@ describe("buildSceneV2", () => {
     expect(error.problems[0]).toContain("role/position");
   });
 
-  it("keeps a node scene's connections, hidden included, with no parent", () => {
+  it("keeps a node scene's connections, concealed included, with no parent", () => {
     const corner = buildSceneV2(
       parsePlaceFileV2("SCN_main_north", rawNodeScene())
     );
     expect(corner.connections).toHaveLength(2);
+    expect(
+      corner.connections.find((c) => c.id === "connection.main_north.cellar")
+        ?.concealed
+    ).toBe(true);
     expect(corner.parentLocationId).toBeUndefined();
   });
 });
@@ -503,7 +555,7 @@ describe("buildSceneV2 item position", () => {
 // ─── module-wide reference integrity ───────────────────────────────
 
 describe("validateModuleReferences", () => {
-  it("accepts a consistent module (hidden references uncited)", () => {
+  it("accepts a consistent module (concealed passage target uncited)", () => {
     expect(() => validateModuleReferences(builtModule())).not.toThrow();
   });
 
@@ -521,16 +573,13 @@ describe("validateModuleReferences", () => {
     );
   });
 
-  it("rejects a visible item that is never cited", () => {
+  it("accepts an item that is never cited — it is there, not yet noticed", () => {
     const module = builtModule((m) => {
       const cellar = m.scenes.get("SCN_cellar");
       if (!cellar) throw new Error("fixture broke");
       cellar.items = [{ id: "item.cellar.crate", name: "Crate" }];
     });
-    const error = expectSchemaError(() => validateModuleReferences(module));
-    expect(error.problems.join("\n")).toContain(
-      '"item.cellar.crate" is never cited'
-    );
+    expect(() => validateModuleReferences(module)).not.toThrow();
   });
 
   it("rejects a connection whose target place is never cited", () => {
@@ -600,7 +649,7 @@ describe("validateModuleReferences", () => {
     );
   });
 
-  it("rejects citing the target of a hidden connection (leak)", () => {
+  it("rejects citing the target of a concealed connection (leak)", () => {
     const module = builtModule((m) => {
       const corner = m.scenes.get("SCN_main_north");
       if (!corner) throw new Error("fixture broke");
@@ -608,17 +657,16 @@ describe("validateModuleReferences", () => {
     });
     const error = expectSchemaError(() => validateModuleReferences(module));
     expect(error.problems.join("\n")).toContain(
-      "cites [SCN_cellar], the target of a hidden connection"
+      "cites [SCN_cellar], reached only through a concealed connection"
     );
   });
 
-  it("treats an uncited hidden item as legal", () => {
+  it("accepts an item cited exactly once — it is in plain view", () => {
     const module = builtModule((m) => {
       const cellar = m.scenes.get("SCN_cellar");
       if (!cellar) throw new Error("fixture broke");
-      cellar.items = [
-        { id: "item.cellar.duplicate_bills", name: "Bills", hidden: true },
-      ];
+      cellar.description = "A dirt-floored cellar. Bills on a crate [item.cellar.duplicate_bills].";
+      cellar.items = [{ id: "item.cellar.duplicate_bills", name: "Bills" }];
     });
     expect(() => validateModuleReferences(module)).not.toThrow();
   });

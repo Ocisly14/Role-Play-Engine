@@ -54,6 +54,11 @@ export interface MovementRuntimeState {
    *  Consumed when the matching blocked edge is reached; every other edge,
    *  including later edges in the same route, is checked normally. */
   passBlockedConnectionId?: string;
+  /** The concealed passage the actor's own words said they would go through
+   *  (`viaConcealedConnectionId` on the start). Without it a concealed
+   *  passage joins nothing: someone who only named where they were going
+   *  walks the open ways. */
+  viaConcealedConnectionId?: string;
   /** The actor's stated waypoints (place ids, adjacent hops); the last one
    *  is the destination. Legs are planned lazily on arrival at each
    *  waypoint, so a mid-route block interrupts exactly where it stands. */
@@ -125,24 +130,35 @@ function placeLabel(dgsm: DynamicGameStateManager, id: string): string {
 
 /** Are two places one stated hop apart? Adjacency is the grain of a spoken
  *  route: a door between scenes, a scene on a road (endpoint or access), or
- *  two node scenes joined by a road (the road ridden implicitly). */
-function placesAdjacent(
+ *  two node scenes joined by a road (the road ridden implicitly). A
+ *  CONCEALED passage joins its two places only for the walk that was granted
+ *  it (`viaConcealedId`) — everyone else's route does not know it is there. */
+export function placesAdjacent(
   dgsm: DynamicGameStateManager,
   a: string,
-  b: string
+  b: string,
+  viaConcealedId?: string
 ): boolean {
+  const usable = (c: { id: string; concealed?: boolean }): boolean =>
+    !c.concealed || c.id === viaConcealedId;
   const connected = (x: string, y: string): boolean =>
-    (dgsm.getScene(x)?.connections ?? []).some((c) => c.targetId === y);
+    (dgsm.getScene(x)?.connections ?? []).some(
+      (c) => c.targetId === y && usable(c)
+    );
   if (connected(a, b) || connected(b, a)) return true;
   const topology = dgsm.getTopology();
   const roadTouches = (roadId: string, placeId: string): boolean => {
     const road = topology.roads.get(roadId);
     if (!road) return false;
-    return (
-      road.endpointA === placeId ||
-      road.endpointB === placeId ||
-      road.alongConnections.some((al) => al.sceneId === placeId)
+    if (road.endpointA === placeId || road.endpointB === placeId) return true;
+    if (!road.alongConnections.some((al) => al.sceneId === placeId)) {
+      return false;
+    }
+    // An access doorway along the road may itself be concealed.
+    const access = (road.connections ?? []).find(
+      (c) => c.role === "access" && c.targetId === placeId
     );
+    return access === undefined || usable(access);
   };
   if (topology.roads.has(a) && roadTouches(a, b)) return true;
   if (topology.roads.has(b) && roadTouches(b, a)) return true;
@@ -227,7 +243,8 @@ export function initMovementRuntime(
   actorId: string,
   routeInput: string[],
   vehicleId?: string,
-  passBlockedConnectionId?: string
+  passBlockedConnectionId?: string,
+  viaConcealedConnectionId?: string
 ): MovementInitResult {
   let route = routeInput;
   if (route.length === 0) {
@@ -286,7 +303,7 @@ export function initMovementRuntime(
   if (
     startId !== undefined &&
     route[0] !== startId &&
-    !placesAdjacent(dgsm, startId, route[0])
+    !placesAdjacent(dgsm, startId, route[0], viaConcealedConnectionId)
   ) {
     return {
       ok: false,
@@ -296,7 +313,9 @@ export function initMovementRuntime(
   }
   let unstatedHopAhead: { fromId: string; toId: string } | undefined;
   for (let i = 0; i + 1 < route.length; i += 1) {
-    if (!placesAdjacent(dgsm, route[i], route[i + 1])) {
+    if (
+      !placesAdjacent(dgsm, route[i], route[i + 1], viaConcealedConnectionId)
+    ) {
       unstatedHopAhead = { fromId: route[i], toId: route[i + 1] };
       route = route.slice(0, i + 1);
       break;
@@ -336,6 +355,9 @@ export function initMovementRuntime(
       ...(vehicleId !== undefined ? { vehicleId } : {}),
       ...(passBlockedConnectionId !== undefined
         ? { passBlockedConnectionId }
+        : {}),
+      ...(viaConcealedConnectionId !== undefined
+        ? { viaConcealedConnectionId }
         : {}),
       route: [...route],
       ...(unstatedHopAhead ? { unstatedHopAhead } : {}),

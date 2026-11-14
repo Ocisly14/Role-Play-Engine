@@ -15,6 +15,8 @@
 
 import { SKILL_CATALOG } from "../../engine/rules/skillCatalog.js";
 import type { ToolSpec } from "../../models/providers/types.js";
+import { askFriendTool } from "./askFriend.js";
+import { SLEEP_FIELD_DESCRIPTION } from "./sleepField.js";
 
 /** Types the character may write. `summary` is system-authored (end-of-day
  *  diary) and deliberately absent. */
@@ -54,13 +56,9 @@ export const actTool: ToolSpec = {
             // offered a way to be wrong about a real id — and a mislabelled
             // real id used to be rejected as if it named nothing. The
             // boundary derives the kind.
+            // No `role` either: how you use the entity is already in
+            // `description`, and nothing downstream needed it said twice.
             id: { type: "string" },
-            role: {
-              type: "string",
-              enum: ["target", "tool", "destination", "recipient"],
-              description:
-                "How you use this entity: acted upon (target), used to act (tool), moved toward (destination), given/told something (recipient).",
-            },
           },
           required: ["id"],
           additionalProperties: false,
@@ -70,7 +68,7 @@ export const actTool: ToolSpec = {
         type: "integer",
         minimum: 1,
         description:
-          "Ticks (1 tick = 1 in-world minute) for THIS single action, not a sequence of future tasks. Atomic does not mean one tick. Your estimate only; the engine sets the authoritative duration.",
+          "Ticks (1 tick = 1 in-world minute) for THIS single action, not a sequence of future tasks. Atomic does not mean one tick — a night's sleep is 480, a long journey or a stay can run to days, up to 10080 (seven days). Your estimate only; the engine sets the authoritative duration.",
       },
       skillId: {
         // Enumerated rather than free text, for two reasons found in one run
@@ -81,12 +79,12 @@ export const actTool: ToolSpec = {
         type: "string",
         enum: SKILL_CATALOG.map((skill) => skill.name),
         description:
-          "The skill you consciously bring to bear. Declare it whenever your training is what you are relying on — talking someone round, moving unseen, forcing a lock, reading a document, landing a blow — and declare it even when you are poor at it: a failed attempt spends time and actual resources; additional harm needs a fumble or an independent cause. Omitting it is a real choice and not a default: an action with no declared skill is settled on its own merits and your training counts for nothing. Never values, difficulties or rolls — only which skill.",
+          "The skill you use for a task such as moving unseen, forcing a lock, translating a document or landing a blow. Omit for persuasion, questioning, deception, intimidation, negotiation and reading people. Provide only the skill name.",
       },
       language: {
         type: "string",
         description:
-          'Required with skillId "Languages", and meaningless without it: name the tongue you are reading or speaking, exactly as it appears under "What you can do". A native tongue needs no Languages declaration; another applicable skill such as Social can still be declared.',
+          'Required with skillId "Languages": name the tongue you are reading or speaking, exactly as it appears under "What you can do". A native tongue needs no Languages declaration.',
       },
       utterance: {
         type: "string",
@@ -165,3 +163,26 @@ export const writeMemoryTool: ToolSpec = {
 /** Order is stable: tool definitions render ahead of the system prompt, so a
  *  reordering would invalidate the cached prefix on every call. */
 export const AGENT_TOOLS: ToolSpec[] = [actTool, continueTool, writeMemoryTool];
+
+/** The player character's `act`: the same tool, still named "act", plus one
+ *  optional `sleep` flag. A deep copy, so `actTool` — and with it every NPC
+ *  request — stays byte-identical. */
+export const playerActTool: ToolSpec = (() => {
+  const copy = structuredClone(actTool);
+  const schema = copy.inputSchema as { properties: Record<string, unknown> };
+  schema.properties.sleep = {
+    type: "boolean",
+    description: SLEEP_FIELD_DESCRIPTION,
+  };
+  return copy;
+})();
+
+/** A player character the player has handed over: the NPC tool set, the
+ *  player's `act`, and the line to their absent friend. Order is stable for
+ *  the same cache reason as AGENT_TOOLS. */
+export const PLAYER_DELEGATED_TOOLS: ToolSpec[] = [
+  playerActTool,
+  continueTool,
+  writeMemoryTool,
+  askFriendTool,
+];

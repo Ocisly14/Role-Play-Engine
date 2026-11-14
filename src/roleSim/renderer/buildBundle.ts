@@ -10,6 +10,7 @@ import type { TickEngine } from "../../engine/core/tickEngine.js";
 import type { TickReport } from "../../engine/core/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import {
+  type NoticedThisMinute,
   charactersAtSameLocation,
   resolvePerceivedLocation,
 } from "../../state/perceivedLocation.js";
@@ -29,6 +30,9 @@ export interface BuildBundleParams {
   occurrencesForNpc?: Occurrence[];
   dgsm: DynamicGameStateManager;
   engine: TickEngine;
+  /** What the viewer noticed this minute beyond plain view (concealment
+   *  design §5.3). Pass the same value to the citation scope. */
+  noticed?: NoticedThisMinute;
 }
 
 export function buildPerceivedBundle(
@@ -36,7 +40,7 @@ export function buildPerceivedBundle(
 ): PerceivedBundle {
   const { npcId, report, occurrencesForNpc, dgsm, engine } = params;
 
-  const scene = resolveScene(npcId, dgsm);
+  const scene = resolveScene(npcId, dgsm, params.noticed);
   const ownSpot = dgsm.getCharacterSpot(npcId);
   const ownConditions = dgsm.getNpcProfile(npcId)?.status?.conditions ?? [];
   const ownAction = resolveOwnAction(npcId, report, engine);
@@ -79,17 +83,19 @@ function resolveScenePresentCharacters(
 
 function resolveScene(
   npcId: string,
-  dgsm: DynamicGameStateManager
+  dgsm: DynamicGameStateManager,
+  noticed?: NoticedThisMinute
 ): PerceivedBundle["scene"] {
   // Roads are places too — a traveller mid-route perceives the
   // street they are on, not "an indistinct place".
-  // Same resolver AND same viewer as the trust boundary reads: a passage this
-  // character has found is rendered for them and citable by them, and one they
-  // have not is neither.
+  // Same resolver AND same `noticed` as the trust boundary reads: a thing
+  // this character noticed is rendered for them and citable by them, and one
+  // they have not is neither.
   const location = resolvePerceivedLocation(
     dgsm.getCharacterPosition(npcId),
     dgsm,
-    npcId
+    npcId,
+    noticed
   );
   if (location) {
     return {
@@ -97,8 +103,8 @@ function resolveScene(
       name: location.name,
       description: location.description,
       activeConditions: location.conditions,
-      // Already free of hidden passages: `adjacentIds` is built with
-      // `.filter((c) => !c.hidden)`, so an unfound door never reaches here.
+      // Already free of concealed passages this viewer did not notice:
+      // `adjacentIds` filters them, so an unseen door never reaches here.
       adjacentPlaces: location.adjacentIds.map((id) => ({
         id,
         name: placeName(id, dgsm),

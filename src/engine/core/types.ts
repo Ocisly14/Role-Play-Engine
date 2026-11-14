@@ -177,22 +177,14 @@ export type StateChange =
       reason: string;
     }
   | {
-      /** These characters have found a concealed connection: each of them
-       *  perceives it from now on, and nobody else does. Recorded on the
-       *  passage itself (`SceneConnection.discoveredBy`), beside `hidden`.
-       *  `connection.setHidden` is the other half — that one opens it for the
-       *  whole world at once. */
-      kind: "connection.discovered";
+      /** Conceal or expose a connection by its authored id (`connection.*`) —
+       *  its physical state, the same for everyone. Routed to
+       *  DGSM.setConnectionConcealedById, which mutates the owning place's
+       *  SceneConnection in place. Who KNOWS about a concealed passage is
+       *  each character's own knowledge, not a change here. */
+      kind: "connection.setConcealed";
       connectionId: string;
-      characterIds: string[];
-    }
-  | {
-      /** Reveal/hide a connection by its authored id (`connection.*`). Routed to
-       *  DGSM.setConnectionHiddenById, which mutates the owning place's
-       *  SceneConnection in place. */
-      kind: "connection.setHidden";
-      connectionId: string;
-      hidden: boolean;
+      concealed: boolean;
     }
   | {
       /** Rewrite a place's whole prose (scene, junction or road — the same
@@ -277,8 +269,6 @@ export type StateChange =
       description?: string;
       /** Appended as one sentence instead of replacing. How damage lands. */
       appendDescription?: string;
-      /** Conceal from / reveal to characters. `false` is the reveal. */
-      hidden?: boolean;
       isLightSource?: boolean;
       lightLevel?: number;
       /** Set when a subsystem emitted this rather than the resolver. */

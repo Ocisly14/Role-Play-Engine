@@ -139,13 +139,47 @@ export const initialDynamicGameState = (
  * Dynamic Game State Manager
  * Provides methods to manage DynamicWorld-specific state
  */
+
+/**
+ * A save written before "hidden" became "not yet noticed" (concealment design
+ * §5.7) still carries `hidden` / `discoveredBy`. Loaded as is, its concealed
+ * passages would silently become open ones and its hidden items visible to
+ * everyone, so it is refused — no legacy read mode, as with the action
+ * snapshot version.
+ */
+function rejectPreConcealmentSave(data: any): void {
+  const places = [
+    ...Object.values(
+      data?.scenes instanceof Map
+        ? Object.fromEntries(data.scenes)
+        : (data?.scenes ?? {})
+    ),
+    ...Object.values(
+      data?.roads instanceof Map
+        ? Object.fromEntries(data.roads)
+        : (data?.roads ?? {})
+    ),
+  ] as Array<{ connections?: any[]; items?: any[] }>;
+  const stale = places.some(
+    (p) =>
+      (p.connections ?? []).some(
+        (c) => c?.hidden !== undefined || c?.discoveredBy !== undefined
+      ) || (p.items ?? []).some((i) => i?.hidden !== undefined)
+  );
+  if (stale) {
+    throw new Error(
+      "This save predates the concealment change (it still carries hidden / discoveredBy). Saves from before it are not supported — start a fresh session."
+    );
+  }
+}
+
 export class DynamicGameStateManager {
   private state: DynamicGameState;
 
   /**
    * Lazily built id-addressed index over every authored connection.
    * Topology never gains or loses connections at runtime (only flags like
-   * `hidden`/blocked flip), so building it once is enough. Derivable from
+   * `concealed`/blocked flip), so building it once is enough. Derivable from
    * state — never serialized.
    */
   private connectionRegistry: ConnectionRegistry | null = null;
@@ -215,6 +249,7 @@ export class DynamicGameStateManager {
    * Deserialize state from storage (converts Objects back to Maps, ISO strings back to Dates)
    */
   static deserialize(data: any): DynamicGameState {
+    rejectPreConcealmentSave(data);
     // Convert scenes from object back to Map
     const scenes = new Map<string, DynamicScene>();
     if (data.scenes) {
@@ -393,7 +428,6 @@ export class DynamicGameStateManager {
     patch: {
       description?: string;
       appendDescription?: string;
-      hidden?: boolean;
       isLightSource?: boolean;
       lightLevel?: number;
     }
@@ -411,7 +445,6 @@ export class DynamicGameStateManager {
         ? `${existing} ${patch.appendDescription.trim()}`
         : patch.appendDescription.trim();
     }
-    if (patch.hidden !== undefined) target.hidden = patch.hidden;
     if (patch.isLightSource !== undefined) {
       target.isLightSource = patch.isLightSource;
     }
@@ -917,33 +950,6 @@ export class DynamicGameStateManager {
     });
   }
 
-  /**
-   * Reveal/hide a connection by its id, mutating the owning place's
-   * SceneConnection in place (serializes with state). False + warn when the
-   * id resolves to nothing.
-   */
-  /** Record that this character has found a concealed connection. Kept on the
-   *  connection itself, beside `hidden`, so a passage carries its own answer
-   *  to "who knows about me" and nothing has to be kept in step with it.
-   *  Idempotent — finding the same door twice is one discovery. */
-  recordConnectionDiscovery(
-    characterId: string,
-    connectionId: string
-  ): boolean {
-    const connection = this.findConnectionById(connectionId);
-    if (!connection) {
-      console.warn(
-        `[DynamicGameState] recordConnectionDiscovery: unknown connection id "${connectionId}"`
-      );
-      return false;
-    }
-    const found = connection.discoveredBy ?? [];
-    if (!found.includes(characterId)) {
-      connection.discoveredBy = [...found, characterId];
-    }
-    return true;
-  }
-
   private findConnectionById(
     connectionId: string
   ): SceneConnection | undefined {
@@ -956,7 +962,16 @@ export class DynamicGameStateManager {
     return owner?.connections?.find((c) => c.id === connectionId);
   }
 
-  setConnectionHiddenById(connectionId: string, hidden: boolean): boolean {
+  /**
+   * Conceal or expose a connection by its id — its physical state, the same
+   * for everyone (a bookshelf pushed aside) — mutating the owning place's
+   * SceneConnection in place (serializes with state). False + warn when the
+   * id resolves to nothing.
+   */
+  setConnectionConcealedById(
+    connectionId: string,
+    concealed: boolean
+  ): boolean {
     const entry = this.getConnectionRegistry().get(connectionId);
     const owner = entry
       ? entry.ownerKind === "scene"
@@ -966,11 +981,11 @@ export class DynamicGameStateManager {
     const connection = owner?.connections?.find((c) => c.id === connectionId);
     if (!connection) {
       console.warn(
-        `[DynamicGameState] setConnectionHiddenById: unknown connection id "${connectionId}"`
+        `[DynamicGameState] setConnectionConcealedById: unknown connection id "${connectionId}"`
       );
       return false;
     }
-    connection.hidden = hidden;
+    connection.concealed = concealed;
     return true;
   }
 

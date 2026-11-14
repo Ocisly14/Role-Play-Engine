@@ -671,7 +671,7 @@ describe("validateRawResolution — outcome, talk and the bar", () => {
         starting: [
           start({
             check: { requiredLevel: "regular" },
-            opposedBy: [{ characterId: "npc_ghost", skillId: "Social" }],
+            opposedBy: [{ characterId: "npc_ghost", skillId: "Athletics" }],
           }),
         ],
       },
@@ -682,7 +682,7 @@ describe("validateRawResolution — outcome, talk and the bar", () => {
     const noBar = validateRawResolution(
       {
         starting: [
-          start({ opposedBy: [{ characterId: "npc_2", skillId: "Social" }] }),
+          start({ opposedBy: [{ characterId: "npc_2", skillId: "Athletics" }] }),
         ],
       },
       makeContext({ newCommands: [skillCommand] })
@@ -820,7 +820,7 @@ describe("finalizeResolution", () => {
             commandId: "live",
             actorId: "npc_2",
             utterance: spoken,
-            objectRefs: [{ kind: "character", id: "npc_1", role: "target" }],
+            objectRefs: [{ kind: "character", id: "npc_1" }],
           }),
         }),
       ],

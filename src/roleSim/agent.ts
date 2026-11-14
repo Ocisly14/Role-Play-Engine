@@ -9,6 +9,7 @@
 import type { ActionObjectRef } from "../engine/actions/types.js";
 import type { GameTime } from "../engine/core/types.js";
 import type { NpcMemoryType } from "../memory/types.js";
+import type { FriendNote, PlayerMode } from "../player/playerState.js";
 import type { DynamicNPCProfile } from "../state/types.js";
 
 export type RoleSimDecision =
@@ -23,8 +24,17 @@ export type RoleSimDecision =
       skillId?: string;
       language?: string;
       utterance?: string;
+      /** Player character only: this act is going to sleep. Present only
+       *  when the model set it to `true`; NPCs are never offered the field. */
+      sleep?: boolean;
     }
   | { tool: "continue"; reason?: string }
+  | {
+      /** Player character in delegated mode only: ask the off-world player
+       *  for advice. Terminal — the decision ends waiting for the answer. */
+      tool: "askFriend";
+      question: string;
+    }
   | {
       tool: "writeMemory";
       type: NpcMemoryType;
@@ -87,12 +97,13 @@ export interface RoleSimContext {
    *  command with this structured reason (invalid ref, bad duration, unknown
    *  skill, …). Rendered as factual feedback so the agent can re-decide. */
   rejectionFeedback?: string;
-  /** Met Social / Investigation checks that were aimed at this character
-   *  and ended this tick, already worded for them by `landedChecks.ts`: the
-   *  other person's words could not be turned aside and an answer is owed.
-   *  Which answer is not in here — that is the decision this prompt asks
-   *  for. Absent when nothing landed. */
-  landedChecks?: ReadonlyArray<string>;
+  /** Set only for the player's own character. Absent for every NPC, and an
+   *  absent field leaves the prompt and the tool set exactly as they are. */
+  player?: {
+    mode: PlayerMode;
+    /** Delegated: what the friend has said, oldest first. */
+    friendLog?: ReadonlyArray<FriendNote>;
+  };
 }
 
 export interface RoleSimAgent {

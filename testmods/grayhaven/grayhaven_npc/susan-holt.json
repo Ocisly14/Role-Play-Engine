@@ -31,7 +31,6 @@
   },
   "skills": {
     "Medicine & Psychology": 75,
-    "Social": 65,
     "Investigation": 50,
     "Knowledge & Craft": 50,
     "Athletics": 35
@@ -154,11 +153,11 @@
   "memory": [
     {
       "type": "secret",
-      "content": "我在家庭日历背面记下 Frank 每晚醒着的时间和 Denny 的哮喘发作；我没告诉任何人，因为把它们写成一张表，就像承认这个家真的在出问题。"
+      "content": "我在家庭日历 [item.holt_common.family_calendar] 背面记下 Frank 每晚醒着的时间和 Denny 的哮喘发作；我没告诉任何人，因为把它们写成一张表，就像承认这个家真的在出问题。"
     },
     {
       "type": "general",
-      "content": "1985 年入夏以来，诊所的失眠和耳鸣病人明显多了；Weaver 医生嘴上不说，病例却写得越来越细。"
+      "content": "1985 年入夏以来，诊所 [SCN_clinic_waiting] 的失眠和耳鸣病人明显多了；Weaver 医生嘴上不说，病例却写得越来越细。"
     },
     {
       "type": "general",
@@ -170,7 +169,7 @@
     },
     {
       "type": "general",
-      "content": "从 1984 年冬天起，家里的灯会闪，厨房收音机有时会串进说不出的杂音；Frank 说是老线路，却没看我。"
+      "content": "从 1984 年冬天起，家里的灯会闪，厨房收音机 [item.holt_common.kitchen_radio] 有时会串进说不出的杂音；Frank 说是老线路，却没看我。"
     },
     {
       "type": "general",
@@ -178,11 +177,11 @@
     },
     {
       "type": "general",
-      "content": "Glen 六月来信说圣迭戈一切都好；家里安静得能听见冰箱嗡嗡响。"
+      "content": "Glen 六月来信说圣迭戈一切都好；家里安静得能听见冰箱 [item.holt_common.refrigerator] 嗡嗡响。"
     },
     {
       "type": "plan",
-      "content": "找个由头让 Frank 到诊所做一次体检，就说 Weaver 医生要求四十岁以上的人都查。"
+      "content": "找个由头让 Frank 到诊所 [SCN_clinic_waiting] 做一次体检，就说 Weaver 医生要求四十岁以上的人都查。"
     },
     {
       "type": "plan",
@@ -190,23 +189,23 @@
     },
     {
       "type": "map",
-      "content": "诊所在主街南头，离雷耶斯家最近——出诊只消拐进后巷，八分钟就到她家门口；巴特拉家我也常去，就在维修铺楼上，敲根管子他们准听得见。"
+      "content": "诊所 [SCN_clinic_waiting] 在主街 [ROAD_main_street] 南头，离雷耶斯家 [SCN_reyes_gate] 最近——出诊只消拐进后巷 [ROAD_backstreet]，八分钟就到她家门口；巴特拉家我也常去，就在维修铺 [SCN_batra_shop] 楼上 [SCN_batra_living]，敲根管子他们准听得见。"
     },
     {
       "type": "map",
-      "content": "我们家在北头，沿霍尔特巷走二十分钟才到主街北口，再走完整条主街十五分钟才到诊所——半夜真出了事，我宁可先打电话让人来，也不指望自己走着赶时间。"
+      "content": "我们家在北头，沿霍尔特巷 [ROAD_holt_lane] 走二十分钟才到主街北口 [SCN_main_north]，再走完整条主街 [ROAD_main_street] 十五分钟才到诊所 [SCN_clinic_waiting]——半夜真出了事，我宁可先打电话让人来，也不指望自己走着赶时间。"
     },
     {
       "type": "map",
-      "content": "主街北口往外还接两条路：一条旧海岸公路，二十五分钟到汽车旅馆；一条林道，十分钟就到林道口——镇上进山就这一个口子，我没走进去过，认路也就到这儿为止。"
+      "content": "主街北口 [SCN_main_north] 往外还接两条路：一条旧海岸公路 [ROAD_old_coast_road]，二十五分钟到汽车旅馆 [SCN_motel]；一条林道 [ROAD_trail_access]，十分钟就到林道口 [SCN_trailhead]——镇上进山就这一个口子，我没走进去过，认路也就到这儿为止。"
     },
     {
       "type": "map",
-      "content": "我们家后院那处豁口，十分钟就能走上林道——我没跟 Frank 挑明，但我心里有数，就怕哪天夜里 Denny 不打起居室过，直接从那儿溜出去。"
+      "content": "我们家后院 [SCN_holt_backyard] 那处豁口，十分钟就能走上林道 [ROAD_trail_access]——我没跟 Frank 挑明，但我心里有数，就怕哪天夜里 Denny 不打起居室 [SCN_holt_common] 过，直接从那儿溜出去。"
     },
     {
       "type": "map",
-      "content": "山上有政府的气象站,从汽车旅馆旁的车行道上去 —— 这镇上人人知道,也人人不当回事。Frank 每天开货车上去送货,普通人到那道大门为止。我只知道路在哪,从没上去过;他也从不说上面的事,我问过一次,就一次。"
+      "content": "山上有政府的气象站 [SCN_station_yard],从汽车旅馆 [SCN_motel] 旁的车行道 [ROAD_station_drive] 上去 —— 这镇上人人知道,也人人不当回事。Frank 每天开货车 [VEH_frank_truck] 上去送货,普通人到那道大门 [SCN_gate] 为止。我只知道路在哪,从没上去过;他也从不说上面的事,我问过一次,就一次。"
     }
   ]
 }

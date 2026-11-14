@@ -33,24 +33,21 @@ Never narrate outcomes as facts.
   If outside, first declare boarding; after it resolves, declare driving with
   your route. Stepping out at the far end is another action.
 - \`objectRefs\` (required, may be empty \`[]\`): the entities your action
-  involves, as structured references:
-  \`{ "id": "<id>", "role"?: "target"|"tool"|"destination"|"recipient" }\`
+  involves, as structured references: \`{ "id": "<id>" }\`
   - \`id\` MUST be a bracketed tag from what you perceive this tick, copied
     exactly and without its brackets. Something you perceive with no tag is
     something you cannot act on this minute. **Never invent an id**
-  - \`role\` says how YOU use the entity: \`target\` (acted upon),
-    \`tool\` (used to act), \`destination\` (moved toward),
-    \`recipient\` (given/told something).
+  - How you use each one belongs in \`description\`, not here.
 - \`proposedDurationTicks\` (required): how many ticks (1 tick = 1 in-world
   minute) you expect or are willing to invest in THIS one action, not the
   total time of a future plan. This is YOUR estimate only — the engine sets
   the real duration and may shorten or extend it. Atomic does not mean one tick.
 - \`skillId\` (optional): the skill you consciously bring to bear, chosen
   from the list the tool offers.
-  Declare it whenever your training is what you are relying on: talking
-  someone round, moving unseen, forcing a lock, reading a document, landing
-  a blow. **Omitting it is a choice with a cost.** An action with no
-  declared skill is settled on its own merits.
+  Declare it for tasks such as moving unseen, forcing a lock, translating
+  a document or landing a blow. For persuasion, questioning, deception,
+  intimidation, negotiation and reading people, describe your approach and
+  omit \`skillId\`.
   You can still declare it even when you are poor at it. Ordinary attempts spend
   time and real resources; a fumble can cause additional harm, and independently
   established hazards still apply. What you must not do is reach for an
@@ -60,8 +57,7 @@ Never narrate outcomes as facts.
 - \`language\` (only with \`skillId: "Languages"\`): which tongue you are
   reading or speaking. "Languages" is a domain, not one number — name the
   language exactly as it is listed under **What you can do**. The tongues you
-  grew up in need no Languages declaration. You can still declare another
-  applicable skill, such as Social for persuasion in your native tongue.
+  grew up in need no Languages declaration.
 - \`utterance\` (optional): the EXACT words you intend to say, verbatim, in your
   character's voice. They are delivered when this action ends, not when you
   submit it. Omit when silent; a paraphrase in \`description\` alone delivers
@@ -134,8 +130,8 @@ Try a lock with a skill and a tool:
 act({
   "description": "I kneel at the cabinet and work the lock with my picks, listening for the tumblers.",
   "objectRefs": [
-    { "id": "item.clinic_exam.cabinet", "role": "target" },
-    { "id": "item.susan.nurse_bag", "role": "tool" }
+    { "id": "item.clinic_exam.cabinet" },
+    { "id": "item.susan.nurse_bag" }
   ],
   "proposedDurationTicks": 3,
   "skillId": "Stealth & Security"
@@ -144,16 +140,15 @@ act({
 Speak to someone present:
 act({
   "description": "I lean toward the tall pale man and press him quietly about what was found at the harbour.",
-  "objectRefs": [ { "id": "stranger_a", "role": "target" } ],
+  "objectRefs": [ { "id": "stranger_a" } ],
   "proposedDurationTicks": 1,
-  "skillId": "Social",
   "utterance": "今晚到底发现了什么？地点和通报人？"
 })
 
 Head somewhere:
 act({
   "description": "I set off through the drizzle toward the clinic, keeping to the lit side of the street.",
-  "objectRefs": [ { "id": "SCN_clinic_waiting", "role": "destination" } ],
+  "objectRefs": [ { "id": "SCN_clinic_waiting" } ],
   "proposedDurationTicks": 12
 })
 `;

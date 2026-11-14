@@ -24,7 +24,7 @@ function makeFixture() {
     conditions: [],
     connections: [
       { id: "connection.home.junc", targetId: "J_A" },
-      { id: "connection.home.secret", targetId: "R_MAIN", hidden: true },
+      { id: "connection.home.secret", targetId: "R_MAIN", concealed: true },
     ],
   };
 
@@ -195,19 +195,23 @@ describe("createItem explicit id", () => {
   });
 });
 
-describe("setItem hidden patch", () => {
-  it("sets and clears the hidden flag", () => {
-    expect(dgsm.setItem("item_chair", { hidden: true })).toBe(true);
+// Items have no hidden flag any more — whether an item is in plain view is
+// whether its place's description cites it — so the patch carries only what
+// the item is like.
+describe("setItem patch", () => {
+  it("appends to the description and sets lighting, on any holder", () => {
+    expect(
+      dgsm.setItem("item_chair", { appendDescription: "One leg is cracked." })
+    ).toBe(true);
     const chair = scene.items.find((i) => i.id === "item_chair");
-    expect(chair?.hidden).toBe(true);
-    expect(dgsm.hasItem("item_chair")).toBe(true); // hidden still exists
-
-    expect(dgsm.setItem("item_chair", { hidden: false })).toBe(true);
-    expect(chair?.hidden).toBe(false);
+    expect(chair?.description).toBe("One leg is cracked.");
 
     // Works on non-scene holders too.
-    expect(dgsm.setItem("item_glove", { hidden: true })).toBe(true);
-    expect(road.items[0].hidden).toBe(true);
+    expect(
+      dgsm.setItem("item_glove", { isLightSource: false, lightLevel: 0 })
+    ).toBe(true);
+    expect(road.items[0].isLightSource).toBe(false);
+    expect(road.items[0].lightLevel).toBe(0);
   });
 });
 
@@ -264,37 +268,39 @@ describe("scene condition ids", () => {
   });
 });
 
-describe("setConnectionHiddenById", () => {
-  it("reveals a hidden scene connection in place", () => {
-    expect(dgsm.setConnectionHiddenById("connection.home.secret", false)).toBe(
-      true
-    );
+describe("setConnectionConcealedById", () => {
+  it("exposes a concealed scene connection in place", () => {
+    expect(
+      dgsm.setConnectionConcealedById("connection.home.secret", false)
+    ).toBe(true);
     const conn = scene.connections.find(
       (c) => c.id === "connection.home.secret"
     );
-    expect(conn?.hidden).toBe(false);
+    expect(conn?.concealed).toBe(false);
   });
 
-  it("hides a node-scene connection", () => {
-    expect(dgsm.setConnectionHiddenById("connection.junc.road", true)).toBe(
+  it("conceals a node-scene connection", () => {
+    expect(dgsm.setConnectionConcealedById("connection.junc.road", true)).toBe(
       true
     );
     const conn = junction.connections.find(
       (c) => c.id === "connection.junc.road"
     );
-    expect(conn?.hidden).toBe(true);
+    expect(conn?.concealed).toBe(true);
   });
 
-  it("hides a road connection", () => {
-    expect(dgsm.setConnectionHiddenById("connection.road.a", true)).toBe(true);
+  it("conceals a road connection", () => {
+    expect(dgsm.setConnectionConcealedById("connection.road.a", true)).toBe(
+      true
+    );
     const conn = road.connections.find((c) => c.id === "connection.road.a");
-    expect(conn?.hidden).toBe(true);
+    expect(conn?.concealed).toBe(true);
   });
 
   it("returns false and warns for an unknown connection id", () => {
-    expect(dgsm.setConnectionHiddenById("connection.nowhere.door", true)).toBe(
-      false
-    );
+    expect(
+      dgsm.setConnectionConcealedById("connection.nowhere.door", true)
+    ).toBe(false);
     expect(warnSpy).toHaveBeenCalledWith(
       expect.stringContaining('unknown connection id "connection.nowhere.door"')
     );

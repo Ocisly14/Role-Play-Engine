@@ -83,7 +83,7 @@ export const CORE_SCENARIOS: SimScenario[] = [
     id: "def-character_interaction",
     group: "core",
     title: "向同场景的人问话 → character_interaction",
-    targetDefs: ["Social"],
+    targetDefs: [],
     cases: [
       {
         label: "侦探：赶在对方走之前问话",

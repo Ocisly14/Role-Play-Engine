@@ -461,11 +461,11 @@ export class ScriptedEventRunner {
           });
           break;
         }
-        case "connection.setHidden": {
+        case "connection.setConcealed": {
           out.push({
-            kind: "connection.setHidden",
+            kind: "connection.setConcealed",
             connectionId: effect.connectionId,
-            hidden: effect.hidden,
+            concealed: effect.concealed,
           });
           break;
         }

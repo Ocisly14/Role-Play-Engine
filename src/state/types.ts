@@ -268,24 +268,17 @@ export interface SceneConnection {
   targetId: string;
   name?: string;
   description?: string;
-  /** When true, this connection is not visible to NPCs until revealed */
-  hidden?: boolean;
   /**
-   * Who has found it while it was hidden.
+   * The passage is physically obscured — a door behind a bookshelf, a hatch
+   * under a rug. It is the same for everyone: what changes when someone finds
+   * it is THEIR knowledge, not the passage, and exposing it for good (the
+   * bookshelf pushed aside) is what flips this to false.
    *
-   * `hidden` is the world's answer to "can anyone see this"; this is the
-   * per-viewer answer to "has this one found it", and it lives here rather
-   * than in an index of its own because it is a fact about this passage. A
-   * character in the list perceives the connection exactly as if it were
-   * open; everyone else still does not know it is there. An action that
-   * exposes the passage for good sets `hidden: false` instead, and this list
-   * stops mattering.
-   *
-   * Written by the Engine — finding a door is an objective outcome of an
-   * action, not a reading of anyone's mind. What the character makes of it
-   * is theirs to write down.
+   * There is deliberately no per-viewer "found by" list: a character who knows
+   * about a concealed passage says how to get through it, and the start
+   * judgement grants that one crossing (`viaConcealedConnectionId`).
    */
-  discoveredBy?: string[];
+  concealed?: boolean;
 }
 
 export interface DynamicScene {
@@ -329,8 +322,6 @@ export interface Item {
   id: string;
   name: string;
   description?: string;
-  /** When true, this item is not visible to NPCs until revealed. */
-  hidden?: boolean;
   /** Contributes to scene illumination — read by subsystem/sun.ts. */
   isLightSource?: boolean;
   lightLevel?: number;

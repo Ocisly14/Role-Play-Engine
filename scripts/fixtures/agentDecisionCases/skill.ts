@@ -8,17 +8,17 @@ import type { SimScenario } from "./types.js";
 // untrained, and someone whose situation invites it but whose instincts
 // might not.
 //
-// Rewritten for the 17 broad domains (src/engine/rules/skillCatalog.ts).
+// Uses the current skill catalog (src/engine/rules/skillCatalog.ts).
 // The old table was organised around 57 fine-grained CoC skills — four
 // separate scenarios for perception / listen / research / track that are all
 // one Investigation now.
 //
 // THREE DOMAINS ARE ABSENT ON PURPOSE. Swimming, Watercraft Operation and
 // Aircraft Operation have no stage in this module: it contains no water, no
-// boats and no aircraft. Inventing a lake to reach 17/17 coverage would
+// boats and no aircraft. Inventing a lake to reach 16/16 coverage would
 // reproduce the exact bug this table exists to catch — a case naming a place
 // with no entity and no route, which the character can decide to go to and
-// then never reach. Coverage against casssandra tops out at 14/17.
+// then never reach. Coverage against casssandra tops out at 13/16.
 //
 // Authoring rules, learned from a live run that looped for 7 ticks because a
 // case invented a car park behind the police station:
@@ -92,9 +92,9 @@ export const SKILL_SCENARIOS: SimScenario[] = [
   // -----------------------------------------------------------------------
   {
     id: "skill-social",
-    group: "skill",
-    title: "Social — 说服、恐吓、欺瞒、看穿人心",
-    targetDefs: ["Social"],
+    group: "core",
+    title: "社交互动 — 说服、恐吓、欺瞒",
+    targetDefs: [],
     cases: [
       {
         label: "市长：让律师改口",

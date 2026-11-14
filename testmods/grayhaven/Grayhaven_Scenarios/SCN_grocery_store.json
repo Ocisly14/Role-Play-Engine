@@ -95,8 +95,7 @@
       {
         "id": "item.grocery_store.duplicate_bills",
         "name": "两张序列号相同的十美元钞票",
-        "description": "两张十美元钞票,序列号一字不差地相同,被折好压在收银机钱箱的最底下。周四对账时 Marisol 发现的;她把它们单独夹在一起,谁也没告诉,宁愿相信是自己看花了眼。",
-        "hidden": true
+        "description": "两张十美元钞票,序列号一字不差地相同,被折好压在收银机钱箱的最底下。周四对账时 Marisol 发现的;她把它们单独夹在一起,谁也没告诉,宁愿相信是自己看花了眼。"
       }
     ],
     "connections": [

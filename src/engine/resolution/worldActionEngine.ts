@@ -50,10 +50,23 @@ import type {
   ToolSpec,
 } from "../../models/providers/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
+import {
+  type FastPathMode,
+  fastPathMode,
+  recordShadow,
+} from "../shared/fastPath.js";
 import type {
   CodeToolInvocation,
   CodeToolRegistry,
 } from "../tools/codeTool.js";
+import {
+  type ChangePhase,
+  decideEndingModes,
+  decidePerceivers,
+  decideUnchangedPhases,
+  speechRows,
+  withDecidedPerceivers,
+} from "./decisionsFastPaths.js";
 import {
   engineModelIdentity,
   isStrictDowngraded,
@@ -66,7 +79,7 @@ import {
   type WorldActionEngineResult,
   formatErrorTarget,
 } from "./types.js";
-import { CODE_TOOL_SPECS } from "./worldDeltaSchema.js";
+import { CODE_TOOL_SPECS, type RawOccurrence } from "./worldDeltaSchema.js";
 import {
   exitsFromHere,
   finalizeResolution,
@@ -87,6 +100,8 @@ import {
 import {
   type AcceptedResolutionDraft,
   type EngineSessionKind,
+  OCCURRENCES_TOOL_CODE_PERCEIVERS,
+  OCCURRENCES_TOOL_CODE_PERCEIVERS_NON_STRICT,
   PHASE_FIELDS,
   PHASE_TOOLS,
   PHASE_TOOLS_NON_STRICT,
@@ -326,7 +341,14 @@ async function callPhaseModelWithFallback(
   messages: ModelMessage[]
 ): Promise<ToolCallResult> {
   const { provider, model } = engineModelIdentity();
-  const strictTool = PHASE_TOOLS[phase];
+  // DECISIONS_PERCEIVERS=on offers the occurrences tool without perceivers.
+  const codePerceivers = phase === "occurrences" && session.perceiversByCode;
+  const strictTool = codePerceivers
+    ? OCCURRENCES_TOOL_CODE_PERCEIVERS
+    : PHASE_TOOLS[phase];
+  const looseTool = codePerceivers
+    ? OCCURRENCES_TOOL_CODE_PERCEIVERS_NON_STRICT
+    : PHASE_TOOLS_NON_STRICT[phase];
   const fingerprint = schemaFingerprint(provider, model, strictTool);
   const downgraded = isStrictDowngraded(fingerprint);
 
@@ -343,7 +365,7 @@ async function callPhaseModelWithFallback(
   try {
     return await callPhaseModel(
       phase,
-      downgraded ? PHASE_TOOLS_NON_STRICT[phase] : strictTool,
+      downgraded ? looseTool : strictTool,
       messages,
       session.context.rules.narrationLanguage
     );
@@ -370,7 +392,7 @@ async function callPhaseModelWithFallback(
     session.calls += 1;
     return await callPhaseModel(
       phase,
-      PHASE_TOOLS_NON_STRICT[phase],
+      looseTool,
       messages,
       session.context.rules.narrationLanguage
     );
@@ -400,6 +422,205 @@ interface Session {
    *  downgraded tool. The refusal is warned about once, in the process that
    *  met it; every later tick says so once and quietly. */
   noticedDowngrade: boolean;
+  /** Phases that must be asked even when the skip rule says they need not:
+   *  a global rewind puts its phase and the tail behind it here, because the
+   *  rewind itself says the plan that skipped them may have been wrong. */
+  unskippable: Set<ResolutionPhase>;
+  /** The change phases the Decisions plan says this settlement leaves
+   *  untouched; asked once, after the endings are accepted. */
+  unchanged?: Set<ChangePhase>;
+  /** DECISIONS_PERCEIVERS=on: the occurrences phase is offered the tool with
+   *  no `perceivers`, and code + Decisions fill them in after the model's
+   *  submission. Turned off for the rest of the session if Decisions fails. */
+  perceiversByCode: boolean;
+}
+
+// ==================== Phases accepted without a model ====================
+//
+// DECISIONS_PHASE_SKIP (design §6.3). In a settlement, a phase whose answer
+// code or the Decisions API can give with confidence is accepted without a
+// request — through the phase's own validator, like any answer. Anything
+// unsure runs the phase as before. A global rewind makes the rewound phase
+// and its tail `unskippable`: the rewind itself says the plan may be wrong.
+
+/** The settlement phases that write world changes. */
+const CHANGE_PHASES: ReadonlySet<ResolutionPhase> = new Set([
+  "characterChanges",
+  "itemChanges",
+  "sceneChanges",
+]);
+
+/**
+ * True when the endings are accepted and none of them carries an outcome.
+ * Then nothing in this settlement can change the world: a no_change ending
+ * may source no change (the stage validator refuses one), and a pure_speech
+ * ending's whole result is its words, delivered by the occurrences phase.
+ */
+function noOutcomeEnding(draft: AcceptedResolutionDraft): boolean {
+  return draft.endings?.every((d) => d.mode !== "outcome") ?? false;
+}
+
+/** Validate a payload as the phase's answer and, if it passes, accept it. */
+function acceptPayload(
+  session: Session,
+  phase: ResolutionPhase,
+  rows: unknown[],
+  why: string
+): boolean {
+  const payload = { [PHASE_FIELDS[phase]]: rows };
+  const errors = validatePhase(phase, payload, session.context, session.draft);
+  if (errors.length > 0) {
+    console.warn(
+      `[WorldActionEngine] tick ${session.context.tick.tickId} phase ${phase}: the code answer was refused (${errors[0].message}); asking the model`
+    );
+    return false;
+  }
+  Object.assign(session.draft, {
+    [draftKey(phase)]: acceptedPhaseValue(phase, payload),
+  });
+  console.log(
+    `[WorldActionEngine] tick ${session.context.tick.tickId} phase ${phase} accepted without a model — ${why}`
+  );
+  return true;
+}
+
+/** sceneChanges is owed when an accepted item change took an item out of a
+ *  place whose prose still cites it — that prose must be rewritten. */
+function sceneChangesOwed(session: Session): boolean {
+  const places = session.context.state.places;
+  for (const row of session.draft.itemChanges ?? []) {
+    const op = (row as { operation?: { kind?: string; from?: string } })
+      .operation;
+    const itemId = (row as { itemId?: string }).itemId;
+    if (!op || !itemId || (op.kind !== "move" && op.kind !== "destroy")) {
+      continue;
+    }
+    const holder =
+      op.kind === "move"
+        ? op.from
+        : session.context.state.itemHolders?.[itemId];
+    if (!holder?.startsWith("scene:")) continue;
+    const place = places.find((p) => p.id === holder.slice("scene:".length));
+    if (place?.description?.includes(`[${itemId}]`)) return true;
+  }
+  return false;
+}
+
+async function acceptWithoutModel(
+  session: Session,
+  phase: ResolutionPhase,
+  perceiversMode: FastPathMode
+): Promise<boolean> {
+  if (session.unskippable.has(phase)) return false;
+  const { context, draft } = session;
+  if (phase === "endings") {
+    const modes = await decideEndingModes(context);
+    return (
+      modes !== null &&
+      acceptPayload(
+        session,
+        phase,
+        modes,
+        "every ending is words alone or no new result"
+      )
+    );
+  }
+  if (CHANGE_PHASES.has(phase)) {
+    if (noOutcomeEnding(draft)) {
+      return acceptPayload(session, phase, [], "no ending carries an outcome");
+    }
+    if (phase === "sceneChanges" && sceneChangesOwed(session)) return false;
+    session.unchanged ??= await decideUnchangedPhases(context, draft);
+    return (
+      session.unchanged.has(phase as ChangePhase) &&
+      acceptPayload(session, phase, [], "no outcome changes this domain")
+    );
+  }
+  if (phase === "occurrences" && perceiversMode === "on") {
+    if (!noOutcomeEnding(draft)) return false;
+    const rows = await decidePerceivers(
+      context,
+      speechRows(context, draft.endings ?? [])
+    );
+    return (
+      rows !== null &&
+      acceptPayload(
+        session,
+        phase,
+        rows,
+        "speech rows by code, perceivers by Decisions"
+      )
+    );
+  }
+  return false;
+}
+
+/** DECISIONS_PHASE_SKIP / DECISIONS_PERCEIVERS shadow: the LLM answered;
+ *  record what the fast path would have said and whether it agreed. */
+async function recordPhaseShadow(
+  session: Session,
+  phase: ResolutionPhase,
+  skipMode: FastPathMode,
+  perceiversMode: FastPathMode
+): Promise<void> {
+  const { context, draft } = session;
+  const tick = context.tick.tickId;
+  if (skipMode === "shadow") {
+    if (phase === "endings") {
+      const modes = await decideEndingModes(context);
+      if (modes) {
+        const llm = new Map(
+          (draft.endings ?? []).map((d) => [d.actionId, d.mode])
+        );
+        recordShadow("DECISIONS_PHASE_SKIP", {
+          tick,
+          phase,
+          predicted: modes,
+          agree: modes.every((m) => llm.get(m.actionId) === m.mode),
+        });
+      }
+    } else if (CHANGE_PHASES.has(phase)) {
+      let predicted = noOutcomeEnding(draft);
+      if (!predicted) {
+        session.unchanged ??= await decideUnchangedPhases(context, draft);
+        predicted = session.unchanged.has(phase as ChangePhase);
+      }
+      if (predicted) {
+        const accepted = draft[draftKey(phase)];
+        const rows = Array.isArray(accepted) ? accepted.length : 0;
+        recordShadow("DECISIONS_PHASE_SKIP", {
+          tick,
+          phase,
+          rows,
+          agree: rows === 0,
+        });
+      }
+    }
+  }
+  if (perceiversMode === "shadow" && phase === "occurrences") {
+    const llmRows = draft.occurrences ?? [];
+    if (llmRows.length === 0) return;
+    const decided = await decidePerceivers(
+      context,
+      llmRows.map((r) => ({ ...r, perceivers: [] }))
+    );
+    if (!decided) return;
+    let pairs = 0;
+    let agree = 0;
+    llmRows.forEach((row, i) => {
+      const llm = new Map(
+        row.perceivers.map((p) => [p.characterId, p.clarity])
+      );
+      const ours = new Map(
+        decided[i].perceivers.map((p) => [p.characterId, p.clarity])
+      );
+      for (const id of new Set([...llm.keys(), ...ours.keys()])) {
+        pairs += 1;
+        if (llm.get(id) === ours.get(id)) agree += 1;
+      }
+    });
+    recordShadow("DECISIONS_PERCEIVERS", { tick, pairs, agree });
+  }
 }
 
 /** Segments rendered once per session: the context is phase-neutral, so
@@ -424,7 +645,16 @@ function discardFrom(session: Session, phase: ResolutionPhase): void {
 
 type PhaseOutcome =
   | { accepted: true }
-  | { accepted: false; failed: WorldActionEngineResult };
+  | { accepted: false; failed: WorldActionEngineResult }
+  /** The model answered without perceivers and Decisions could not fill
+   *  them: ask the phase again with the full tool. */
+  | { accepted: false; perceiversFailed: true };
+
+/** Appended to the occurrences instruction when code decides perceivers.
+ *  After the cached blocks, so the shared prefix is unchanged. */
+const PERCEIVERS_BY_CODE_NOTE = `## Perceivers are decided by code in this session
+
+Do not write \`perceivers\` on any row — the tool does not take them. After you submit, code decides who perceives each row and how clearly, from where everyone is. Write each row's \`content\` at full objective detail, and still split rows only where different audiences receive different FACTS. A \`sanityChecks\` entry names someone you expect to perceive the row clearly; code drops it if they turn out not to.`;
 
 // ==================== The runner ====================
 
@@ -451,25 +681,60 @@ export async function resolveTick(
     rewinds: 0,
     invocations: [],
     noticedDowngrade: false,
+    unskippable: new Set(),
+    perceiversByCode: false,
   };
   const segments = renderContextSegments(context);
+  const skipMode = fastPathMode("DECISIONS_PHASE_SKIP");
+  const perceiversMode = fastPathMode("DECISIONS_PERCEIVERS");
+  session.perceiversByCode = kind === "settlement" && perceiversMode === "on";
 
   let from: ResolutionPhase = session.phases[0];
   let globalErrors: ResolutionError[] | undefined;
 
   for (;;) {
     for (const phase of session.phases.slice(session.phases.indexOf(from))) {
+      if (
+        session.kind === "settlement" &&
+        skipMode === "on" &&
+        (await acceptWithoutModel(session, phase, perceiversMode))
+      ) {
+        continue;
+      }
       // The global gate's verdict goes to the FIRST request of the rewound
       // phase only: it is why that phase is being decided again. The phases
       // behind it are rerun because the draft they read changed, and they are
       // told nothing — a fault that was not theirs is not theirs to fix.
-      const outcome = await runPhase(
+      let outcome = await runPhase(
         session,
         segments,
         phase,
         phase === from ? globalErrors : undefined
       );
-      if (!outcome.accepted) return outcome.failed;
+      if (!outcome.accepted && "perceiversFailed" in outcome) {
+        console.warn(
+          `[WorldActionEngine] tick ${tickId}: Decisions could not decide who perceives the occurrences; asking the model for them`
+        );
+        session.perceiversByCode = false;
+        outcome = await runPhase(
+          session,
+          segments,
+          phase,
+          phase === from ? globalErrors : undefined
+        );
+      }
+      if (!outcome.accepted) {
+        return "failed" in outcome
+          ? outcome.failed
+          : unusable(
+              `${tickId}: occurrences could not be given perceivers, nothing applied`,
+              [],
+              session.invocations
+            );
+      }
+      if (session.kind === "settlement") {
+        await recordPhaseShadow(session, phase, skipMode, perceiversMode);
+      }
     }
 
     // Every phase of the session accepted. The assembled draft is judged
@@ -498,6 +763,10 @@ export async function resolveTick(
     session.rewinds += 1;
     from = rewindPhaseFor(errors, context, session.kind);
     discardFrom(session, from);
+    for (const later of session.phases.slice(session.phases.indexOf(from))) {
+      session.unskippable.add(later);
+    }
+    if (from === "endings") session.unchanged = undefined;
     globalErrors = errors;
     console.warn(
       `[WorldActionEngine] tick ${tickId}: assembled draft rejected by the global gate (${errors.length} error(s)); rewinding to phase ${from}, ${session.calls}/${MAX_PROVIDER_CALLS} calls spent`
@@ -552,6 +821,9 @@ async function runPhase(
             globalErrors ? { globalErrors } : undefined
           ),
         },
+        ...(phase === "occurrences" && session.perceiversByCode
+          ? [{ kind: "text" as const, text: PERCEIVERS_BY_CODE_NOTE }]
+          : []),
       ],
     },
   ];
@@ -704,8 +976,23 @@ async function runPhase(
       submitted !== undefined && retained.length > 0
         ? mergeRows(phase, retained, submitted, context, session.draft)
         : submitted;
+    // DECISIONS_PERCEIVERS=on: the rows arrive without perceivers; code and
+    // Decisions fill them in before anything judges the rows.
+    let rows = merged;
+    if (
+      phase === "occurrences" &&
+      session.perceiversByCode &&
+      Array.isArray(rows)
+    ) {
+      const filled = await withDecidedPerceivers(
+        context,
+        rows as RawOccurrence[]
+      );
+      if (!filled) return { accepted: false, perceiversFailed: true };
+      rows = filled;
+    }
     const payload =
-      merged !== undefined ? { [PHASE_FIELDS[phase]]: merged } : call.args;
+      rows !== undefined ? { [PHASE_FIELDS[phase]]: rows } : call.args;
     const errors = validatePhase(phase, payload, context, session.draft);
     if (errors.length === 0) {
       Object.assign(session.draft, {
@@ -722,8 +1009,8 @@ async function runPhase(
       previousPayload: call.args,
       ...(MERGE_PHASES.has(phase) ? { retained } : {}),
     };
-    if (MERGE_PHASES.has(phase) && merged !== undefined) {
-      const split = retainedRows(phase, merged, context, session.draft);
+    if (MERGE_PHASES.has(phase) && rows !== undefined) {
+      const split = retainedRows(phase, rows, context, session.draft);
       retained = split.retained;
       repair = { ...repair, retained, faulty: split.faulty };
     }

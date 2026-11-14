@@ -24,8 +24,7 @@
     "Ranged Combat": 70,
     "Athletics": 60,
     "Melee Combat": 55,
-    "Stealth & Security": 45,
-    "Social": 45
+    "Stealth & Security": 45
   },
   "languages": { "native": ["English", "Spanish"] },
   "inventory": [

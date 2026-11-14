@@ -30,7 +30,6 @@
     "conditions": []
   },
   "skills": {
-    "Social": 70,
     "Knowledge & Craft": 85,
     "Investigation": 65
   },
@@ -168,15 +167,15 @@
     },
     {
       "type": "secret",
-      "content": "后厨门帘挡不住堂座的声音。我听过镇上一半的心事，从不外传；这才是我真正的本钱。"
+      "content": "后厨 [SCN_bluebird_kitchen] 门帘挡不住堂座 [SCN_bluebird_dining] 的声音。我听过镇上一半的心事，从不外传；这才是我真正的本钱。"
     },
     {
       "type": "general",
-      "content": "后厨的 KGRV 收音机近来总会串进沙沙声，拍两下能暂时安静，过一会儿又回来。"
+      "content": "后厨 [SCN_bluebird_kitchen] 的 KGRV 收音机 [item.bluebird_kitchen.kitchen_radio] 近来总会串进沙沙声，拍两下能暂时安静，过一会儿又回来。"
     },
     {
       "type": "general",
-      "content": "这阵子堂座都在聊灯闪、死鱼和 Earl 看见的光。我先把蛋挞端上去，嘴里有东西时，人说话不会那么刻薄。"
+      "content": "这阵子堂座 [SCN_bluebird_dining] 都在聊灯闪、死鱼和 Earl 看见的光。我先把蛋挞端上去，嘴里有东西时，人说话不会那么刻薄。"
     },
     {
       "type": "general",
@@ -192,35 +191,35 @@
     },
     {
       "type": "plan",
-      "content": "找个周五请 Holt 一家吃顿晚饭；饭桌上的话比诊所里的真。"
+      "content": "找个周五请 Holt 一家吃顿晚饭；饭桌上的话比诊所 [SCN_clinic_waiting] 里的真。"
     },
     {
       "type": "map",
-      "content": "清早从维修铺楼下出门，顺主街往北走一刻钟就到蓝鸟后厨——先过街机厅，再过警长办公室、杂货店，才瞧见餐馆的门灯，这条路我闭着眼也认得，哪块砖翘着都晓得。"
+      "content": "清早从维修铺 [SCN_batra_shop] 楼下出门，顺主街 [ROAD_main_street] 往北走一刻钟就到蓝鸟后厨 [SCN_bluebird_kitchen]——先过街机厅 [SCN_arcade]，再过警长办公室 [SCN_sheriff_front]、杂货店 [SCN_grocery_store]，才瞧见餐馆 [SCN_bluebird_dining] 的门灯，这条路我闭着眼也认得，哪块砖翘着都晓得。"
     },
     {
       "type": "map",
-      "content": "面粉、糖这些大宗东西我都托 Marisol 杂货店那头捎带，顺手把要寄的信也交给她——邮局跟杂货店是一间铺子，这镇上寄信跟买糖是一趟事。"
+      "content": "面粉、糖这些大宗东西我都托 Marisol 杂货店 [SCN_grocery_store] 那头捎带，顺手把要寄的信也交给她——邮局跟杂货店是一间铺子，这镇上寄信跟买糖是一趟事。"
     },
     {
       "type": "map",
-      "content": "主街南口往下坡道走一刻钟是码头海滩，拐进后巷几分钟就到雷耶斯家门口——我给 Marisol 送吃食常抄这条后巷，比绕正门近。"
+      "content": "主街南口 [SCN_main_south] 往下坡道 [ROAD_dock_slope] 走一刻钟是码头海滩 [SCN_dock]，拐进后巷 [ROAD_backstreet] 几分钟就到雷耶斯家门口 [SCN_reyes_gate]——我给 Marisol 送吃食常抄这条后巷，比绕正门近。"
     },
     {
       "type": "map",
-      "content": "主街北口岔三条路：霍尔特巷二十分钟到 Holt 家院门，我们常去他们家吃周五晚饭；旧海岸公路二十五分钟到汽车旅馆，那边住的多是过路的外乡人；还有条林道，十分钟就到林道口，再往里我没走过。"
+      "content": "主街北口 [SCN_main_north] 岔三条路：霍尔特巷 [ROAD_holt_lane] 二十分钟到 Holt 家院门 [SCN_holt_gate]，我们常去他们家吃周五晚饭；旧海岸公路 [ROAD_old_coast_road] 二十五分钟到汽车旅馆 [SCN_motel]，那边住的多是过路的外乡人；还有条林道 [ROAD_trail_access]，十分钟就到林道口 [SCN_trailhead]，再往里我没走过。"
     },
     {
       "type": "map",
-      "content": "灯塔崖只有从码头那边一条崖间小径能上去，半小时光景，路上岔一条小道通 Earl 的小屋；灯塔从八几年起就锁着，自动化以后没人再守了。"
+      "content": "灯塔崖 [SCN_lighthouse_cliff] 只有从码头 [SCN_dock] 那边一条崖间小径 [ROAD_cliff_path] 能上去，半小时光景，路上岔一条小道通 Earl 的小屋 [SCN_earl_cabin]；灯塔从八几年起就锁着，自动化以后没人再守了。"
     },
     {
       "type": "map",
-      "content": "汽车旅馆边上有条车行道往山里去，通雷德利站，可普通人只能到大门，过不去——听 Frank 说货车上去要小半个钟头，我没兴趣打听更多。"
+      "content": "汽车旅馆 [SCN_motel] 边上有条车行道 [ROAD_station_drive] 往山里去，通雷德利站 [SCN_station_yard]，可普通人只能到大门 [SCN_gate]，过不去——听 Frank 说货车上去要小半个钟头，我没兴趣打听更多。"
     },
     {
       "type": "map",
-      "content": "林子那头我只晓得林道口就在主街北口边上，再往深处什么样我没去过，堂座里客人闲聊时听过几句地名，没记真切。"
+      "content": "林子那头我只晓得林道口 [SCN_trailhead] 就在主街北口 [SCN_main_north] 边上，再往深处什么样我没去过，堂座里客人闲聊时听过几句地名，没记真切。"
     }
   ]
 }

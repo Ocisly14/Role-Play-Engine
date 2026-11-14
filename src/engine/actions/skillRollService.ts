@@ -32,7 +32,7 @@ function lookupIgnoreCase(
  * The catalog's exact spelling for a declared skill — the returned id is
  * persisted on the command and the roll record and is what
  * `renderSkillGuidance` looks up, so "stealth & security" must not survive as
- * a distinct id from "Stealth & Security". A name outside the 17 domains
+ * a distinct id from "Stealth & Security". A name outside the catalog
  * comes back trimmed but unrecognized; `resolveSkillValue` then answers
  * undefined and the command is rejected at intake. There is no legacy-name
  * mapping: profiles and declarations must use the catalog names.
@@ -44,8 +44,7 @@ export function canonicalDisplayName(skillId: string): string {
 /**
  * Resolve a declared skillId to its canonical domain name and the actor's
  * effective value: trained value from the profile when present, the domain's
- * base value otherwise. Returns undefined for anything outside the 17-domain
- * catalog — the command is then rejected at intake.
+ * base value otherwise. Returns undefined for anything outside the catalog.
  */
 export function resolveSkillValue(
   skillId: string,

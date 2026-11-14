@@ -14,11 +14,13 @@
 // Roads carry the same `items` / `conditions` / connection data scenes do,
 // so one uniform view serves both.
 //
-// This resolver is also the single choke point for `hidden`: an item or
-// connection flagged hidden exists in the world (the Engine sees it, the
-// trust boundary counts it as real) but must not reach perception — not the
-// rendered narrative, not the citable directory. All three branches filter
-// here so no caller can leak an unrevealed thing by reading the raw node.
+// This resolver is also the single choke point for what is IN PLAIN VIEW.
+// There is no hidden flag: an item the place's description does not cite is
+// there but not yet noticed, and a passage marked `concealed` is physically
+// obscured. Neither reaches perception — not the rendered narrative, not the
+// citable directory — unless this viewer noticed it this minute (`noticed`).
+// All branches filter here so no caller can leak an unnoticed thing by
+// reading the raw node.
 
 import type { SceneCondition } from "../engine/core/types.js";
 import type { DynamicGameStateManager } from "./DynamicGameState.js";
@@ -53,30 +55,44 @@ const ROAD_PROXIMITY_MINUTES = 1;
  *  is citable stay one set. */
 export const ROAD_ITEM_REACH_MINUTES = 5;
 
-/** True when this passage is open to everyone, or this viewer has found it.
- *  `hidden` is the world's answer, `discoveredBy` this viewer's. */
+/** What a viewer noticed this minute beyond what is in plain view: an item
+ *  the description does not cite, a concealed passage. Decided per render
+ *  (concealment design §5.3); absent, only plain view counts. */
+export interface NoticedThisMinute {
+  itemIds?: ReadonlySet<string>;
+  connectionIds?: ReadonlySet<string>;
+}
+
+const CITATION_RE = /\[([^\[\]\s]+)\]/g;
+
+/** The ids a piece of prose cites as `[id]`. */
+export function citedIds(prose: string | undefined): Set<string> {
+  const out = new Set<string>();
+  for (const m of (prose ?? "").matchAll(CITATION_RE)) out.add(m[1]);
+  return out;
+}
+
+/** True when this passage is in plain view, or this viewer noticed it. */
 function passageVisible(
-  connection: { hidden?: boolean; discoveredBy?: string[] },
-  viewerId: string | undefined
+  connection: { id: string; concealed?: boolean },
+  noticed: NoticedThisMinute | undefined
 ): boolean {
-  if (!connection.hidden) return true;
-  return (
-    viewerId !== undefined && !!connection.discoveredBy?.includes(viewerId)
-  );
+  if (!connection.concealed) return true;
+  return noticed?.connectionIds?.has(connection.id) ?? false;
 }
 
 /**
- * @param viewerId Whose eyes. Omit only where nobody is looking — resolving a
- *   place by id to print its NAME, say. A concealed passage one character has
- *   found is visible to them and to nobody else, so the viewer has to come
- *   with the position: the trust boundary and the renderer both read this
- *   resolver, and they must be given the same one or the citable set and the
- *   rendered set stop agreeing.
+ * @param _viewerId Whose eyes. Kept for callers; what differs between viewers
+ *   now arrives as `noticed`, so the trust boundary and the renderer must be
+ *   given the same `noticed` or the citable set and the rendered set stop
+ *   agreeing.
+ * @param noticed What this viewer noticed this minute beyond plain view.
  */
 export function resolvePerceivedLocation(
   position: CharacterPosition | null | undefined,
   dgsm: DynamicGameStateManager,
-  viewerId?: string
+  _viewerId?: string,
+  noticed?: NoticedThisMinute
 ): PerceivedLocation | null {
   if (!position) return null;
   const topology = dgsm.getTopology();
@@ -99,7 +115,7 @@ export function resolvePerceivedLocation(
       description: scene.description ?? "",
       conditions: dgsm.getSceneConditions(scene.id),
       items: [
-        ...visibleItems(scene.items),
+        ...visibleItems(scene.items, scene.description, noticed),
         ...vehiclesHere.map((v) => ({
           id: v.id,
           name: v.name,
@@ -108,12 +124,12 @@ export function resolvePerceivedLocation(
       ],
       // `getScene` answers null, not undefined, for an id it does not know —
       // so the old `!== undefined` test kept everything it meant to drop.
-      // Hidden connections stay out until revealed: an unfound door must not
-      // enter the citable set. A node scene (street, yard) additionally sees
-      // its incident roads — a road has no hidden flag of its own.
+      // Concealed passages stay out unless noticed this minute: an unseen
+      // door must not enter the citable set. A node scene (street, yard)
+      // additionally sees its incident roads — a road is never concealed.
       adjacentIds: [
         ...(scene.connections ?? [])
-          .filter((c) => passageVisible(c, viewerId))
+          .filter((c) => passageVisible(c, noticed))
           .map((c) => c.targetId)
           .filter((id) => dgsm.getScene(id) != null),
         ...(topology.sceneToRoads.get(scene.id) ?? []).map((r) => r.id),
@@ -133,14 +149,22 @@ export function resolvePerceivedLocation(
 
   const road = topology.roads.get(position.roadId);
   if (!road) return null;
-  // `alongConnections` is derived with hidden entries included; the hidden
-  // flag lives on the authored `access` connection, matched by sceneId. The
-  // two endpoint node scenes are always visible — you can see where a road
-  // leads even before you have found every doorway along it.
+  // `alongConnections` is derived with concealed entries included; the flag
+  // lives on the authored `access` connection, matched by sceneId. The two
+  // endpoint node scenes are always visible — you can see where a road leads
+  // even before you have noticed every doorway along it.
+  // A doorway scene is out of view only when EVERY access to it is: an open
+  // door beside a concealed one still shows the place.
+  const accessByTarget = new Map<string, boolean>();
+  for (const c of road.connections ?? []) {
+    if (c.role !== "access") continue;
+    accessByTarget.set(
+      c.targetId,
+      (accessByTarget.get(c.targetId) ?? false) || passageVisible(c, noticed)
+    );
+  }
   const hiddenAccessIds = new Set(
-    (road.connections ?? [])
-      .filter((c) => c.role === "access" && !passageVisible(c, viewerId))
-      .map((c) => c.targetId)
+    [...accessByTarget].filter(([, visible]) => !visible).map(([id]) => id)
   );
   return {
     id: road.id,
@@ -149,7 +173,7 @@ export function resolvePerceivedLocation(
     description: road.description ?? "",
     conditions: dgsm.getSceneConditions(road.id),
     items: [
-      ...visibleItems(road.items).filter(
+      ...visibleItems(road.items, road.description, noticed).filter(
         (item) =>
           item.position === undefined ||
           Math.abs(item.position - position.position) *
@@ -180,9 +204,55 @@ export function resolvePerceivedLocation(
   };
 }
 
-/** Items minus the ones not yet revealed. */
-function visibleItems(items: Item[] | undefined): Item[] {
-  return (items ?? []).filter((item) => !item.hidden);
+/** The items in plain view — cited by the place's description — plus the
+ *  ones this viewer noticed this minute. */
+function visibleItems(
+  items: Item[] | undefined,
+  description: string | undefined,
+  noticed: NoticedThisMinute | undefined
+): Item[] {
+  const cited = citedIds(description);
+  return (items ?? []).filter(
+    (item) => cited.has(item.id) || (noticed?.itemIds?.has(item.id) ?? false)
+  );
+}
+
+/** The items at this position that are NOT in plain view — the candidates a
+ *  viewer may or may not notice (concealment design §5.3). Road items keep
+ *  the reach radius. */
+export function unnoticedCandidates(
+  position: CharacterPosition | null | undefined,
+  dgsm: DynamicGameStateManager
+): { items: Item[]; connectionIds: string[] } {
+  if (!position) return { items: [], connectionIds: [] };
+  const topology = dgsm.getTopology();
+  if (position.type === "scene") {
+    const scene = dgsm.getScene(position.sceneId);
+    if (!scene) return { items: [], connectionIds: [] };
+    const cited = citedIds(scene.description);
+    return {
+      items: (scene.items ?? []).filter((i) => !cited.has(i.id)),
+      connectionIds: (scene.connections ?? [])
+        .filter((c) => c.concealed)
+        .map((c) => c.id),
+    };
+  }
+  const road = topology.roads.get(position.roadId);
+  if (!road) return { items: [], connectionIds: [] };
+  const cited = citedIds(road.description);
+  return {
+    items: (road.items ?? []).filter(
+      (item) =>
+        !cited.has(item.id) &&
+        (item.position === undefined ||
+          Math.abs(item.position - position.position) *
+            road.travelTimeMinutes <=
+            ROAD_ITEM_REACH_MINUTES)
+    ),
+    connectionIds: (road.connections ?? [])
+      .filter((c) => c.concealed)
+      .map((c) => c.id),
+  };
 }
 
 /** Same view, addressed by id — for callers holding only a location id

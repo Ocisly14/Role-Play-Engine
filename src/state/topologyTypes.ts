@@ -38,7 +38,7 @@ export interface RoadNode {
   name: string;
   description: string;
   parentLocationId?: string;
-  /** Authored connections (source of truth; carries id/role/position/hidden). */
+  /** Authored connections (source of truth; carries id/role/position/concealed). */
   connections: RoadConnection[];
   /** Node scene ID at the start (derived from the `endpointA` connection) */
   endpointA: string;

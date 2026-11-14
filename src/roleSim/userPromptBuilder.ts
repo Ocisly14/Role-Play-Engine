@@ -162,20 +162,6 @@ ${block}`
     );
   }
 
-  if (ctx.landedChecks && ctx.landedChecks.length > 0) {
-    volatile.push(
-      `## What just landed on you
-${ctx.landedChecks.map((line) => `- ${line}`).join("\n")}
-
-These prompts ask you to weigh the supported force of an attempt only insofar
-as your actual perception supplies it. They are not new sensory evidence,
-proof of spoken words, or a feeling or response already chosen for you.
-Do not infer an unseen approach or a hidden motive from this section.
-What to do is up to you in your next action, including an answer, refusal or
-silence. Your belief remains your own. Keep your commitments and practical constraints in view.`
-    );
-  }
-
   if (ctx.rejectionFeedback) {
     volatile.push(
       `## Your previous action was REJECTED
@@ -185,6 +171,27 @@ ${ctx.rejectionFeedback}
 This is factual feedback, not something that happened in the world. Decide
 again: fix the rejected field (a tag copied exactly from what you perceive,
 a positive tick count, a real skill name) or choose a different action.`
+    );
+  }
+
+  // The player's character, handed over: what their absent friend has said,
+  // oldest first. Append-only like the perception stream, but it rides here,
+  // behind the breakpoint, rather than in `growing`: an NPC has no such
+  // section, and keeping it out of the earlier groups leaves every byte ahead
+  // of it exactly what an NPC's prompt would carry.
+  const friendLog =
+    ctx.player?.mode === "delegated" ? (ctx.player.friendLog ?? []) : [];
+  if (friendLog.length > 0) {
+    const lines = friendLog.map((note) => {
+      const said = `Your friend said (at ${formatForPrompt(note.gameDateTime)}): ${note.answer}`;
+      return note.question ? `You asked: ${note.question}\n${said}` : said;
+    });
+    volatile.push(
+      `## What your friend said
+Only you hear them. What they say is advice; what you do is still yours to
+decide.
+
+${lines.join("\n\n")}`
     );
   }
 
@@ -255,8 +262,11 @@ How to judge each kind:
   now. Fold the history of a person into that line; do not keep a trail.
 - \`plan\`: a plan that is done, or that events have overtaken, is deleted.
 - \`map\`: lines about one area may be folded together, but **never lose a
-  place name** — a place you no longer have a line for is a place you no
-  longer know how to reach.
+  place name or its \`[tag]\`** — a place you no longer have a line for is a
+  place you no longer know how to reach, and a name without its tag is one
+  you can no longer point at.
+- Every \`[tag]\` in a line you keep or merge is carried through exactly,
+  attached to the same thing.
 - \`secret\`: keep each one on its own; never fold a secret into another
   line.
 - \`long_term_intent\`: the newest one stays. Older ones may go.
@@ -275,6 +285,15 @@ ${langName}.`
     // `act` output is structured fields — prose goes in `description`, ids in
     // `objectRefs`. The envelope itself is enforced by the API (a tool call is
     // required), so this doesn't have to describe JSON.
+    // A delegated player character also holds `askFriend`; the line naming
+    // the terminal tools says so for them alone, so an NPC's closing keeps
+    // every byte it had.
+    const callLine =
+      ctx.player?.mode === "delegated"
+        ? `Call one tool now — \`act\`, \`continue\` or \`askFriend\`, plus any
+\`writeMemory\` worth keeping from what you just perceived. Write content in ${langName}.`
+        : `Call one tool now — \`act\` or \`continue\`, plus any \`writeMemory\`
+worth keeping from what you just perceived. Write content in ${langName}.`;
     volatile.push(
       `## Decide
 Everything above is INPUT you have read — the world describing itself TO
@@ -292,8 +311,7 @@ An action may span several ticks; use \`continue\` if the current one should
 keep running. Words attached to an act arrive at its end; speak separately
 first when they must precede a longer task.
 
-Call one tool now — \`act\` or \`continue\`, plus any \`writeMemory\`
-worth keeping from what you just perceived. Write content in ${langName}.`
+${callLine}`
     );
   }
 

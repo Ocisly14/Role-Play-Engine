@@ -30,7 +30,6 @@
     "conditions": []
   },
   "skills": {
-    "Social": 75,
     "Knowledge & Craft": 80,
     "Investigation": 70,
     "Occult": 45
@@ -174,15 +173,15 @@
     },
     {
       "type": "general",
-      "content": "1889 年 Leonor 号在暗礁上出事，幸存者坚称自己跟着一盏灯进港。后来有了灯塔，像是镇子给那盏灯的回答。"
+      "content": "1889 年 Leonor 号在暗礁上出事，幸存者坚称自己跟着一盏灯进港。后来有了灯塔 [SCN_lighthouse_cliff]，像是镇子给那盏灯的回答。"
     },
     {
       "type": "general",
-      "content": "从去年冬天起，堂座的灯会闪，收音机会串台，海滩还冲上过死鱼；这些让老故事显得太近。"
+      "content": "从去年冬天起，堂座 [SCN_bluebird_dining] 的灯 [item.bluebird_dining.ceiling_lights] 会闪，收音机 [item.bluebird_dining.counter_radio] 会串台，海滩 [SCN_dock] 还冲上过死鱼；这些让老故事显得太近。"
     },
     {
       "type": "general",
-      "content": "Manny 走了十三年，儿女在内陆；蓝鸟每一张桌子就是我留下的家人。"
+      "content": "Manny 走了十三年，儿女在内陆；蓝鸟 [SCN_bluebird_dining] 每一张桌子就是我留下的家人。"
     },
     {
       "type": "plan",
@@ -194,35 +193,35 @@
     },
     {
       "type": "map",
-      "content": "蓝鸟在主街北半，出门往一边是杂货店兼邮局，再过去是 Ray 的警长办公室——三家挨着门面，谁家来了生客、谁去邮局取信，我坐柜台就看全了。"
+      "content": "蓝鸟 [SCN_bluebird_dining] 在主街 [ROAD_main_street] 北半，出门往一边是杂货店兼邮局 [SCN_grocery_store]，再过去是 Ray 的警长办公室 [SCN_sheriff_front]——三家挨着门面，谁家来了生客、谁去邮局取信，我坐柜台 [item.bluebird_dining.lunch_counter] 就看全了。"
     },
     {
       "type": "map",
-      "content": "主街走到南头，星港街机厅、巴特拉家的电视维修铺（楼上就是 Anita 一家的住处）、诊所都挨在南半，一头走到那头十五分钟；孩子们从我这边跑去街机厅，来回不过半小时，我掐得比他们妈还准。"
+      "content": "主街 [ROAD_main_street] 走到南头，星港街机厅 [SCN_arcade]、巴特拉家的电视维修铺 [SCN_batra_shop]（楼上 [SCN_batra_living] 就是 Anita 一家的住处）、诊所 [SCN_clinic_waiting] 都挨在南半，一头走到那头十五分钟；孩子们从我这边跑去街机厅，来回不过半小时，我掐得比他们妈还准。"
     },
     {
       "type": "map",
-      "content": "主街北口往外岔三条路：旧海岸公路二十五分钟到汽车旅馆，霍尔特巷二十分钟到霍尔特家院门，林道十分钟就到林道口——最后这条我记得最牢，因为 Tommy 那帮孩子最近老往那边钻，当我看不见。"
+      "content": "主街北口 [SCN_main_north] 往外岔三条路：旧海岸公路 [ROAD_old_coast_road] 二十五分钟到汽车旅馆 [SCN_motel]，霍尔特巷 [ROAD_holt_lane] 二十分钟到霍尔特家院门 [SCN_holt_gate]，林道 [ROAD_trail_access] 十分钟就到林道口 [SCN_trailhead]——最后这条我记得最牢，因为 Tommy 那帮孩子最近老往那边钻，当我看不见。"
     },
     {
       "type": "map",
-      "content": "主街南口往外，下坡道十五分钟到码头和海滩，后巷八分钟就到雷耶斯家后门——这些年鱼货和人情，都是顺着这两条道来来去去的。"
+      "content": "主街南口 [SCN_main_south] 往外，下坡道 [ROAD_dock_slope] 十五分钟到码头和海滩 [SCN_dock]，后巷 [ROAD_backstreet] 八分钟就到雷耶斯家后门 [SCN_reyes_gate]——这些年鱼货和人情，都是顺着这两条道来来去去的。"
     },
     {
       "type": "map",
-      "content": "码头往灯塔崖，走崖间小径要半小时，除了这条没有别的道；半路岔进去就是 Earl 那间小屋。灯塔自打 1982 年守塔人撤了以后一直锁着，没人再上去点灯。"
+      "content": "码头 [SCN_dock] 往灯塔崖 [SCN_lighthouse_cliff]，走崖间小径 [ROAD_cliff_path] 要半小时，除了这条没有别的道；半路岔进去就是 Earl 那间小屋 [SCN_earl_cabin]。灯塔自打 1982 年守塔人撤了以后一直锁着，没人再上去点灯。"
     },
     {
       "type": "map",
-      "content": "汽车旅馆边上那条车道一直进山，到自动大门为止——里面是政府的气象站，我们这辈人四十年都过不去这道门，也没人再问为什么。Frank 天天赶车往上送货，问起他就摆摆手。"
+      "content": "汽车旅馆 [SCN_motel] 边上那条车道 [ROAD_station_drive] 一直进山，到自动大门 [SCN_gate] 为止——里面是政府的气象站 [SCN_station_yard]，我们这辈人四十年都过不去这道门，也没人再问为什么。Frank 天天赶车往上送货，问起他就摆摆手。"
     },
     {
       "type": "map",
-      "content": "年轻那会儿我们常挎着野餐篮子进林子，先过林道口，再踏着石头过灰溪，锯木厂就在溪那头再往里走一段——具体哪条岔路怎么拐，四十年了，我记不全了。"
+      "content": "年轻那会儿我们常挎着野餐篮子进林子，先过林道口 [SCN_trailhead]，再踏着石头过灰溪 [SCN_creek_ford]，锯木厂 [SCN_sawmill] 就在溪那头再往里走一段——具体哪条岔路怎么拐，四十年了，我记不全了。"
     },
     {
       "type": "map",
-      "content": "伐木铁路还在跑的年月，山里有条笔直的路基，图省事的人爱抄它；厂子废了以后路基还在，老辈人都说，顺着它走绕远，但不会迷路。"
+      "content": "伐木铁路还在跑的年月，山里有条笔直的路基 [SCN_railbed]，图省事的人爱抄它；厂子废了以后路基还在，老辈人都说，顺着它走绕远，但不会迷路。"
     }
   ]
 }

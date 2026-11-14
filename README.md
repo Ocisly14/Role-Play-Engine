@@ -282,11 +282,11 @@ has no relationship operation of its own.
 
 ## Skills
 
-Skills are 17 broad ability domains defined in
+Skills are 16 broad ability domains defined in
 `src/engine/rules/skillCatalog.ts`, each with a guidance document under
 `src/engine/rules/skills/`:
 
-Social · Knowledge & Craft · Science & Nature · Investigation · Athletics ·
+Knowledge & Craft · Science & Nature · Investigation · Athletics ·
 Swimming · Stealth & Security · Repair & Engineering · Land Vehicle
 Operation · Watercraft Operation · Aircraft Operation · Survival &
 Navigation · Medicine & Psychology · Melee Combat · Ranged Combat ·

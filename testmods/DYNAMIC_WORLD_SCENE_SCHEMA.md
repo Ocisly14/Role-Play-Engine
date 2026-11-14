@@ -85,15 +85,21 @@ inline with a stable `[reference-id]`.
 
 - Every `[citation]` must resolve to a **local item, a local condition, or the
   TARGET place of one of this file's connections**.
-- Every visible item is cited **exactly once**; hidden items must NOT be cited
-  (the prose would reveal them).
+- An item cited in the prose is **in plain sight**, and is cited **exactly
+  once**. An item that has a `references.items` row but is **not cited** is a
+  thing nobody has noticed yet (a liner under a suitcase lining, bills at the
+  bottom of a cash drawer) — that absence is the whole mechanism. Items carry
+  **no `hidden` flag**; the loader rejects one. Whether a particular character
+  notices an uncited item is decided per character at perception time; laying
+  it open for everyone is done by rewriting the prose to cite it.
 - Conditions are always cited exactly once.
 - **Connections are cited by the place they lead to** (`[SCN_library_stacks]`,
   `[ROAD_main_street]`) — never by their own `connection.*` id. A passage is
-  topology bookkeeping, not a pointable thing. Every non-hidden connection's
-  target must be cited exactly once; a hidden connection's target must NOT be
-  cited. **A door that matters as an object** (lockable, breakable, notable)
-  **is authored as an item** in addition to the connection.
+  topology bookkeeping, not a pointable thing. Every non-concealed
+  connection's target must be cited exactly once; a `concealed` connection's
+  target must NOT be cited on that connection's account. **A door that
+  matters as an object** (lockable, breakable, notable) **is authored as an
+  item** in addition to the connection.
 - Citing a place this file has no connection to is an error. Far landmarks a
   character can see but not walk to stay uncited prose.
 - All place ids and reference ids share ONE module-wide namespace.
@@ -118,10 +124,10 @@ container registry, no entry-scene declarations.
 
 ```ts
 interface Item {
-  id: string;               // module-unique, cited exactly once (if visible)
+  id: string;               // module-unique; cited once = in plain sight,
+                            // uncited = not yet noticed (no `hidden` flag)
   name: string;
   description?: string;     // the Engine reads prose and judges — no stat fields
-  hidden?: boolean;         // invisible until revealed; must NOT be cited
   isLightSource?: boolean;  // summed by subsystem/sun.ts
   lightLevel?: number;
   position?: number;        // ROAD items only: 0.0 (endpointA) – 1.0 (endpointB).
@@ -134,6 +140,26 @@ interface Item {
 Design guideline: every scene carries **at least 3 visible items** — not all
 plot-functional; environmental texture (a bench, a mushroom ring, a rusted
 spike) is what emergent behavior grabs hold of.
+
+### Connection
+
+```ts
+interface Connection {
+  id: string;               // connection.<scene>.<thing>; never cited
+  targetId: string;         // the place it leads to — what the prose cites
+  name: string;
+  description?: string;
+  concealed?: boolean;      // physically obscured (a door behind a bookshelf),
+                            // the same for everyone; its target is not cited
+                            // on its account
+}
+```
+
+`concealed` is a physical state of the passage, not anyone's knowledge of it.
+There is no `discoveredBy` list (the loader rejects one): a character who
+knows the way through keeps that as their own memory. Opening the passage
+for everyone is a change of physical state — the Engine's
+`connectionConcealed` or a scripted `connection.setConcealed` effect.
 
 ### SceneCondition
 
@@ -208,7 +234,8 @@ Highlights of the vocabulary:
   `item.move`, `scene.addCondition`/`removeCondition`,
   `character.hp/san/fatigue/…`, `connection.setBlock` (with a shared
   `featureId` so a lift-event can withdraw a raise-event's vote),
-  `connection.setHidden` (how a sealed door opens), `event.emit`,
+  `connection.setConcealed` with `concealed: boolean` (how a sealed door
+  opens; formerly `connection.setHidden`/`hidden`), `event.emit`,
   `event.transition`.
 
 ### Holder grammar (one grammar everywhere)
@@ -243,6 +270,30 @@ placement now that macro locations are gone:
   is written per profile in the character's own voice. Nothing geographic is
   generated at bootstrap; a place absent from a character's memories does not
   exist for them (this IS the lost-in-the-woods mechanic).
+
+  **Seeded memories carry tags.** A character may only point at ids they
+  have been shown — in the prose they perceived, in their own inventory, or
+  in their memories — so a memory that names a specific place (`SCN_*`,
+  `ROAD_*`, `VEH_*`) or a specific item (`item.*`, from a place file's
+  `references` or anyone's inventory) puts the bracketed id right after the
+  name, in the character's own sentence:
+
+  ```
+  清早从维修铺 [SCN_batra_shop] 楼下出门，顺主街 [ROAD_main_street] 往北走一刻钟就到蓝鸟后厨 [SCN_bluebird_kitchen]
+  ```
+
+  People are never tagged (knowing who someone is is a separate fact). The
+  loader checks that every tag names a real entity, and that every `map`
+  memory carries at least one place tag — an untagged map memory is
+  directions to nowhere the character can name. Tag the place the route
+  actually reaches: a shop on the street is its street-facing room
+  (`SCN_grocery_store`, not the back room), "the motel" is its yard
+  `SCN_motel`, a house reached by a lane is the lane's end (`SCN_holt_gate`).
+  Tagging an item also lets the character cite something they have not
+  seen this session — that is the point for a secret they keep (Marisol's
+  `[item.grocery_store.duplicate_bills]`, Vance's
+  `[item.motel_room4.suitcase_liner]`), so tag only what the character
+  really knows.
 - `inventory[]`: what the character carries. Ids follow the same grammar as
   a place file's items, with the owner where the place would be:
 

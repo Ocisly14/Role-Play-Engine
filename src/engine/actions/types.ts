@@ -30,19 +30,13 @@ export interface ActionEntityRef {
   id: string;
 }
 
-export const OBJECT_REF_ROLES = [
-  "target",
-  "tool",
-  "destination",
-  "recipient",
-] as const;
-export type ObjectRefRole = (typeof OBJECT_REF_ROLES)[number];
-
-/** How the actor intends to use the referenced entity. The role never limits
- *  which entities the Engine may end up modifying. */
-export interface ActionObjectRef extends ActionEntityRef {
-  role?: ObjectRefRole;
-}
+/** An entity an action involves. Only the id carries meaning: how the actor
+ *  uses it is in the command's `description`. There used to be a `role`
+ *  (target / tool / destination / recipient); nothing read `tool`, the
+ *  Engine names whom an occurrence was aimed at itself (`targetIds`), and
+ *  asking the actor to classify each reference only gave it one more thing
+ *  to get wrong. */
+export type ActionObjectRef = ActionEntityRef;
 
 // ==================== Agent tool args (untrusted) ====================
 
@@ -64,6 +58,10 @@ export interface ActToolArgs {
   language?: string;
   /** Exact words spoken, verbatim. Omitted for silent actions. */
   utterance?: string;
+  /** Player character only: this act is going to sleep. Only offered on the
+   *  player's `act`; the boundary accepts it from anyone but it means
+   *  nothing to the Engine — autosave reads it. */
+  sleep?: boolean;
 }
 
 // ==================== Trusted command ====================
@@ -98,6 +96,9 @@ export interface ActionCommand extends TrustedActionEnvelope {
   /** Never set at intake. Kept for snapshots written before dice moved to
    *  resolution time; the live roll lives on `EngineAction.checkOutcome`. */
   skillRoll?: SkillRollRecord;
+  /** Copied from the tool's `sleep` when the actor marked this act as going
+   *  to sleep. Absent otherwise. Not read by the Engine. */
+  sleep?: boolean;
 }
 
 /** Intake answer to a submitted command. A receipt, not a world outcome. */
@@ -270,20 +271,13 @@ export type SceneStateOperation =
       reason: string;
     }
   | {
-      /** These characters have found a concealed passage. Addressed at the
-       *  connection because that is where the fact lives — `discoveredBy`
-       *  sits beside `hidden` on the passage itself — and it takes a list
-       *  because finding is not private: everyone who watched the bookcase
-       *  swing out learned the same thing at the same moment. */
-      kind: "connectionDiscovered";
+      /** Expose (`concealed: false`) or conceal a connection by its authored
+       *  id — only when its physical state really changes (the bookshelf
+       *  pushed aside). Someone merely finding it is their own knowledge:
+       *  one occurrence they perceive, no change here. */
+      kind: "connectionConcealed";
       connectionId: string;
-      characterIds: string[];
-    }
-  | {
-      /** Reveal (`hidden: false`) or conceal a connection by its authored id. */
-      kind: "connectionHidden";
-      connectionId: string;
-      hidden: boolean;
+      concealed: boolean;
     }
   | {
       kind: "environmentContribute";
@@ -317,8 +311,6 @@ export type ItemStateOperation =
       description?: string;
       /** Adds one sentence to the description instead of replacing it. */
       appendDescription?: string;
-      /** Conceal from / reveal to characters. `false` is the reveal. */
-      hidden?: boolean;
       isLightSource?: boolean;
       lightLevel?: number;
     };

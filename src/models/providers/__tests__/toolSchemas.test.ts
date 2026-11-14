@@ -6,7 +6,10 @@ import {
   RESOLUTION_PHASES,
 } from "../../../engine/resolution/worldResolutionStageSchemas.js";
 import { TOOL_CAPS, VALID_TOOLS } from "../../../roleSim/toolDispatcher.js";
-import { AGENT_TOOLS } from "../../../roleSim/tools/schemas.js";
+import {
+  AGENT_TOOLS,
+  PLAYER_DELEGATED_TOOLS,
+} from "../../../roleSim/tools/schemas.js";
 import { AnthropicAdapter } from "../anthropic.js";
 import {
   canBeStrict,
@@ -67,8 +70,21 @@ function assertStrictIsExpressible(tool: ToolSpec) {
 describe("agent tool schemas", () => {
   it("covers exactly the dispatcher's tool whitelist", () => {
     // A tool the model can call but the dispatcher rejects (or vice versa)
-    // silently wastes a turn.
-    expect(new Set(AGENT_TOOLS.map((t) => t.name))).toEqual(VALID_TOOLS);
+    // silently wastes a turn. The whitelist spans every set the agent may be
+    // handed — NPCs' and the delegated player character's; the agent loop
+    // narrows it to whichever set it actually offered.
+    expect(
+      new Set([...AGENT_TOOLS, ...PLAYER_DELEGATED_TOOLS].map((t) => t.name))
+    ).toEqual(VALID_TOOLS);
+  });
+
+  it("keeps the player tools out of every grammar and closed, like the NPC ones", () => {
+    for (const tool of PLAYER_DELEGATED_TOOLS) {
+      const schema = tool.inputSchema as Record<string, unknown>;
+      expect(schema.type).toBe("object");
+      expect(schema.additionalProperties).toBe(false);
+      expect(tool.noGrammar).toBe(true);
+    }
   });
 
   it("names every capped tool", () => {

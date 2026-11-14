@@ -48,8 +48,9 @@ world-rule module.
 
 4. **Declared ability only.** A check may use only the skill the actor
    declared. If no skill was declared, or that skill does not cover the
-   attempt, omit the check; never substitute another skill or raise the bar to
-   punish the choice.
+   attempt, omit the check. Interpersonal influence, questioning and reading
+   someone's intent are settled without a check. Keep checks for independently
+   uncertain tasks such as treatment, combat or learned-language comprehension.
 
 5. **Failure is bounded.** A plain failed check means the attempt did not work
    and its time was spent. Only a fumble licenses an additional lasting cost

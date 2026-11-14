@@ -27,7 +27,7 @@ character id.
 - `move {from, to}` — relocate an existing item from its exact current holder,
   whether by transfer, deliberate placement or external force.
 - `destroy {}` — remove an item that no longer exists as a meaningful object.
-- `set {description?, appendDescription?, hidden?, isLightSource?,
+- `set {description?, appendDescription?, isLightSource?,
   lightLevel?}` — change what an existing item is like without changing its
   identity or holder.
 
@@ -80,12 +80,29 @@ Choose the operation from the object's resulting identity and function:
 Damage does not automatically mean destruction. Describe and apply only what
 the action, tools and deterministic damage result support.
 
-## Hidden and revealed items
+## Unnoticed and plain-view items
 
-Use `set.hidden:false` when an existing concealed item becomes available to
-ordinary perception, and `set.hidden:true` only when an action actually
-conceals it. Knowing privately where something is does not necessarily reveal
-it to the whole scene.
+There is no hidden flag. An item a place's description does not cite is in
+that place but unnoticed — the Items section marks it `unnoticed`. Plain view
+is the place's prose:
+
+- When an action lays an unnoticed item open for anyone to see (the drawer
+  emptied onto the table, the panel torn off), the scene changes rewrite the
+  place's description to cite it.
+- When an item comes to rest in plain view at a place (set down on the
+  counter, dropped in the road), the same applies: the place's description
+  cites it.
+- When an action brings a new item into being (`create` — a leg pried off a
+  chair, a board torn from the wall, a note written): in someone's hands it
+  needs nothing more; in plain view at a place, the place's description cites
+  it in the same submission; hidden there on purpose, it stays uncited. Either
+  way the occurrence that shows it names it with its `[id]`, and the thing it
+  came from is rewritten (`set` on the chair, `setDescription` on the wall's
+  place) so the world does not keep the part in two places.
+- When an action hides an item there (under the mattress, behind the loose
+  brick), move it there and leave it uncited.
+- Someone FINDING an unnoticed item is their knowledge, not a change: an
+  occurrence that names the item, perceived by the finder. Nothing here.
 
 ## Scene-description coherence
 

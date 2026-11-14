@@ -31,7 +31,6 @@
   },
   "skills": {
     "Knowledge & Craft": 65,
-    "Social": 60,
     "Investigation": 45,
     "Medicine & Psychology": 35
   },
@@ -151,15 +150,15 @@
     },
     {
       "type": "secret",
-      "content": "上礼拜盘库，后仓多出一整箱进货单上没有的番茄罐头。我宁愿相信是自己累得记错了。"
+      "content": "上礼拜盘库，后仓 [SCN_grocery_backroom] 多出一整箱进货单上没有的番茄罐头 [item.grocery_backroom.unordered_crate]。我宁愿相信是自己累得记错了。"
     },
     {
       "type": "secret",
-      "content": "周四对收银机时，两张十块钞票的序列号一模一样；我把它们压在钱箱最底下。"
+      "content": "周四对收银机 [item.grocery_store.cash_register] 时，两张十块钞票 [item.grocery_store.duplicate_bills] 的序列号一模一样；我把它们压在钱箱最底下。"
     },
     {
       "type": "general",
-      "content": "这间店从 Reis 时代起就是镇上最老的字号。1979 年之后，店、邮政秤和 Tommy 都归我一个人照看。"
+      "content": "这间店 [SCN_grocery_store] 从 Reis 时代起就是镇上最老的字号。1979 年之后，店、邮政秤 [item.grocery_store.postal_scale] 和 Tommy 都归我一个人照看。"
     },
     {
       "type": "general",
@@ -175,7 +174,7 @@
     },
     {
       "type": "general",
-      "content": "上个月半条街的灯一起闪，店里冰柜跳闸；Dev 查过线路，说没有问题。"
+      "content": "上个月半条街的灯一起闪，店里冰柜 [item.grocery_store.cooler_case] 跳闸；Dev 查过线路，说没有问题。"
     },
     {
       "type": "plan",
@@ -187,31 +186,31 @@
     },
     {
       "type": "map",
-      "content": "店开在主街北半，一头是老雷警长的办公室，一头挨着 Dolores 的蓝鸟餐馆；买东西、送信、吃饭一条街都能撞见熟人。"
+      "content": "店 [SCN_grocery_store] 开在主街 [ROAD_main_street] 北半，一头是老雷警长的办公室 [SCN_sheriff_front]，一头挨着 Dolores 的蓝鸟餐馆 [SCN_bluebird_dining]；买东西、送信、吃饭一条街都能撞见熟人。"
     },
     {
       "type": "map",
-      "content": "打烊我走后巷回家，八分钟，黑着也认得每一步；那条巷子直通我们雷耶斯家门口，就在主街南口那一拐。"
+      "content": "打烊我走后巷 [ROAD_backstreet] 回家，八分钟，黑着也认得每一步；那条巷子直通我们雷耶斯家门口 [SCN_reyes_gate]，就在主街南口 [SCN_main_south] 那一拐。"
     },
     {
       "type": "map",
-      "content": "邮件车和货运车周二一早从主街北口进镇，顺主街开到我店门口卸货，货得从店堂一趟趟搬进后仓才算完。"
+      "content": "邮件车和货运车周二一早从主街北口 [SCN_main_north] 进镇，顺主街 [ROAD_main_street] 开到我店门口 [SCN_grocery_store] 卸货，货得从店堂一趟趟搬进后仓 [SCN_grocery_backroom] 才算完。"
     },
     {
       "type": "map",
-      "content": "主街南口往下十五分钟到码头和海滩，老 Earl 守着码头边那间小屋；主街北口往外，二十五分钟到汽车旅馆，二十分钟到 Holt 家院门。"
+      "content": "主街南口 [SCN_main_south] 往下十五分钟到码头和海滩 [SCN_dock]，老 Earl 守着码头边那间小屋 [SCN_earl_cabin]；主街北口 [SCN_main_north] 往外，二十五分钟到汽车旅馆 [SCN_motel]，二十分钟到 Holt 家院门 [SCN_holt_gate]。"
     },
     {
       "type": "map",
-      "content": "主街北口往林道走十分钟就是林道口，那是整片林子唯一的口子；再往里我从没进过，也不许 Tommy 进。"
+      "content": "主街北口 [SCN_main_north] 往林道 [ROAD_trail_access] 走十分钟就是林道口 [SCN_trailhead]，那是整片林子唯一的口子；再往里我从没进过，也不许 Tommy 进。"
     },
     {
       "type": "map",
-      "content": "镇上老人说林子深处有座废弃的老锯木厂，具体多远、怎么走我说不上来——那种地方不是小孩该惦记的。"
+      "content": "镇上老人说林子深处有座废弃的老锯木厂 [SCN_sawmill]，具体多远、怎么走我说不上来——那种地方不是小孩该惦记的。"
     },
     {
       "type": "map",
-      "content": "汽车旅馆边那条车道能一路上山到北山的政府气象站，Frank 天天开车送货去；普通人也就到山上那道大门，再往里没人去过，镇上早就没人多问了。"
+      "content": "汽车旅馆 [SCN_motel] 边那条车道 [ROAD_station_drive] 能一路上山到北山的政府气象站 [SCN_station_yard]，Frank 天天开车送货去；普通人也就到山上那道大门 [SCN_gate]，再往里没人去过，镇上早就没人多问了。"
     }
   ]
 }

@@ -30,7 +30,6 @@
     "conditions": []
   },
   "skills": {
-    "Social": 65,
     "Investigation": 50,
     "Ranged Combat": 45,
     "Athletics": 25,
@@ -68,7 +67,6 @@
       "id": "item.ray.case_notes_1958",
       "name": "1958 年旧案笔录",
       "properties": {
-        "hidden": true,
         "note": "Ray 私藏的 1958 年失踪案笔录，边页写满后来的交叉比对和疑问。"
       }
     }
@@ -163,15 +161,15 @@
   "memory": [
     {
       "type": "secret",
-      "content": "1958 年我还是年轻警员时，一个渔民报案说在雷德利站方向的雾里看见怪东西；我做了笔录，准备上报。"
+      "content": "1958 年我还是年轻警员时，一个渔民报案说在雷德利站方向的雾里看见怪东西；我做了笔录 [item.ray.case_notes_1958]，准备上报。"
     },
     {
       "type": "secret",
-      "content": "随后两个穿西装的人上门，知道我的名字和笔录每个字，客气地提醒此案到此为止；我把案卷压了下来。"
+      "content": "随后两个穿西装的人上门，知道我的名字和笔录每个字，客气地提醒此案到此为止；我把案卷 [item.ray.case_notes_1958] 压了下来。"
     },
     {
       "type": "secret",
-      "content": "从那以后，我把每一件沾着山上的报案都轻轻滑走。Cole 的档案柜就在前厅，一门之隔，我一次没翻过。"
+      "content": "从那以后，我把每一件沾着山上的报案都轻轻滑走。Cole 的档案柜 [item.sheriff_front.incident_files] 就在前厅 [SCN_sheriff_front]，一门之隔，我一次没翻过。"
     },
     {
       "type": "general",
@@ -179,7 +177,7 @@
     },
     {
       "type": "general",
-      "content": "Cole 把每一起怪事报案都规规矩矩归档，档案柜就在前厅；他不明白我为何从不看。"
+      "content": "Cole 把每一起怪事报案都规规矩矩归档，档案柜 [item.sheriff_front.incident_files] 就在前厅 [SCN_sheriff_front]；他不明白我为何从不看。"
     },
     {
       "type": "general",
@@ -187,11 +185,11 @@
     },
     {
       "type": "general",
-      "content": "Denny 暑假总往林道口跑，吃饭时看我的眼神像等我说漏什么；他年轻时跟我一样，眼睛太尖。"
+      "content": "Denny 暑假总往林道口 [SCN_trailhead] 跑，吃饭时看我的眼神像等我说漏什么；他年轻时跟我一样，眼睛太尖。"
     },
     {
       "type": "general",
-      "content": "潮水好的傍晚我会去码头钓鱼；Earl 偶尔在旁边，我们能一声不吭坐一个钟头。"
+      "content": "潮水好的傍晚我会去码头 [SCN_dock] 钓鱼；Earl 偶尔在旁边，我们能一声不吭坐一个钟头。"
     },
     {
       "type": "plan",
@@ -199,43 +197,43 @@
     },
     {
       "type": "plan",
-      "content": "这周把积着的巡逻记录补签，Cole 又把它们码在我桌角了。"
+      "content": "这周把积着的巡逻记录 [item.sheriff_office.patrol_logs] 补签，Cole 又把它们码在我桌角 [item.sheriff_office.ray_desk] 了。"
     },
     {
       "type": "map",
-      "content": "主街从北口到南口十五分钟，警长办公室就在靠北那一段，边上挨着杂货店和蓝鸟餐馆——出门溜达一圈，这三家的门脸我抬眼都能看到。"
+      "content": "主街 [ROAD_main_street] 从北口 [SCN_main_north] 到南口 [SCN_main_south] 十五分钟，警长办公室 [SCN_sheriff_front] 就在靠北那一段，边上挨着杂货店 [SCN_grocery_store] 和蓝鸟餐馆 [SCN_bluebird_dining]——出门溜达一圈，这三家的门脸我抬眼都能看到。"
     },
     {
       "type": "map",
-      "content": "再往南是街机厅「星港」、Batra家的维修铺（他们一家住楼上）、诊所；南口出去后巷八分钟到雷耶斯家门口，下坡道十五分钟到码头，这条巡逻线我三十六年没怎么走岔过。"
+      "content": "再往南是街机厅「星港」 [SCN_arcade]、Batra家的维修铺 [SCN_batra_shop]（他们一家住楼上 [SCN_batra_living]）、诊所 [SCN_clinic_waiting]；南口 [SCN_main_south] 出去后巷 [ROAD_backstreet] 八分钟到雷耶斯家门口 [SCN_reyes_gate]，下坡道 [ROAD_dock_slope] 十五分钟到码头 [SCN_dock]，这条巡逻线我三十六年没怎么走岔过。"
     },
     {
       "type": "map",
-      "content": "北口出去，霍尔特巷二十分钟到我家院门，旧海岸公路二十五分钟到汽车旅馆，林道十分钟到林道口——这几条路我闭着眼都能走。"
+      "content": "北口 [SCN_main_north] 出去，霍尔特巷 [ROAD_holt_lane] 二十分钟到我家院门 [SCN_holt_gate]，旧海岸公路 [ROAD_old_coast_road] 二十五分钟到汽车旅馆 [SCN_motel]，林道 [ROAD_trail_access] 十分钟到林道口 [SCN_trailhead]——这几条路我闭着眼都能走。"
     },
     {
       "type": "map",
-      "content": "码头往南崖间小径三十分钟到灯塔崖，半道上岔一条路到Earl的小屋，这是上灯塔唯一的道；旅馆边上车行道能通到山上的自动大门，货车三十分钟、步行四个半钟头，普通人到大门就是头，再往上是政府气象站的地界。"
+      "content": "码头 [SCN_dock] 往南崖间小径 [ROAD_cliff_path] 三十分钟到灯塔崖 [SCN_lighthouse_cliff]，半道上岔一条路到Earl的小屋 [SCN_earl_cabin]，这是上灯塔唯一的道；旅馆 [SCN_motel] 边上车行道 [ROAD_station_drive] 能通到山上的自动大门 [SCN_gate]，货车三十分钟、步行四个半钟头，普通人到大门就是头，再往上是政府气象站 [SCN_station_yard] 的地界。"
     },
     {
       "type": "map",
-      "content": "林道口进山两条主线：一条奔灰溪渡口，一个来钟头，踏石过溪——暴雨后涨水，踏石一淹就断了道；另一条一个钟头到旧铁路路基，路基是当年伐木铁路留下的，笔直好认，绕远但不迷路。"
+      "content": "林道口 [SCN_trailhead] 进山两条主线：一条奔灰溪渡口 [SCN_creek_ford]，一个来钟头，踏石过溪——暴雨后涨水，踏石一淹就断了道；另一条一个钟头到旧铁路路基 [SCN_railbed]，路基是当年伐木铁路留下的，笔直好认，绕远但不迷路。"
     },
     {
       "type": "map",
-      "content": "灰溪渡口再往里一个半钟头到旧锯木厂，走路基的话从路基到厂子要两个钟头。厂子1974年关的，如今就是一片废墟，差不多在进山的半道上。"
+      "content": "灰溪渡口 [SCN_creek_ford] 再往里一个半钟头到旧锯木厂 [SCN_sawmill]，走路基 [SCN_railbed] 的话从路基到厂子要两个钟头。厂子1974年关的，如今就是一片废墟，差不多在进山的半道上。"
     },
     {
       "type": "map",
-      "content": "锯木厂往深处走，一个钟头到雾谷，一个来钟头到红杉环。雾谷是块低洼谷地，雾常年淤在那儿，四条林径都在谷里交汇——通灰溪、路基、锯木厂、红杉环，全林子最容易转向的地方，雾天别指望在那儿认准方向。"
+      "content": "锯木厂 [SCN_sawmill] 往深处走，一个钟头到雾谷 [SCN_fog_hollow]，一个来钟头到红杉环 [SCN_redwood_ring]。雾谷是块低洼谷地，雾常年淤在那儿，四条林径都在谷里交汇——通灰溪 [SCN_creek_ford]、路基 [SCN_railbed]、锯木厂、红杉环，全林子最容易转向的地方，雾天别指望在那儿认准方向。"
     },
     {
       "type": "map",
-      "content": "雾谷到红杉环不到一个钟头；雾谷绕沼泽到灰溪将近两个钟头，穿灌木到路基也要两个钟头。要是在林子里走了半天又绕回原地，多半是在雾谷和红杉环之间打转了。"
+      "content": "雾谷 [SCN_fog_hollow] 到红杉环 [SCN_redwood_ring] 不到一个钟头；雾谷绕沼泽到灰溪 [SCN_creek_ford] 将近两个钟头，穿灌木到路基 [SCN_railbed] 也要两个钟头。要是在林子里走了半天又绕回原地，多半是在雾谷和红杉环之间打转了。"
     },
     {
       "type": "map",
-      "content": "红杉环再往北爬两个多钟头，就是山上那道铁丝网围栏，普通人走到那儿就没路了。不管走锯木厂线还是雾谷线，镇上到围栏都得六个来钟头，谁也说不清哪条更快。"
+      "content": "红杉环 [SCN_redwood_ring] 再往北爬两个多钟头，就是山上那道铁丝网围栏 [SCN_fence]，普通人走到那儿就没路了。不管走锯木厂 [SCN_sawmill] 线还是雾谷 [SCN_fog_hollow] 线，镇上到围栏都得六个来钟头，谁也说不清哪条更快。"
     }
   ]
 }

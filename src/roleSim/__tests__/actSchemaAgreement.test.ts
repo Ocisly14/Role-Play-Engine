@@ -12,7 +12,7 @@
 
 import { describe, expect, it } from "vitest";
 import type { RoleSimDecision } from "../agent.js";
-import { actTool } from "../tools/schemas.js";
+import { actTool, playerActTool } from "../tools/schemas.js";
 
 type ActDecision = Extract<RoleSimDecision, { tool: "act" }>;
 
@@ -43,8 +43,13 @@ const ACT = fields<ActDecision>()(
   "proposedDurationTicks",
   "skillId",
   "language",
-  "utterance"
+  "utterance",
+  "sleep"
 );
+
+/** Decision fields only the player's `act` carries. NPCs' schema stops short
+ *  of them so NPC requests stay byte-identical. */
+const PLAYER_ONLY = new Set<string>(["sleep"]);
 
 const _covers: Covers<ActDecision, (typeof ACT)[number]> = true;
 void _covers;
@@ -52,6 +57,16 @@ void _covers;
 describe("the act tool schema and RoleSimDecision describe the same thing", () => {
   it("every schema property has a slot in the decision — nothing to drop", () => {
     const schema = actTool.inputSchema as {
+      properties: Record<string, unknown>;
+    };
+    const wireFields = ACT.filter(
+      (k) => k !== "tool" && !PLAYER_ONLY.has(k)
+    ).sort();
+    expect(Object.keys(schema.properties).sort()).toEqual(wireFields);
+  });
+
+  it("the player's act schema covers every decision field, sleep included", () => {
+    const schema = playerActTool.inputSchema as {
       properties: Record<string, unknown>;
     };
     const wireFields = ACT.filter((k) => k !== "tool").sort();
@@ -68,20 +83,22 @@ describe("the act tool schema and RoleSimDecision describe the same thing", () =
     const decision = agent.buildTerminalDecision({
       tool: "act",
       description: "我就着窗光读舅舅的信。",
-      objectRefs: [{ id: "item.batra_master.sari_trunk", role: "target" }],
+      objectRefs: [{ id: "item.batra_master.sari_trunk" }],
       proposedDurationTicks: 8,
       skillId: "Languages",
       language: "Hindi",
       utterance: "……",
+      sleep: true,
     });
     expect(decision).toEqual({
       tool: "act",
       description: "我就着窗光读舅舅的信。",
-      objectRefs: [{ id: "item.batra_master.sari_trunk", role: "target" }],
+      objectRefs: [{ id: "item.batra_master.sari_trunk" }],
       proposedDurationTicks: 8,
       skillId: "Languages",
       language: "Hindi",
       utterance: "……",
+      sleep: true,
     });
   });
 });

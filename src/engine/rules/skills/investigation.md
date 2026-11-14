@@ -23,10 +23,10 @@ is limited to what is actually there.
 - Nothing is found that the world does not hold. An adequately searched, explicitly empty area can yield an absence.
   Missing detail in the input or a failed search is only a limit on the finding,
   not proof that the room contains nothing.
-- When the search is a QUESTION put to a person — reading how much they saw,
-  drawing out what they know — the finding is not yours to write. Describe only the actor's supported question or evidence gathering, never
-  an unissued answer. Persuasion and sincerity reading belong to Social; do not
-  substitute it when Investigation was declared outside its coverage.
+- Questions put to a person and attempts to read their sincerity are
+  interpersonal actions without a check. Deliver the question through speech.
+  Any answer comes from the other person's own action, and the observer
+  interprets the behavior they perceive.
 
 ## Success levels
 

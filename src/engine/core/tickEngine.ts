@@ -8,6 +8,7 @@ import {
   type EngineAction,
 } from "../actions/types.js";
 import { createDefaultCodeToolRegistry } from "../registerDefaults.js";
+import { catalogSkillName } from "../rules/skillCatalog.js";
 import type { ScriptedEvent } from "../scriptedEvents/types.js";
 import type { SubsystemRegistry } from "../subsystem/registry.js";
 import type { CodeToolRegistry } from "../tools/codeTool.js";
@@ -104,7 +105,24 @@ export function createTickEngine(opts: CreateTickEngineOptions): TickEngine {
       );
     }
     inbox.rehydrate(opts.persistedState.inbox);
-    actionStore.rehydrate(opts.persistedState.actions);
+    // Older saves can have a social check on an action whose clock is still
+    // running. Resume the action without that check and keep completed history.
+    actionStore.rehydrate(
+      opts.persistedState.actions.map((action) => {
+        if (action.status !== "active" || !action.check) return action;
+        if (!catalogSkillName(action.check.skillId)) {
+          const { check, checkOutcome, ...unchecked } = action;
+          return unchecked;
+        }
+        if (action.checkOutcome || !action.check.opposedBy) return action;
+        const opposedBy = action.check.opposedBy.filter((defender) =>
+          catalogSkillName(defender.skillId)
+        );
+        return opposedBy.length === action.check.opposedBy.length
+          ? action
+          : { ...action, check: { ...action.check, opposedBy } };
+      })
+    );
   }
 
   const orchestrator = new TickOrchestrator({

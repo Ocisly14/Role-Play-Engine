@@ -137,7 +137,7 @@ export interface DecisionRecord {
    *  future non-terminal return would not silently mis-record. */
   tool: RoleSimDecision["tool"];
   description?: string;
-  objectRefs?: Array<{ kind: string; id: string; role?: string }>;
+  objectRefs?: Array<{ kind: string; id: string }>;
   proposedDurationTicks?: number;
   skillId?: string;
   utterance?: string;
@@ -823,9 +823,7 @@ export async function runStagedCase(
                 {
                   kind: sc.kind,
                   description: `${sc.itemId}: ${
-                    sc.hidden === false
-                      ? "revealed"
-                      : (sc.description ?? sc.appendDescription ?? "updated")
+                    sc.description ?? sc.appendDescription ?? "updated"
                   }`,
                 },
               ];
@@ -937,7 +935,6 @@ export async function runStagedCase(
               objectRefs: decision.objectRefs.map((r) => ({
                 kind: r.kind,
                 id: r.id,
-                ...(r.role ? { role: r.role } : {}),
               })),
               proposedDurationTicks: decision.proposedDurationTicks,
               ...(decision.skillId ? { skillId: decision.skillId } : {}),

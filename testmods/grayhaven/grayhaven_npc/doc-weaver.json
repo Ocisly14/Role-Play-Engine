@@ -30,7 +30,6 @@
     "conditions": []
   },
   "skills": {
-    "Social": 70,
     "Science & Nature": 70,
     "Investigation": 60,
     "Medicine & Psychology": 85
@@ -199,23 +198,23 @@
     },
     {
       "type": "secret",
-      "content": "上个月我自己的耳朵也响过两次。我把自己编号写进统计表，不写名字。"
+      "content": "上个月我自己的耳朵也响过两次。我把自己编号写进统计表 [item.weaver.case_ledger]，不写名字。"
     },
     {
       "type": "general",
-      "content": "从去年冬天起，失眠和耳鸣的主诉明显增加。候诊室也同时开始谈灯闪、死鱼和 Earl 的光；这种相关性值得记录。"
+      "content": "从去年冬天起，失眠和耳鸣的主诉明显增加。候诊室 [SCN_clinic_waiting] 也同时开始谈灯闪、死鱼和 Earl 的光；这种相关性值得记录。"
     },
     {
       "type": "general",
-      "content": "周日的 KGRV 歌剧转播近来夹着沙沙声。我一度以为是耳鸣，后来对照过：留声机没事，收音机才有。"
+      "content": "周日的 KGRV 歌剧转播近来夹着沙沙声。我一度以为是耳鸣，后来对照过：留声机 [item.clinic_upstairs.gramophone] 没事，收音机 [item.clinic_upstairs.radio] 才有。"
     },
     {
       "type": "general",
-      "content": "Susan 清点候诊登记时发现今年病人更多。她没看过我的统计，却得出了相同方向的结论，是有价值的独立旁证。"
+      "content": "Susan 清点候诊登记 [item.clinic_waiting.appointment_book] 时发现今年病人更多。她没看过我的统计，却得出了相同方向的结论，是有价值的独立旁证。"
     },
     {
       "type": "general",
-      "content": "1963 年我打算在灰港待五年就回旧金山；今年是第二十二年，楼上的行李箱早已成了床头柜。"
+      "content": "1963 年我打算在灰港待五年就回旧金山；今年是第二十二年，楼上 [SCN_clinic_upstairs] 的行李箱 [item.clinic_upstairs.suitcase] 早已成了床头柜。"
     },
     {
       "type": "plan",
@@ -227,23 +226,23 @@
     },
     {
       "type": "map",
-      "content": "诊所在主街南头，跟星港街机厅、巴特拉家的电视铺挨在一排，楼上是我住处。主街走到头十五分钟，北头是蓝鸟餐馆、杂货店兼邮局、警长办公室——街面上的路灯、长椅、邮筒、公告栏也都在那一段。"
+      "content": "诊所 [SCN_clinic_waiting] 在主街 [ROAD_main_street] 南头，跟星港街机厅 [SCN_arcade]、巴特拉家的电视铺 [SCN_batra_shop] 挨在一排，楼上 [SCN_clinic_upstairs] 是我住处。主街走到头十五分钟，北头是蓝鸟餐馆 [SCN_bluebird_dining]、杂货店兼邮局 [SCN_grocery_store]、警长办公室 [SCN_sheriff_front]——街面上的路灯 [item.main_street.street_lamp]、长椅 [item.main_street.diner_bench]、邮筒 [item.main_street.mailbox]、公告栏 [item.main_street.notice_board] 也都在那一段。"
     },
     {
       "type": "map",
-      "content": "主街北口是个路口：旧海岸公路二十五分钟到汽车旅馆；霍尔特巷二十分钟到霍尔特家院门——他们家常年在我这儿看病，这条巷子我闭眼都认得；林道十分钟到林道口。"
+      "content": "主街北口 [SCN_main_north] 是个路口：旧海岸公路 [ROAD_old_coast_road] 二十五分钟到汽车旅馆 [SCN_motel]；霍尔特巷 [ROAD_holt_lane] 二十分钟到霍尔特家院门 [SCN_holt_gate]——他们家常年在我这儿看病，这条巷子我闭眼都认得；林道 [ROAD_trail_access] 十分钟到林道口 [SCN_trailhead]。"
     },
     {
       "type": "map",
-      "content": "主街南口另一个路口：下坡道十五分钟到码头和海滩，后巷八分钟直接到雷耶斯家门口，比绕主街近一半。码头那边风大，我几个哮喘、风湿的老病人，一起风准来挂号——比日历准。"
+      "content": "主街南口 [SCN_main_south] 另一个路口：下坡道 [ROAD_dock_slope] 十五分钟到码头和海滩 [SCN_dock]，后巷 [ROAD_backstreet] 八分钟直接到雷耶斯家门口 [SCN_reyes_gate]，比绕主街近一半。码头那边风大，我几个哮喘、风湿的老病人，一起风准来挂号——比日历准。"
     },
     {
       "type": "map",
-      "content": "汽车旅馆边上那条车行道往山上去，尽头一道自动大门，再往里是山上那座政府气象站——普通人到大门为止，我没上去过，镇上拿它当谈资。旅馆边上还有个货运中转棚。"
+      "content": "汽车旅馆 [SCN_motel] 边上那条车行道 [ROAD_station_drive] 往山上去，尽头一道自动大门 [SCN_gate]，再往里是山上那座政府气象站 [SCN_station_yard]——普通人到大门为止，我没上去过，镇上拿它当谈资。旅馆边上还有个货运中转棚 [SCN_freight_shed]。"
     },
     {
       "type": "map",
-      "content": "出诊到过林道口那一带一次，再往林子里，我没进去过，心里没数。"
+      "content": "出诊到过林道口 [SCN_trailhead] 那一带一次，再往林子里，我没进去过，心里没数。"
     }
   ]
 }

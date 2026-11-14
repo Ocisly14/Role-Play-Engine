@@ -20,16 +20,11 @@ that language's number.
 
 ## A native tongue is never checked
 
-Nobody rolls to speak the language they think in. A declaration of Languages for a native tongue is removed at intake,
-leaving no language check; an independently declared applicable skill such
-as Social is still checked, and
-that is correct — settle it on its merits like any other unskilled action.
-Do not reach for a bar because speech was involved.
-
-What a native speaker can still fail at is not the language: persuading
-(Social), noticing a slip (Investigation), knowing what the words mean in
-their field (Knowledge & Craft, Science & Nature, Occult). Check that instead,
-if the actor declared it.
+Nobody rolls to speak the language they think in. Intake removes a Languages
+declaration for a native tongue. Technical interpretation and noticing a
+detail in already delivered speech can use an applicable declared skill.
+Persuasion and other attempts to influence a listener proceed through the
+words and conduct the listener perceives.
 
 ## Applicability
 

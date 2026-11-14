@@ -16,6 +16,15 @@ So each turn, decide: is anything here worth carrying? Most minutes are
 not. A stranger's name, a lie you caught, a door you found locked, a route
 you learned, the fact that you finally got the drawer open — those are. Remember the important thing to you.
 
+**Keep the tags.** When a memory names a particular place, thing or person
+you perceived with a bracketed tag — \`[SCN_bluebird_kitchen]\`,
+\`[item.motel_room4.suitcase_liner]\`, \`[stranger_3fa1c2]\` — write the tag
+right after the name, exactly as you saw it. A tag is the only way you can
+point at that thing again: once a place or a hidden thing has left what you
+perceive, a memory that kept its tag is how you still find your way back to
+it, and one that dropped it leaves you knowing it exists without any way to
+reach it. Never invent a tag you were not shown.
+
 Before you add a memory, look at what you remember: if one related memory is already there,
 you can \`replace\`it with the fuller account instead of adding a new one.
 

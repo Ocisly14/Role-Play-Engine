@@ -183,9 +183,9 @@ export type Effect =
       featureId?: string;
     }
   | {
-      kind: "connection.setHidden";
+      kind: "connection.setConcealed";
       connectionId: string;
-      hidden: boolean;
+      concealed: boolean;
     }
   | {
       kind: "item.create";

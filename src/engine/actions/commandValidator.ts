@@ -11,13 +11,14 @@ import {
   ACTION_ENTITY_KINDS,
   type ActToolArgs,
   type ActionObjectRef,
-  OBJECT_REF_ROLES,
 } from "./types.js";
 
 /** Bounds for the actor-proposed duration. 1 tick = 1 in-world minute; the
  *  cap only rejects absurd submissions — the Engine owns real durations. */
 export const MIN_PROPOSED_DURATION_TICKS = 1;
-export const MAX_PROPOSED_DURATION_TICKS = 480;
+// Seven days: the longest an action can be judged to take (the start
+// judgement's duration bins end there), so an actor can say so honestly.
+export const MAX_PROPOSED_DURATION_TICKS = 10080;
 
 export type CommandRejectionCode =
   | "invalid_description"
@@ -25,7 +26,8 @@ export type CommandRejectionCode =
   | "unknown_ref"
   | "invalid_duration"
   | "invalid_skill"
-  | "invalid_utterance";
+  | "invalid_utterance"
+  | "invalid_sleep";
 
 /** What the world contains, for the two id spaces that are global and stable.
  *  Only existence: reachability is not a boundary question. */
@@ -46,7 +48,6 @@ export type ValidateActArgsResult =
   | { ok: false; code: CommandRejectionCode; reason: string };
 
 const KIND_SET = new Set<string>(ACTION_ENTITY_KINDS);
-const ROLE_SET = new Set<string>(OBJECT_REF_ROLES);
 
 /**
  * Validate untrusted `act` args: shape, enums, duration bounds, and every
@@ -138,6 +139,11 @@ export function validateActArgs(
       ? args.utterance
       : undefined;
 
+  if (args.sleep !== undefined && typeof args.sleep !== "boolean") {
+    return reject("invalid_sleep", "`sleep` must be a boolean when present");
+  }
+  const sleep = args.sleep === true ? true : undefined;
+
   return {
     ok: true,
     args: {
@@ -147,6 +153,7 @@ export function validateActArgs(
       ...(skillId !== undefined ? { skillId } : {}),
       ...(language !== undefined ? { language } : {}),
       ...(utterance !== undefined ? { utterance } : {}),
+      ...(sleep !== undefined ? { sleep } : {}),
     },
   };
 }
@@ -163,7 +170,7 @@ function validateRef(
   if (typeof entry !== "object" || entry === null) {
     return reject(
       "invalid_object_refs",
-      `objectRefs[${index}] must be an object {kind, id, role?}`
+      `objectRefs[${index}] must be an object {id}`
     );
   }
   const ref = entry as Record<string, unknown>;
@@ -178,14 +185,9 @@ function validateRef(
       `objectRefs[${index}].id must be a non-empty string`
     );
   }
-  if (ref.role !== undefined) {
-    if (typeof ref.role !== "string" || !ROLE_SET.has(ref.role)) {
-      return reject(
-        "invalid_object_refs",
-        `objectRefs[${index}].role must be one of ${OBJECT_REF_ROLES.join("|")} (got: ${JSON.stringify(ref.role)})`
-      );
-    }
-  }
+  // A stray `role` (the field this ref used to carry) is ignored, not
+  // refused: it says nothing the description does not, and a rejection would
+  // cost the actor a retry over a word.
 
   // The three id spaces are disjoint, so the id itself says which one it
   // belongs to and the actor is not asked to declare it. It used to be, and
@@ -236,13 +238,7 @@ function validateRef(
 
   return {
     ok: true,
-    ref: {
-      kind: resolvedKind,
-      id: resolvedId,
-      ...(ref.role !== undefined
-        ? { role: ref.role as ActionObjectRef["role"] }
-        : {}),
-    },
+    ref: { kind: resolvedKind, id: resolvedId },
   };
 }
 

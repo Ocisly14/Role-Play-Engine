@@ -51,6 +51,8 @@ export interface RawActionStart {
     route: string[];
     vehicleId?: string;
     passBlockedConnectionId?: string;
+    /** One-use grant to cross a concealed passage the actor's words name. */
+    viaConcealedConnectionId?: string;
   };
 }
 
@@ -369,21 +371,12 @@ export const SCENE_OPS: OperationSpec[] = [
     },
   },
   {
-    kinds: ["connectionDiscovered"],
+    kinds: ["connectionConcealed"],
     fields:
-      "connectionId:string, characterIds:string[] — these characters have FOUND a concealed passage. List EVERYONE who could see it happen, not just whoever acted: from now each of them perceives it and may use it, and it stays shut for everyone else. Only for a connection that is hidden. To open it for the whole world instead (a door forced, a wall broken) use connectionHidden with hidden:false",
+      "connectionId:string, concealed:boolean — the passage's PHYSICAL state, the same for everyone: false when it is laid open (the bookshelf pushed aside, the wall broken), true when it is covered again. Someone merely finding a concealed passage changes nothing here — that is an occurrence they perceive, and their own knowledge",
     schema: {
-      properties: { connectionId: STR, characterIds: STR_LIST },
-      required: ["connectionId", "characterIds"],
-    },
-  },
-  {
-    kinds: ["connectionHidden"],
-    fields:
-      "connectionId:string, hidden:boolean — false reveals a concealed exit, true conceals one",
-    schema: {
-      properties: { connectionId: STR, hidden: BOOL },
-      required: ["connectionId", "hidden"],
+      properties: { connectionId: STR, concealed: BOOL },
+      required: ["connectionId", "concealed"],
     },
   },
   {
@@ -424,7 +417,7 @@ export const ITEM_OPS: OperationSpec[] = [
   {
     kinds: ["create"],
     fields:
-      'name:string, location:<"scene:<placeId>" or characterId>, description?:string, id?:string — stable id; must be unused; omit to auto-generate; ALWAYS pass one for non-Latin names',
+      "name:string, location:<\"scene:<placeId>\" or characterId>, description?:string, id?:string — stable id; must be unused; omit to auto-generate; ALWAYS pass one for non-Latin names. If it comes into being IN PLAIN VIEW at a place (not in someone's hands, not hidden there on purpose), the same submission rewrites that place's description to cite it as [id] — an item no description cites is there but unnoticed by everyone, its maker included. The occurrence that shows it coming into being names it with its [id], so whoever perceives that can point at it",
     schema: {
       properties: { name: STR, location: STR, description: STR, id: STR },
       required: ["name", "location"],
@@ -433,7 +426,7 @@ export const ITEM_OPS: OperationSpec[] = [
   {
     kinds: ["move"],
     fields:
-      'from:<current holder, exactly as the Items section shows it>, to:<"scene:<placeId>" for a place — a vehicle interior scene included — or a bare characterId> (one holder grammar, same as create.location). If the FROM place\'s prose cites this item, the same submission must rewrite that description (scene setDescription) — the prose must not keep pointing at what left',
+      "from:<current holder, exactly as the Items section shows it>, to:<\"scene:<placeId>\" for a place — a vehicle interior scene included — or a bare characterId> (one holder grammar, same as create.location). If the FROM place's prose cites this item, the same submission must rewrite that description (scene setDescription) — the prose must not keep pointing at what left. If it lands IN PLAIN VIEW at a place (set down on the counter, dropped in the road), rewrite that place's description to cite it too — an item a place's prose does not cite is there but unnoticed, which is right only when it was hidden there on purpose",
     schema: { properties: { from: STR, to: STR }, required: ["from", "to"] },
   },
   {
@@ -445,12 +438,11 @@ export const ITEM_OPS: OperationSpec[] = [
   {
     kinds: ["set"],
     fields:
-      "any of — description:string (REPLACES the whole description; write everything still true of the thing) · appendDescription:string (adds a supported detail only when the existing description remains true; replace description instead if damage or displacement made an old claim false) · hidden:boolean (false REVEALS a concealed item to characters, true conceals it) · isLightSource:boolean (false when it no longer lights the room, e.g. smashed) · lightLevel:number",
+      "any of — description:string (REPLACES the whole description; write everything still true of the thing) · appendDescription:string (adds a supported detail only when the existing description remains true; replace description instead if damage or displacement made an old claim false) · isLightSource:boolean (false when it no longer lights the room, e.g. smashed) · lightLevel:number",
     schema: {
       properties: {
         description: STR,
         appendDescription: STR,
-        hidden: BOOL,
         isLightSource: BOOL,
         lightLevel: { type: "number" },
       },
@@ -609,7 +601,7 @@ export const OCCURRENCE_ITEM = {
     content: {
       type: "string",
       description:
-        "Write this LAST. One objective, third-person paragraph of what happened — world-true, no character-perspective wording, no reasoning, no corrections: settle who did what before writing it. REQUIRED when speech is false. On a speech row, optional: what the words were NOT — the speaker's supported delivery or accompanying gesture. A listener turning to look needs its own established source. Never the words themselves: code adds them, and never an invented reply. No summary of pending speech, replay of an earlier event, or unsupported completion of an ongoing plan. Position and ownership claims must agree with the accepted state.",
+        "Write this LAST. One objective, third-person paragraph of what happened — world-true, no character-perspective wording, no reasoning, no corrections: settle who did what before writing it. REQUIRED when speech is false. On a speech row, optional: what the words were NOT — the speaker's supported delivery or accompanying gesture. A listener turning to look needs its own established source. Never the words themselves: code adds them, and never an invented reply. No summary of pending speech, replay of an earlier event, or unsupported completion of an ongoing plan. Position and ownership claims must agree with the accepted state. When this row shows an item coming into being (`create`) or an unnoticed item being found, write its [id] right after its name — that tag is the only way the people who perceive this row can point at it afterwards.",
     },
   },
   required: ["actionIds", "speech", "perceivers"],
@@ -643,7 +635,7 @@ const SUBMISSION_PROPERTIES = {
         check: {
           type: "object",
           description:
-            "The bar for the skill the actor declared, set BEFORE any roll exists. Omit entirely when the declared skill does not fit the attempt or no check is needed: an omitted check means the skill grants nothing, and the action is settled on its own merits. Never raise the bar to punish a poor skill choice. An actor who declared NO skill cannot be checked at all.",
+            "The bar for the skill the actor declared, set BEFORE any roll exists. Omit entirely when the declared skill does not fit the attempt or no check is needed: an omitted check means the skill grants nothing, and the action is settled on its own merits. Never raise the bar to punish a poor skill choice. Omit check and opposedBy for interpersonal attempts. A check requires a declared skill from the catalog.",
           properties: {
             requiredLevel: {
               type: "string",
@@ -681,6 +673,11 @@ const SUBMISSION_PROPERTIES = {
               type: "string",
               description:
                 "Set when the actor DRIVES: the vehicle moves along the route (drivable roads only) and everyone in its interior scene rides along. The driver must be inside the vehicle; whether they may drive it is yours to judge.",
+            },
+            viaConcealedConnectionId: {
+              type: "string",
+              description:
+                'Set when the actor\'s own words say how they get through a CONCEALED passage (connections flagged `concealed` under Detailed Places) — "push the bookshelf aside and slip through" — and the route takes it. A passage nobody named stays shut to the route: someone who only said where they were going walks the open ways. One-use; names the exact connectionId.',
             },
             passBlockedConnectionId: {
               type: "string",
@@ -754,6 +751,45 @@ export const STARTING_LIST = {
   items: STARTING_ITEM,
 };
 export const CHARACTER_CHANGES_LIST = SUBMISSION_PROPERTIES.characterChanges;
+
+/**
+ * The occurrence row with no `perceivers` (DECISIONS_PERCEIVERS=on, design
+ * §6.3 step 5): the model writes what happened, and who perceives each row is
+ * decided afterwards by code + the Decisions API. A sanity check names a
+ * character the model expects to perceive the row clearly; code drops the
+ * check if that character turns out not to.
+ */
+const {
+  perceivers: _perceiversDecidedByCode,
+  sanityChecks: occurrenceSanity,
+  ...occurrenceKept
+} = OCCURRENCE_ITEM.properties;
+export const OCCURRENCE_ITEM_CODE_PERCEIVERS = {
+  ...OCCURRENCE_ITEM,
+  properties: {
+    ...occurrenceKept,
+    sanityChecks: {
+      ...occurrenceSanity,
+      items: {
+        ...occurrenceSanity.items,
+        properties: {
+          ...occurrenceSanity.items.properties,
+          characterId: {
+            type: "string",
+            description:
+              "A character who perceives THIS occurrence clearly (full or limited). Who perceives each row is decided by code after you submit; a check on someone who turns out not to perceive it clearly is dropped.",
+          },
+        },
+      },
+    },
+  },
+  required: ["actionIds", "speech"],
+};
+export const OCCURRENCES_LIST_CODE_PERCEIVERS = {
+  ...SUBMISSION_PROPERTIES.occurrences,
+  description: `${SUBMISSION_PROPERTIES.occurrences.description} Do NOT write perceivers: code decides who perceives each row, and how clearly, after you submit — write each row's content at full objective detail.`,
+  items: OCCURRENCE_ITEM_CODE_PERCEIVERS,
+};
 export const SCENE_CHANGES_LIST = SUBMISSION_PROPERTIES.sceneChanges;
 export const ITEM_CHANGES_LIST = SUBMISSION_PROPERTIES.itemChanges;
 export const OCCURRENCES_LIST = SUBMISSION_PROPERTIES.occurrences;

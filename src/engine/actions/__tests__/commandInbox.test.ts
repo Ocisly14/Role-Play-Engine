@@ -14,7 +14,7 @@ function command(overrides: Partial<ActionCommand> = {}): ActionCommand {
     issuedAt: "1923-04-02T09:15:00",
     issuedSceneId: "SCN_1",
     description: "I try the lock.",
-    objectRefs: [{ kind: "item", id: "cabinet_lock", role: "target" }],
+    objectRefs: [{ kind: "item", id: "cabinet_lock" }],
     proposedDurationTicks: 3,
     ...overrides,
   };

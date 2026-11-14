@@ -150,7 +150,7 @@
   "memory": [
     {
       "type": "secret",
-      "content": "我、Tommy 和 Denny 相信雷德利站里有鬼，正在秘密收集证据。登记簿绝不能让任何大人看见。"
+      "content": "我、Tommy 和 Denny 相信雷德利站里有鬼，正在秘密收集证据。登记簿 [item.batra_priya.evidence_notebook] 绝不能让任何大人看见。"
     },
     {
       "type": "secret",
@@ -158,15 +158,15 @@
     },
     {
       "type": "secret",
-      "content": "改装收音机的零件是从爸爸的报废机箱里拆的，他不知道。"
+      "content": "改装收音机 [item.batra_priya.modified_radio] 的零件是从爸爸的报废机箱 [item.batra_shop.scrap_chassis] 里拆的，他不知道。"
     },
     {
       "type": "general",
-      "content": "从去年冬天起，爸爸的雪花屏和串台报修单多得反常。他记录本上的数字不像巧合。"
+      "content": "从去年冬天起，爸爸的雪花屏和串台报修单多得反常。他记录本 [item.batra_shop.repair_ledger] 上的数字不像巧合。"
     },
     {
       "type": "general",
-      "content": "春天海滩冲上死鱼那回，全镇都看见了，但没有人说得清原因；这是 B 级证据。"
+      "content": "春天海滩 [SCN_dock] 冲上死鱼那回，全镇都看见了，但没有人说得清原因；这是 B 级证据。"
     },
     {
       "type": "general",
@@ -174,7 +174,7 @@
     },
     {
       "type": "plan",
-      "content": "凑齐零件做一台能接收音机的磁带录音机，挑晚上守着 KGRV 录下杂音。"
+      "content": "凑齐零件做一台能接收音机的磁带录音机 [item.batra_priya.recorder_project]，挑晚上守着 KGRV 录下杂音。"
     },
     {
       "type": "plan",
@@ -182,31 +182,31 @@
     },
     {
       "type": "map",
-      "content": "主街是一条路，南北贯穿，我掐表走过整条，十五分钟整——这个数验证过不止一次，A 级。街北半是蓝鸟餐馆、杂货店兼邮局、警长办公室；街南半是星港街机厅、我们家维修铺、诊所，我家楼下就是店堂，招牌两分钟能看见。"
+      "content": "主街 [ROAD_main_street] 是一条路，南北贯穿，我掐表走过整条，十五分钟整——这个数验证过不止一次，A 级。街北半是蓝鸟餐馆 [SCN_bluebird_dining]、杂货店兼邮局 [SCN_grocery_store]、警长办公室 [SCN_sheriff_front]；街南半是星港街机厅 [SCN_arcade]、我们家维修铺 [SCN_batra_shop]、诊所 [SCN_clinic_waiting]，我家楼下就是店堂，招牌两分钟能看见。"
     },
     {
       "type": "map",
-      "content": "主街北口往外三条路：旧海岸公路二十五分钟到汽车旅馆；霍尔特巷二十分钟到 Holt 家院门；林道十分钟到林道口——这几个数我步行各测过，不是随口说的。"
+      "content": "主街北口 [SCN_main_north] 往外三条路：旧海岸公路 [ROAD_old_coast_road] 二十五分钟到汽车旅馆 [SCN_motel]；霍尔特巷 [ROAD_holt_lane] 二十分钟到 Holt 家院门 [SCN_holt_gate]；林道 [ROAD_trail_access] 十分钟到林道口 [SCN_trailhead]——这几个数我步行各测过，不是随口说的。"
     },
     {
       "type": "map",
-      "content": "主街南口往外两条：下坡道十五分钟到码头和海滩；后巷八分钟到雷耶斯家门口——后巷最近，去杂货店堵 Tommy 我都抄这条。"
+      "content": "主街南口 [SCN_main_south] 往外两条：下坡道 [ROAD_dock_slope] 十五分钟到码头和海滩 [SCN_dock]；后巷 [ROAD_backstreet] 八分钟到雷耶斯家门口 [SCN_reyes_gate]——后巷最近，去杂货店 [SCN_grocery_store] 堵 Tommy 我都抄这条。"
     },
     {
       "type": "map",
-      "content": "除了正路，Denny 家后院还有个豁口，抄近路走十分钟也能接上林道——他溜出来都走那条，比出正门快。"
+      "content": "除了正路，Denny 家后院 [SCN_holt_backyard] 还有个豁口，抄近路走十分钟也能接上林道 [ROAD_trail_access]——他溜出来都走那条，比出正门快。"
     },
     {
       "type": "map",
-      "content": "林道口到灰溪渡口，我们三次记录都是七十分钟，踏石过溪；暴雨后水涨，踏石会被淹，只能原地等水退——这段我给 A 级，可复现。"
+      "content": "林道口 [SCN_trailhead] 到灰溪渡口 [SCN_creek_ford]，我们三次记录都是七十分钟，踏石过溪；暴雨后水涨，踏石会被淹，只能原地等水退——这段我给 A 级，可复现。"
     },
     {
       "type": "map",
-      "content": "灰溪渡口再走九十分钟到旧锯木厂，那是我们的前进营地。我的地图画到这里为止——再往北我们没去过，不写。"
+      "content": "灰溪渡口 [SCN_creek_ford] 再走九十分钟到旧锯木厂 [SCN_sawmill]，那是我们的前进营地 [item.sawmill.forward_camp]。我的地图画到这里为止——再往北我们没去过，不写。"
     },
     {
       "type": "map",
-      "content": "围栏:未实测,无坐标,C 级 —— 只有大孩子的说法和 Tommy 的赌咒。据说从锯木厂再往北还有很远,镇口出发单程要六个小时,尽头是政府的铁丝网。我们仨说好了总有一天去,把它从 C 级升到 A 级。"
+      "content": "围栏 [SCN_fence]:未实测,无坐标,C 级 —— 只有大孩子的说法和 Tommy 的赌咒。据说从锯木厂 [SCN_sawmill] 再往北还有很远,镇口出发单程要六个小时,尽头是政府的铁丝网。我们仨说好了总有一天去,把它从 C 级升到 A 级。"
     }
   ]
 }

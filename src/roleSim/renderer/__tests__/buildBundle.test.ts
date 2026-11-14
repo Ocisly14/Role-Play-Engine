@@ -284,8 +284,8 @@ describe("buildPerceivedBundle", () => {
 // the main street, the docks — and hold nothing about which door of his own
 // house opens where. Perception was his only source, and it did not say.
 describe("the ways out", () => {
-  /** A study whose door leads to the hall, optionally unfound. */
-  function studyWithDoor(hidden: boolean): DynamicGameStateManager {
+  /** A study whose door leads to the hall, optionally concealed. */
+  function studyWithDoor(concealed: boolean): DynamicGameStateManager {
     const study = {
       id: "SCN_1",
       name: "Study",
@@ -296,7 +296,7 @@ describe("the ways out", () => {
         {
           id: "connection.study.door",
           targetId: "SCN_HALL",
-          ...(hidden ? { hidden: true } : {}),
+          ...(concealed ? { concealed: true } : {}),
         },
       ],
     };
@@ -342,10 +342,10 @@ describe("the ways out", () => {
     });
   });
 
-  it("leaves out a passage the character has not found", () => {
-    // `adjacentIds` filters `!c.hidden` upstream, so an unrevealed door never
-    // reaches the bundle — a renderer told to write the ways out cannot hand
-    // the character one they have not discovered.
+  it("leaves out a concealed passage the character has not noticed", () => {
+    // `adjacentIds` filters concealed passages upstream, so an unseen door
+    // never reaches the bundle — a renderer told to write the ways out cannot
+    // hand the character one they have not noticed.
     const bundle = buildPerceivedBundle({
       npcId: "npc_1",
       dgsm: studyWithDoor(true),
@@ -354,5 +354,18 @@ describe("the ways out", () => {
     expect(bundle.scene.adjacentPlaces.map((e) => e.id)).not.toContain(
       "SCN_HALL"
     );
+  });
+
+  it("carries a concealed passage the character noticed this minute", () => {
+    const bundle = buildPerceivedBundle({
+      npcId: "npc_1",
+      dgsm: studyWithDoor(true),
+      engine: makeEngine([]),
+      noticed: { connectionIds: new Set(["connection.study.door"]) },
+    });
+    expect(bundle.scene.adjacentPlaces).toContainEqual({
+      id: "SCN_HALL",
+      name: "The Hall",
+    });
   });
 });

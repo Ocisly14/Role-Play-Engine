@@ -421,7 +421,7 @@ describe("the trigger worklist answers what the Engine would otherwise infer", (
       actions: {
         newCommands: [
           command("bare"),
-          command("skilled", "Social"),
+          command("skilled", "Athletics"),
           command("spoken", undefined, "喂。"),
         ],
         activeActions: [],
@@ -624,11 +624,13 @@ describe("the Engine phase schemas and provider limits", () => {
     //
     // So the effect lists could not be brought under a grammar by rearranging
     // or simplifying them while they shared one tool — which is why they no
-    // longer do. Split one list per request, the largest thing any request
-    // compiles is eight branches beside five optionals (`sceneChanges`),
-    // between the 6-optional/7-branch pairing the probe accepted and the
-    // 10-optional/6-branch one it refused; it is the most exposed of the six
-    // and has NOT itself been probed. The numbers are pinned, not just the
+    // longer do. Split one list per request, the largest union any request
+    // compiles is seven branches beside five optionals (`sceneChanges`, after
+    // the concealment change folded discovery into `connectionConcealed`),
+    // and the most optionals is seven beside two branches (`starts`, after
+    // `viaConcealedConnectionId`) — both within the 6-optional/7-branch
+    // pairing the probe accepted, short of the 10-optional/6-branch one it
+    // refused. Neither has itself been probed. The numbers are pinned, not just the
     // flags: an optional added to a phase, or a branch added to a union, is a
     // change that can stop that phase compiling, and it should be caught here
     // rather than in a 400 from the API. Re-measure with the probe when the
@@ -639,12 +641,12 @@ describe("the Engine phase schemas and provider limits", () => {
     const optionalsByPhase = RESOLUTION_PHASES.map((phase) =>
       optionalCount(PHASE_TOOLS[phase].inputSchema)
     );
-    expect(optionalsByPhase).toEqual([6, 0, 0, 8, 5, 4]);
+    expect(optionalsByPhase).toEqual([7, 0, 0, 7, 5, 4]);
     expect(
       RESOLUTION_PHASES.map((phase) =>
         branchCount(PHASE_TOOLS[phase].inputSchema)
       )
-    ).toEqual([2, 3, 7, 4, 8, 0]);
+    ).toEqual([2, 3, 7, 4, 7, 0]);
     // The five reused lists still add up to the 23 optionals the two-tool
     // partition carried (6 in the action half, 17 in the effect half); the
     // endings decision adds none. Same six lists, cut differently.

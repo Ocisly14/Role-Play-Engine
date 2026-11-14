@@ -82,7 +82,7 @@ function makeNpc(id: string, scene: string) {
     name: id,
     __scene: scene,
     attributes: { STR: 50 },
-    skills: { "Stealth & Security": 60 },
+    skills: { "Stealth & Security": 60, Social: 45 },
     status: {
       hp: 10,
       maxHp: 12,
@@ -167,7 +167,7 @@ describe("buildEngineResolutionContext", () => {
 
   it("carries real skill values, positions and blocked connections", () => {
     const npc1 = context.state.characters.find((c) => c.id === "npc_1");
-    expect(npc1?.skills["Stealth & Security"]).toBe(60);
+    expect(npc1?.skills).toEqual({ "Stealth & Security": 60 });
     expect(npc1?.locationId).toBe("SCN_1");
     const scn1 = context.state.places.find((s) => s.id === "SCN_1");
     expect(scn1?.kind).toBe("scene");
@@ -226,7 +226,7 @@ describe("a command that names a person brings their pockets", () => {
 
   it("snapshots the inventory of a character the command points at", () => {
     const context = build([
-      { kind: "character", id: "npc_far", role: "target" },
+      { kind: "character", id: "npc_far" },
     ]);
     expect(context.state.items).toContainEqual(
       expect.objectContaining({ id: "ledger", holder: "npc_far" })
@@ -237,7 +237,7 @@ describe("a command that names a person brings their pockets", () => {
     // The id passes the citation boundary because it names something real,
     // and until the holder was pulled in it appeared in no rendered section
     // of the request at all.
-    const context = build([{ kind: "item", id: "ledger", role: "target" }]);
+    const context = build([{ kind: "item", id: "ledger" }]);
     expect(context.state.items).toContainEqual(
       expect.objectContaining({ id: "ledger", holder: "npc_far" })
     );

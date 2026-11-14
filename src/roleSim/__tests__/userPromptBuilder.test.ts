@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
+import { formatForPrompt } from "../../state/gameClock.js";
 import type { RoleSimContext } from "../agent.js";
 import {
   buildUserPrompt,
@@ -328,9 +329,9 @@ describe("a character knows their own hands", () => {
       m[1],
       Number(m[2]),
     ]) as Array<[string, number]>;
-    // 16, not 17: Languages has no single value and is listed separately, by
+    // Languages has no single value and is listed separately, by
     // tongue, when the character has any.
-    expect(listed).toHaveLength(16);
+    expect(listed).toHaveLength(15);
     expect(listed.map(([name]) => name)).not.toContain("Languages");
     expect(listed.map(([, v]) => v)).toEqual(
       [...listed.map(([, v]) => v)].sort((a, b) => b - a)
@@ -345,12 +346,13 @@ describe("a character knows their own hands", () => {
       makeCtx({
         npcProfile: {
           ...makeCtx().npcProfile,
-          skills: { Social: 65 },
+          skills: { Athletics: 65, Social: 70 },
         },
       } as never),
       opts
     );
-    expect(text).toContain("- Social 65");
+    expect(text).toContain("- Athletics 65");
+    expect(text).not.toContain("- Social");
     // Untrained domains fall back to the catalog's base, not to zero.
     expect(text).toContain("- Investigation 20");
   });
@@ -484,29 +486,139 @@ describe("the consolidate closing", () => {
   });
 });
 
-describe("landed checks", () => {
-  it("adds a section between perception and the decision when something landed", () => {
-    const text = buildUserPrompt(
-      makeCtx({
-        perception: { narrative: "He asks where the patrol turns back." },
-        landedChecks: [
-          "What the person [stranger_ab12cd] just said leaves you no way around it: you have to answer.",
-        ],
-      }),
-      opts
-    );
-    const headings = [...text.matchAll(/^## .+$/gm)].map((m) => m[0]);
-    expect(headings.indexOf("## What just landed on you")).toBe(
-      headings.indexOf("## What you perceive now") + 1
-    );
-    expect(text).toContain("- What the person [stranger_ab12cd] just said");
-    expect(text).toContain("is up to you in your next action");
+describe("the player's friend log", () => {
+  // A context rich enough to fill all three groups, so the comparison covers
+  // the cached block, the growing block and the volatile one.
+  const base = () =>
+    makeCtx({
+      memories: [
+        {
+          id: "mem_1",
+          handle: "M000001",
+          type: "general",
+          content: "The harbour was empty at dawn.",
+          gameDateTime: "1923-04-02T06:00:00",
+        },
+      ],
+      recentPerceptions: [
+        {
+          gameDateTime: "1923-04-02T09:14:00",
+          narrative: "Rain on the skylight.",
+        },
+      ],
+      perception: { narrative: "Dust hangs in the lamplight." },
+      currentAction: { description: "searching the shelves" },
+    });
+
+  const friendLog = [
+    {
+      gameDateTime: "1923-04-02T09:10:00",
+      question: "Should I tell him?",
+      answer: "Not yet.",
+    },
+    { gameDateTime: "1923-04-02T09:12:00", answer: "Watch the door." },
+  ];
+
+  // The one line of the closing that differs for a delegated player: it names
+  // the terminal tools, and only they hold `askFriend`.
+  const NPC_CALL_LINE =
+    "Call one tool now — `act` or `continue`, plus any `writeMemory`\nworth keeping from what you just perceived.";
+  const DELEGATED_CALL_LINE =
+    "Call one tool now — `act`, `continue` or `askFriend`, plus any\n`writeMemory` worth keeping from what you just perceived.";
+  const asNpcClosing = (text: string) =>
+    text.replace(DELEGATED_CALL_LINE, NPC_CALL_LINE);
+
+  it("a manual player's prompt is the NPC prompt; a delegated one differs only in the call line", () => {
+    // A manual player renders byte-identically to a context with no `player`
+    // at all — segments, breakpoints and all. A delegated player with nothing
+    // from their friend differs only in the closing's call line.
+    const npc = buildUserPromptSegments(base(), opts);
+    for (const player of [{ mode: "manual" }, { mode: "manual", friendLog }]) {
+      expect(
+        buildUserPromptSegments(
+          { ...base(), player } as unknown as RoleSimContext,
+          opts
+        )
+      ).toEqual(npc);
+    }
+    for (const player of [
+      { mode: "delegated" },
+      { mode: "delegated", friendLog: [] },
+    ]) {
+      const segments = buildUserPromptSegments(
+        { ...base(), player } as unknown as RoleSimContext,
+        opts
+      );
+      expect(segments.map((seg) => seg.cache)).toEqual(
+        npc.map((seg) => seg.cache)
+      );
+      expect(segments.slice(0, -1)).toEqual(npc.slice(0, -1));
+      const last = segments[segments.length - 1].text;
+      expect(last).toContain(DELEGATED_CALL_LINE);
+      expect(asNpcClosing(last)).toBe(npc[npc.length - 1].text);
+    }
   });
 
-  it("is absent when nothing landed", () => {
-    expect(buildUserPrompt(makeCtx({ landedChecks: [] }), opts)).not.toContain(
-      "## What just landed on you"
+  it("only a delegated player's closing names askFriend", () => {
+    const npcText = buildUserPrompt(base(), opts);
+    expect(npcText).toContain(NPC_CALL_LINE);
+    expect(npcText).not.toContain("askFriend");
+    const delegated = buildUserPrompt(
+      {
+        ...base(),
+        player: { mode: "delegated" },
+      } as unknown as RoleSimContext,
+      opts
     );
-    expect(buildUserPrompt(makeCtx(), opts)).not.toContain("landed on you");
+    const decide = delegated.slice(delegated.indexOf("## Decide"));
+    expect(decide).toContain(DELEGATED_CALL_LINE);
+    expect(decide).toContain("Write content in English.");
+  });
+
+  it("delegated: the friend's words ride behind the breakpoint, in the last segment", () => {
+    const npc = buildUserPromptSegments(base(), opts);
+    const player = buildUserPromptSegments(
+      {
+        ...base(),
+        player: { mode: "delegated", friendLog },
+      } as unknown as RoleSimContext,
+      opts
+    );
+
+    // Same segment layout, same breakpoints; every segment before the last
+    // is byte-identical to the NPC's.
+    expect(player.map((seg) => seg.cache)).toEqual(npc.map((seg) => seg.cache));
+    expect(player.slice(0, -1)).toEqual(npc.slice(0, -1));
+
+    const last = player[player.length - 1].text;
+    const first = `You asked: Should I tell him?\nYour friend said (at ${formatForPrompt("1923-04-02T09:10:00")}): Not yet.`;
+    const second = `Your friend said (at ${formatForPrompt("1923-04-02T09:12:00")}): Watch the door.`;
+    expect(last).toContain("## What your friend said");
+    expect(last).toContain(first);
+    expect(last).toContain(second);
+    // Oldest first.
+    expect(last.indexOf(first)).toBeLessThan(last.indexOf(second));
+  });
+
+  it("delegated: the section is purely additive and sits just before the decision", () => {
+    const npcText = buildUserPrompt(base(), opts);
+    const text = buildUserPrompt(
+      {
+        ...base(),
+        player: { mode: "delegated", friendLog },
+      } as unknown as RoleSimContext,
+      opts
+    );
+
+    const headings = [...text.matchAll(/^## .+$/gm)].map((m) => m[0]);
+    expect(headings.indexOf("## What your friend said")).toBe(
+      headings.indexOf("## Decide") - 1
+    );
+
+    // Cut the section (and its trailing separator) back out and restore the
+    // NPC call line: what remains is the NPC prompt byte for byte.
+    const start = text.indexOf("## What your friend said");
+    const end = text.indexOf("## Decide");
+    expect(asNpcClosing(text.slice(0, start) + text.slice(end))).toBe(npcText);
   });
 });

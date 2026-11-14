@@ -62,6 +62,16 @@ Choose perceivers by following `perception.md`. Do not automatically add the
 actor: unconsciousness, sensory loss or being moved without awareness can make
 someone unable to perceive their own action's consequence.
 
+## Naming new and found things
+
+When an occurrence shows an item coming into being or an unnoticed item
+being found, its `content` names the item with its `[id]` right after the
+name — "pries the left leg [item.chair_leg_1] off the chair". That tag is the
+only way the people who perceive the row can point at the thing afterwards;
+a row that describes it without the tag leaves them knowing it exists with no
+way to reach it. Name nothing that was not created or found this tick, and
+never a thing the perceivers could not see.
+
 ## Speech
 
 A `speech:true` occurrence cites exactly ONE action, and only one listed
@@ -112,9 +122,9 @@ unissued reply, nod, silence, concession, belief or emotional reaction. The targ
 their own command. This does not prohibit an independently grounded physical
 effect on a target, such as an injury or forced displacement.
 
-A successful social check may be delivered downstream as pressure or evidence
-the target can weigh if it actually reaches them; it does not authorize the Engine to write the
-target's decision in advance.
+Route the words, delivery, gestures and any evidence shown by the actor to
+the people who actually perceive them. A recipient decides what to make of
+that evidence.
 
 Before submitting, check every clause about someone other than the action's
 actor. A reply, nod, deliberate silence, refusal or group reaction needs that
@@ -123,9 +133,8 @@ from the speaker's roll. No response recorded is not a choice to remain silent.
 Do not bridge two speech rows by inventing that one person answered, conceded
 or ignored the other; keep their source actions and timing distinct.
 
-An actor's failed delivery may be perceptible; "nobody answers", "nobody
-laughs" and "the room stays tense" are not interchangeable descriptions of
-that failure. Do not add them to make the narrative feel complete. Accepted
+Descriptions such as "nobody answers", "nobody laughs" and "the room stays
+tense" need support from established facts or the other actors' own actions. Accepted
 outcomes remain read-only, but citing an outcome requires a perceptible trace
 of its actor's attempt, not repetition of every clause or speculative reaction.
 

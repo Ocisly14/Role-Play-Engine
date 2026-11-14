@@ -67,7 +67,6 @@
       "id": "item.denny.observation_notebook",
       "name": "观察小本子",
       "properties": {
-        "hidden": true,
         "note": "藏在夹克内袋的小本子，按日期记录大人谈到雷德利站时的反应。"
       }
     },
@@ -169,19 +168,19 @@
   "memory": [
     {
       "type": "secret",
-      "content": "我和 Tommy、Priya 约好收集雷德利站有鬼的证据。登记簿在 Priya 那儿，不能让任何大人知道，尤其是家里人。"
+      "content": "我和 Tommy、Priya 约好收集雷德利站有鬼的证据。登记簿 [item.batra_priya.evidence_notebook] 在 Priya 那儿，不能让任何大人知道，尤其是家里人。"
     },
     {
       "type": "secret",
-      "content": "我夜里从后院栅栏的豁口溜出去过，没人发现。"
+      "content": "我夜里从后院 [SCN_holt_backyard] 栅栏的豁口溜出去过，没人发现。"
     },
     {
       "type": "secret",
-      "content": "我在小本子上记着：爸爸被问到山上会哼走调的歌，爷爷听到“山上”就岔开话题；每一次我都记了日期。"
+      "content": "我在小本子 [item.denny.observation_notebook] 上记着：爸爸被问到山上会哼走调的歌，爷爷听到“山上”就岔开话题；每一次我都记了日期。"
     },
     {
       "type": "general",
-      "content": "哥哥 Glen 1984 年参军，1985 年六月的信说军舰比整个灰港还大；他的旧夹克现在归我。"
+      "content": "哥哥 Glen 1984 年参军，1985 年六月的信说军舰比整个灰港还大；他的旧夹克 [item.denny.glen_jacket] 现在归我。"
     },
     {
       "type": "general",
@@ -193,11 +192,11 @@
     },
     {
       "type": "general",
-      "content": "1985 年七月，我们在旧锯木厂废墟立了前进营地：Priya 管登记，Tommy 探路，我负责理论。"
+      "content": "1985 年七月，我们在旧锯木厂 [SCN_sawmill] 废墟立了前进营地 [item.sawmill.forward_camp]：Priya 管登记，Tommy 探路，我负责理论。"
     },
     {
       "type": "plan",
-      "content": "八月底前再去一次锯木厂，把 Priya 新记下的杂音规律和证据簿对一遍。"
+      "content": "八月底前再去一次锯木厂 [SCN_sawmill]，把 Priya 新记下的杂音规律和证据簿 [item.batra_priya.evidence_notebook] 对一遍。"
     },
     {
       "type": "plan",
@@ -205,35 +204,35 @@
     },
     {
       "type": "map",
-      "content": "主街是镇上唯一一条正经街，走一头到另一头要一刻钟，骑车能省一半——北边挨着蓝鸟餐馆、杂货店兼邮局、警长办公室，南边是星港街机厅、Batra家的电视维修铺（Priya家住楼上）和诊所。"
+      "content": "主街 [ROAD_main_street] 是镇上唯一一条正经街，走一头到另一头要一刻钟，骑车能省一半——北边挨着蓝鸟餐馆 [SCN_bluebird_dining]、杂货店兼邮局 [SCN_grocery_store]、警长办公室 [SCN_sheriff_front]，南边是星港街机厅 [SCN_arcade]、Batra家的电视维修铺 [SCN_batra_shop]（Priya家住楼上 [SCN_batra_living]）和诊所 [SCN_clinic_waiting]。"
     },
     {
       "type": "map",
-      "content": "从我家顺霍尔特巷走去主街北口要二十分钟，那儿也是旧海岸公路和林道的交叉口；旧海岸公路再往北是汽车旅馆，旅馆边上那个货运棚是爸爸他们的货车上山送雷德利站的地方——车能一直开到自动大门，我们小孩连门都到不了。"
+      "content": "从我家顺霍尔特巷 [ROAD_holt_lane] 走去主街北口 [SCN_main_north] 要二十分钟，那儿也是旧海岸公路 [ROAD_old_coast_road] 和林道 [ROAD_trail_access] 的交叉口；旧海岸公路再往北是汽车旅馆 [SCN_motel]，旅馆边上那个货运棚 [SCN_freight_shed] 是爸爸他们的货车 [VEH_frank_truck] 上山送雷德利站的地方——车能一直开到自动大门 [SCN_gate]，我们小孩连门都到不了。"
     },
     {
       "type": "map",
-      "content": "主街南口往下坡道走一刻钟到码头和海滩，后巷抄近路八分钟就到Tommy家门口；码头往南沿崖边小路走半小时是灯塔，唯一的岔路通向Earl爷爷的小屋——灯塔从1982年起就锁着，没人能进去。"
+      "content": "主街南口 [SCN_main_south] 往下坡道 [ROAD_dock_slope] 走一刻钟到码头和海滩 [SCN_dock]，后巷 [ROAD_backstreet] 抄近路八分钟就到Tommy家门口 [SCN_reyes_gate]；码头往南沿崖边小路 [ROAD_cliff_path] 走半小时是灯塔 [SCN_lighthouse_cliff]，唯一的岔路通向Earl爷爷的小屋 [SCN_earl_cabin]——灯塔从1982年起就锁着，没人能进去。"
     },
     {
       "type": "map",
-      "content": "从我家后院栅栏的豁口钻出去，顺坡走几分钟就接上林道，再往回走一点就是林道口——比从主街北口绕过去快一半还多，这是我的私门，夜里溜出去不用经过起居室。"
+      "content": "从我家后院 [SCN_holt_backyard] 栅栏的豁口钻出去，顺坡走几分钟就接上林道 [ROAD_trail_access]，再往回走一点就是林道口 [SCN_trailhead]——比从主街北口 [SCN_main_north] 绕过去快一半还多，这是我的私门，夜里溜出去不用经过起居室 [SCN_holt_common]。"
     },
     {
       "type": "map",
-      "content": "去旧锯木厂我们走灰溪渡口这条线：林道口到渡口一个多钟头，踏石过溪，再走一个半钟头到锯木厂，单程小半天，当天必须往返。"
+      "content": "去旧锯木厂 [SCN_sawmill] 我们走灰溪渡口 [SCN_creek_ford] 这条线：林道口 [SCN_trailhead] 到渡口一个多钟头，踏石过溪，再走一个半钟头到锯木厂，单程小半天，当天必须往返。"
     },
     {
       "type": "map",
-      "content": "下大雨后灰溪会涨水，踏石一淹就过不去——1985年6月那场雨后我们就被堵在半路回来过一次；书里写涨水趟不过去就该原路退，我们那次就是这么办的。"
+      "content": "下大雨后灰溪 [SCN_creek_ford] 会涨水，踏石一淹就过不去——1985年6月那场雨后我们就被堵在半路回来过一次；书里写涨水趟不过去就该原路退，我们那次就是这么办的。"
     },
     {
       "type": "map",
-      "content": "Priya的地图上还画了另一条到锯木厂的路——旧铁路路基，笔直好认不会迷路，但绕远，得走三个钟头，是灰溪涨水时的备用路。"
+      "content": "Priya的地图上还画了另一条到锯木厂 [SCN_sawmill] 的路——旧铁路路基 [SCN_railbed]，笔直好认不会迷路，但绕远，得走三个钟头，是灰溪 [SCN_creek_ford] 涨水时的备用路。"
     },
     {
       "type": "map",
-      "content": "锯木厂再往北我们没去过，只听说最深处是政府的铁丝网围栏，单程要走上六个钟头——没探明的路线书里教训我不能贸然闯，我们说好总有一天要去。"
+      "content": "锯木厂 [SCN_sawmill] 再往北我们没去过，只听说最深处是政府的铁丝网围栏 [SCN_fence]，单程要走上六个钟头——没探明的路线书里教训我不能贸然闯，我们说好总有一天要去。"
     }
   ]
 }

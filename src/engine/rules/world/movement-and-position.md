@@ -55,6 +55,17 @@ where the judgement happens:
 Never both for one passage in one resolution. `passBlockedConnectionId`
 grants no route; it only applies to a matching edge in the actor-stated route.
 
+### Concealed passages
+
+A connection flagged `concealed` (a door behind a bookshelf) joins nothing in
+anyone's route by default: a character who only said where they were going
+walks the open ways, and never slips through a door they did not mention.
+When the actor's own words say how they get through it ("push the bookshelf
+aside and slip into the back room") and the route takes it, set
+`movement.viaConcealedConnectionId` to that exact `connectionId` from Detailed
+Places. It changes nothing about the passage itself; laying it open for
+everyone is a separate `sceneChanges connectionConcealed {concealed:false}`.
+
 ## Non-travel displacement
 
 Use `character.position` only when a body changes scenes without following a

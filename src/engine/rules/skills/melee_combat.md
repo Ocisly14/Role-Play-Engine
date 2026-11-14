@@ -18,8 +18,8 @@ matter more than the label of the attack.
 
 - Accepted for any attempt to strike, grapple, restrain, or disarm a target
   within reach.
-- Rejected beyond reach (Ranged Combat) and for a threat that is never carried
-  out (Social).
+- Ranged Combat covers attacks beyond melee reach. A spoken threat uses no
+  check.
 - The weapon must be one the actor actually holds — check the inventory. An
   improvised weapon is accepted with its real properties, not a nominal one.
 

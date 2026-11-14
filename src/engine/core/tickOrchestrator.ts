@@ -50,6 +50,7 @@ import type {
   EngineAction,
 } from "../actions/types.js";
 import { buildEngineResolutionContext } from "../resolution/contextBuilder.js";
+import { decideStarts } from "../resolution/decisionsFastPaths.js";
 import type {
   ObjectiveWorldEvent,
   ResolutionTrigger,
@@ -60,10 +61,17 @@ import {
   type WorldActionEngineDeps,
   resolveTick,
 } from "../resolution/worldActionEngine.js";
+import type { RawActionStart } from "../resolution/worldDeltaSchema.js";
+import {
+  finalizeResolution,
+  validateRawResolution,
+} from "../resolution/worldDeltaValidator.js";
+import { catalogSkillName } from "../rules/skillCatalog.js";
 import {
   effectiveSkillValue,
   getCharacterConditionPenalties,
 } from "../shared/characterConditionPenalties.js";
+import { fastPathMode, recordShadow } from "../shared/fastPath.js";
 import type { SubsystemRegistry } from "../subsystem/registry.js";
 import type { AnchorSubsystem } from "../subsystem/types.js";
 import {
@@ -111,6 +119,8 @@ export interface OrchestratorDeps {
   tickDurationMinutes: number;
   /** Language every Engine session composes its prose in. Default English. */
   narrationLanguage?: string;
+  /** Injectable for tests; defaults to the Decisions start judgement. */
+  decideStartsFn?: typeof decideStarts;
 }
 
 interface PendingInterruption {
@@ -175,34 +185,87 @@ export class TickOrchestrator {
     // No new command → no session, no model call.
     const startTransitions: ActionTransition[] = [];
     if (newCommands.length > 0) {
-      const context = buildEngineResolutionContext({
-        dgsm,
-        tickId: `tick_${this.tickCounter}_${decidedAt}_start`,
-        tickStartTime: decidedAt,
-        durationMinutes: tick,
-        triggers: [
-          {
-            actionIds: newCommands.map((c) => actionIdForCommand(c.commandId)),
-            reason: "new_action",
-          },
-        ],
-        newCommands,
-        activeActions: this.activeActions(),
-        objectiveWorldEvents: [],
-        narrationLanguage: this.deps.narrationLanguage,
-      });
-      const result = await resolveFn(context, engineDeps);
-      if (result.ok) {
-        startTransitions.push(
-          ...this.commitStarts(result, decidedAt, newCommands)
+      const startContext = (commands: ActionCommand[]) =>
+        buildEngineResolutionContext({
+          dgsm,
+          tickId: `tick_${this.tickCounter}_${decidedAt}_start`,
+          tickStartTime: decidedAt,
+          durationMinutes: tick,
+          triggers: [
+            {
+              actionIds: commands.map((c) => actionIdForCommand(c.commandId)),
+              reason: "new_action",
+            },
+          ],
+          newCommands: commands,
+          activeActions: this.activeActions(),
+          objectiveWorldEvents: [],
+          narrationLanguage: this.deps.narrationLanguage,
+        });
+
+      // Phase 2a — DECISIONS_STARTS (design §6.2). Commands whose every start
+      // field the Decisions API answers with confidence get their rows from
+      // it, checked by the same gate as a model's; the rest go to the model.
+      let llmCommands = newCommands;
+      let shadowRows: RawActionStart[] = [];
+      const startsMode = fastPathMode("DECISIONS_STARTS");
+      if (startsMode !== "off") {
+        const decided = await (this.deps.decideStartsFn ?? decideStarts)(
+          startContext(newCommands),
+          dgsm
         );
-      } else {
-        // The Engine produced nothing usable. The commands go back: drained
-        // commands have queued actions that no trigger would pick up again,
-        // and putting them back is what makes "nothing happened" true rather
-        // than "this tick silently ate two commands". They start a minute
-        // late, on the next drain.
-        for (const command of newCommands) this.deps.inbox.add(command);
+        if (startsMode === "shadow") {
+          shadowRows = decided.rows;
+        } else if (decided.rows.length > 0) {
+          const subset = newCommands.filter((c) =>
+            decided.decided.has(actionIdForCommand(c.commandId))
+          );
+          const subContext = startContext(subset);
+          const raw = { starting: decided.rows };
+          const errors = validateRawResolution(raw, subContext);
+          if (errors.length === 0) {
+            const finalized = finalizeResolution(raw, subContext);
+            startTransitions.push(
+              ...this.commitStarts(
+                {
+                  ok: true,
+                  resolution: finalized.resolution,
+                  movementInits: finalized.movementInits,
+                  checkInits: finalized.checkInits,
+                  codeToolInvocations: [],
+                },
+                decidedAt,
+                subset
+              )
+            );
+            llmCommands = newCommands.filter(
+              (c) => !decided.decided.has(actionIdForCommand(c.commandId))
+            );
+          } else {
+            console.warn(
+              `[TickOrchestrator] Decisions start rows refused (${errors[0].message}); the model judges them`
+            );
+          }
+        }
+      }
+
+      if (llmCommands.length > 0) {
+        const result = await resolveFn(startContext(llmCommands), engineDeps);
+        if (result.ok) {
+          if (shadowRows.length > 0) {
+            this.recordStartsShadow(shadowRows, result, decidedAt);
+          }
+          startTransitions.push(
+            ...this.commitStarts(result, decidedAt, llmCommands)
+          );
+        } else {
+          // The Engine produced nothing usable. The commands go back: drained
+          // commands have queued actions that no trigger would pick up again,
+          // and putting them back is what makes "nothing happened" true
+          // rather than "this tick silently ate two commands". They start a
+          // minute late, on the next drain.
+          for (const command of llmCommands) this.deps.inbox.add(command);
+        }
       }
     }
 
@@ -262,7 +325,22 @@ export class TickOrchestrator {
     // what its actor cut short, what the world stopped.
     const activeActions = this.activeActions();
     const triggers: ResolutionTrigger[] = [];
-    const dueIds = activeActions
+    // Only "active" is eligible: a settlement context cannot address a
+    // still-queued action (its worklist silently drops the id). An
+    // interruption requested against an action that is still queued — a
+    // command sent back by a failed start session — stays pending until the
+    // action is active, rather than being dropped on the floor. Computed
+    // before the due set so an arrival that is also being interrupted is
+    // never mistaken for a plain one below.
+    const interruptions = this.pendingInterruptions.filter((p) => {
+      const action = this.deps.actionStore.get(p.actionId);
+      return action !== undefined && action.status === "active";
+    });
+    this.pendingInterruptions = this.pendingInterruptions.filter(
+      (p) => this.deps.actionStore.get(p.actionId)?.status === "queued"
+    );
+    const interruptedIds = new Set(interruptions.map((p) => p.actionId));
+    let dueIds = activeActions
       .filter(
         (a) =>
           arrivedActionIds.has(a.id) ||
@@ -270,7 +348,39 @@ export class TickOrchestrator {
             a.progressMinutes >= a.resolvedDurationTicks * tick)
       )
       .map((a) => a.id);
+    // Everything due this minute, closed by code or not: an action whose time
+    // is spent is never "replaced", whoever ends up settling it.
     const due = new Set(dueIds);
+
+    // Phase 5a — a plain arrival closes in code (ENGINE_ARRIVAL_SKIP). A walk
+    // that arrived with no check and no words has nothing for the Engine to
+    // judge: the endings phase could only answer no_change, which sources no
+    // change and no occurrence, and the walker's new position is already in
+    // the movement runtime's state changes. `shadow` still settles it and
+    // records whether the Engine agreed.
+    const arrivalMode = fastPathMode("ENGINE_ARRIVAL_SKIP");
+    const plainArrivals =
+      arrivalMode === "off"
+        ? []
+        : dueIds.filter((id) =>
+            this.isPlainArrival(id, arrivedActionIds, interruptedIds)
+          );
+    const codeTransitions: ActionTransition[] = [];
+    if (arrivalMode === "on" && plainArrivals.length > 0) {
+      const closed = new Set(plainArrivals);
+      dueIds = dueIds.filter((id) => !closed.has(id));
+      for (const id of plainArrivals) {
+        const action = this.deps.actionStore.get(id);
+        if (!action) continue;
+        codeTransitions.push({
+          actionId: id,
+          actorId: action.command.actorId,
+          from: "active",
+          to: "completed",
+          progressDeltaMinutes: 0,
+        });
+      }
+    }
     // A replacement is the actor cutting an action short. An action whose
     // time is spent this very minute was not cut short — it ended on its own,
     // and its successor is simply the next thing the actor does — so it is
@@ -293,18 +403,6 @@ export class TickOrchestrator {
     if (dueIds.length > 0) {
       triggers.push({ actionIds: dueIds, reason: "duration_reached" });
     }
-    // Only "active" is eligible: a settlement context cannot address a
-    // still-queued action (its worklist silently drops the id). An
-    // interruption requested against an action that is still queued — a
-    // command sent back by a failed start session — stays pending until the
-    // action is active, rather than being dropped on the floor.
-    const interruptions = this.pendingInterruptions.filter((p) => {
-      const action = this.deps.actionStore.get(p.actionId);
-      return action !== undefined && action.status === "active";
-    });
-    this.pendingInterruptions = this.pendingInterruptions.filter(
-      (p) => this.deps.actionStore.get(p.actionId)?.status === "queued"
-    );
     if (interruptions.length > 0) {
       triggers.push({
         actionIds: [...new Set(interruptions.map((p) => p.actionId))],
@@ -348,10 +446,14 @@ export class TickOrchestrator {
         this.pendingInterruptions.push(...interruptions);
       }
     }
+    if (arrivalMode === "shadow" && settlement) {
+      this.recordArrivalShadow(plainArrivals, settlement, nextTickTime);
+    }
 
     const transitions: ActionTransition[] = [
       ...preTransitions,
       ...startTransitions,
+      ...codeTransitions,
       ...(settlement?.resolution.transitions ?? []),
     ];
 
@@ -369,9 +471,12 @@ export class TickOrchestrator {
     // no new result. Its transition still wakes the actor; do not synthesize
     // an event or an observation recap. Fallbacks are for transitions outside
     // the settlement (dead actor, failed route, failed resolution, etc.).
-    const settled = new Set(
-      settlement?.resolution.transitions.map((t) => t.actionId) ?? []
-    );
+    // A plain arrival closed in code is settled too: it ended with nothing to
+    // say, by the same rule as a no_change ending.
+    const settled = new Set([
+      ...(settlement?.resolution.transitions.map((t) => t.actionId) ?? []),
+      ...codeTransitions.map((t) => t.actionId),
+    ]);
     for (const t of transitions) {
       if (
         t.to === "active" ||
@@ -518,7 +623,10 @@ export class TickOrchestrator {
 
     // Phase 12 — the settlement's lifecycle commit, AFTER a successful flush.
     // (The starts were committed in Phase 2: they had nothing to flush.)
-    for (const t of settlement?.resolution.transitions ?? []) {
+    for (const t of [
+      ...codeTransitions,
+      ...(settlement?.resolution.transitions ?? []),
+    ]) {
       const action = this.deps.actionStore.get(t.actionId);
       if (!action) continue;
       this.applyTransition(action, t, nextTickTime);
@@ -534,6 +642,87 @@ export class TickOrchestrator {
       stateChanges: applied.stateChanges,
       damageReports: applied.damageReports,
     };
+  }
+
+  /** An arrival with nothing for the Engine to judge: the walk reached its
+   *  destination this minute, no check was set when it started, it carries
+   *  no words to deliver, and nothing is interrupting it. */
+  private isPlainArrival(
+    actionId: string,
+    arrivedActionIds: ReadonlySet<string>,
+    interruptedIds: ReadonlySet<string>
+  ): boolean {
+    if (!arrivedActionIds.has(actionId) || interruptedIds.has(actionId)) {
+      return false;
+    }
+    const action = this.deps.actionStore.get(actionId);
+    if (!action || action.check) return false;
+    return !action.command.utterance?.trim();
+  }
+
+  /** Shadow record for DECISIONS_STARTS: the Decisions rows beside what the
+   *  model set for the same commands. */
+  private recordStartsShadow(
+    rows: readonly RawActionStart[],
+    result: WorldActionEngineResult & { ok: true },
+    tickTime: GameTime
+  ): void {
+    for (const row of rows) {
+      const t = result.resolution.transitions.find(
+        (x) => x.actionId === row.actionId
+      );
+      const llmLevel = result.checkInits[row.actionId]?.requiredLevel ?? "none";
+      const oursLevel = row.check?.requiredLevel ?? "none";
+      const llmRoute = result.movementInits[row.actionId]?.route;
+      const record: Record<string, unknown> = {
+        tick: tickTime,
+        actionId: row.actionId,
+        check: {
+          ours: oursLevel,
+          llm: llmLevel,
+          agree: oursLevel === llmLevel,
+        },
+      };
+      if (row.movement) {
+        record.route = {
+          ours: row.movement.route,
+          llm: llmRoute ?? null,
+          agree:
+            JSON.stringify(row.movement.route) === JSON.stringify(llmRoute),
+        };
+      } else {
+        record.duration = {
+          ours: row.resolvedDurationTicks,
+          llm: t?.resolvedDurationTicks ?? null,
+        };
+      }
+      recordShadow("DECISIONS_STARTS", record);
+    }
+  }
+
+  /** Shadow record for ENGINE_ARRIVAL_SKIP: what the Engine made of each
+   *  arrival code would have closed as no_change. */
+  private recordArrivalShadow(
+    actionIds: readonly string[],
+    settlement: WorldActionEngineResult & { ok: true },
+    tickTime: GameTime
+  ): void {
+    for (const actionId of actionIds) {
+      const t = settlement.resolution.transitions.find(
+        (x) => x.actionId === actionId
+      );
+      const cited = settlement.resolution.occurrences.some((o) =>
+        o.sourceActionIds.includes(actionId)
+      );
+      const llm = !t ? "unsettled" : t.reason || cited ? "result" : "no_change";
+      recordShadow("ENGINE_ARRIVAL_SKIP", {
+        tick: tickTime,
+        actionId,
+        predicted: "no_change",
+        llm,
+        agree: llm === "no_change",
+      });
+    }
   }
 
   private activeActions(): EngineAction[] {
@@ -561,7 +750,9 @@ export class TickOrchestrator {
     for (const [actionId, bar] of Object.entries(result.checkInits)) {
       const action = this.deps.actionStore.get(actionId);
       const skillId = action?.command.declaredSkillId;
-      if (!action || action.check || !skillId) continue;
+      if (!action || action.check || !skillId || !catalogSkillName(skillId)) {
+        continue;
+      }
       action.check = {
         skillId,
         ...(action.command.declaredLanguage !== undefined
@@ -585,7 +776,8 @@ export class TickOrchestrator {
           actorId,
           init.route,
           init.vehicleId,
-          init.passBlockedConnectionId
+          init.passBlockedConnectionId,
+          init.viaConcealedConnectionId
         )
       );
     }

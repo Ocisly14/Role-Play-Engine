@@ -19,6 +19,12 @@ vi.mock("../toolDispatcher.js", async () => {
 });
 
 const { LLMRoleSimAgent } = await import("../llmAgent.js");
+const { PLAYER_SYSTEM_PROMPT, SYSTEM_PROMPT } = await import(
+  "../systemPrompt.js"
+);
+const { AGENT_TOOLS, PLAYER_DELEGATED_TOOLS } = await import(
+  "../tools/schemas.js"
+);
 
 /** One model turn: the calls it made, in provider shape. */
 function turn(calls: Array<{ id: string; name: string; args?: object }>) {
@@ -235,5 +241,110 @@ describe("agent tool loop", () => {
     const second = messagesOnCall(1);
     expect(second.slice(0, first.length)).toEqual(first);
     expect(second.length).toBe(first.length + 2);
+  });
+});
+
+describe("the player character's delegated mode", () => {
+  const delegatedCtx = {
+    ...(ctx as Record<string, unknown>),
+    player: { mode: "delegated", friendLog: [] },
+  } as never;
+
+  /** What the agent asked the model with on its Nth request. */
+  function requestOn(n: number): { customSystemPrompt: string; tools: unknown } {
+    return generateToolCalls.mock.calls[n][0];
+  }
+
+  beforeEach(() => {
+    generateToolCalls.mockReset();
+    dispatchInstantTool.mockReset();
+    sent.length = 0;
+    dispatchInstantTool.mockResolvedValue({ result: "Remembered (general)." });
+  });
+
+  it("ends the decision on askFriend and returns the question", async () => {
+    queueTurns(
+      turn([
+        { id: "t1", name: "askFriend", args: { question: "要告诉他吗？" } },
+      ])
+    );
+
+    const decision = await makeAgent().decideNext(delegatedCtx);
+
+    expect(decision).toEqual({ tool: "askFriend", question: "要告诉他吗？" });
+    expect(generateToolCalls).toHaveBeenCalledTimes(1);
+  });
+
+  it("asks with the player prompt and the player tools", async () => {
+    queueTurns(turn([{ id: "t1", name: "continue" }]));
+
+    await makeAgent().decideNext(delegatedCtx);
+
+    expect(requestOn(0).customSystemPrompt).toBe(PLAYER_SYSTEM_PROMPT);
+    expect(requestOn(0).tools).toBe(PLAYER_DELEGATED_TOOLS);
+  });
+
+  it("an NPC is asked exactly as before", async () => {
+    queueTurns(turn([{ id: "t1", name: "continue" }]));
+
+    await makeAgent().decideNext(ctx);
+
+    expect(requestOn(0).customSystemPrompt).toBe(SYSTEM_PROMPT);
+    expect(requestOn(0).tools).toBe(AGENT_TOOLS);
+  });
+
+  it("a player in manual mode is not offered the delegated set", async () => {
+    queueTurns(turn([{ id: "t1", name: "continue" }]));
+
+    await makeAgent().decideNext({
+      ...(ctx as Record<string, unknown>),
+      player: { mode: "manual" },
+    } as never);
+
+    expect(requestOn(0).customSystemPrompt).toBe(SYSTEM_PROMPT);
+    expect(requestOn(0).tools).toBe(AGENT_TOOLS);
+  });
+
+  it("an NPC cannot end its decision on askFriend — it is an unknown tool", async () => {
+    queueTurns(
+      turn([{ id: "t1", name: "askFriend", args: { question: "?" } }]),
+      turn([{ id: "t2", name: "continue" }])
+    );
+
+    const decision = await makeAgent().decideNext(ctx);
+
+    expect(decision).toMatchObject({ tool: "continue" });
+    expect(generateToolCalls).toHaveBeenCalledTimes(2);
+    expect(dispatchInstantTool).not.toHaveBeenCalled();
+    const toolMessage = messagesOnCall(1).find((m) => m.role === "tool");
+    if (toolMessage?.role !== "tool") throw new Error("expected tool results");
+    expect(toolMessage.results).toEqual([
+      { toolCallId: "t1", content: 'Error: unknown tool "askFriend".' },
+    ]);
+  });
+
+  it("passes sleep through only when it is the boolean true", async () => {
+    const act = (sleep: unknown) =>
+      turn([
+        {
+          id: "t1",
+          name: "act",
+          args: {
+            description: "I lie down for the night.",
+            objectRefs: [],
+            proposedDurationTicks: 5,
+            sleep,
+          },
+        },
+      ]);
+
+    queueTurns(act(true));
+    const slept = await makeAgent().decideNext(delegatedCtx);
+    expect(slept).toMatchObject({ tool: "act", sleep: true });
+
+    generateToolCalls.mockReset();
+    queueTurns(act("yes"));
+    const notSlept = await makeAgent().decideNext(delegatedCtx);
+    expect(notSlept).not.toHaveProperty("sleep");
   });
 });

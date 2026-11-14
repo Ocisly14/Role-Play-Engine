@@ -30,7 +30,12 @@
 
 import { createHash } from "node:crypto";
 import type { DynamicGameStateManager } from "./DynamicGameState.js";
-import { charactersAtSameLocation } from "./perceivedLocation.js";
+import {
+  type NoticedThisMinute,
+  charactersAtSameLocation,
+  citedIds,
+  resolvePerceivedLocation,
+} from "./perceivedLocation.js";
 import type { DynamicNPCProfile } from "./types.js";
 
 export interface PerceivableDirectory {
@@ -42,11 +47,12 @@ export interface PerceivableDirectory {
    *  `characters`. Someone they know maps to themselves (their real id is no
    *  secret); a stranger maps from an alias. This map is the only way back. */
   characterHandles: Map<string, string>;
-  /** Item ids in scope: items at the current location ∪ actor inventory. */
+  /** Item ids the actor may cite: shown to them (see `CitationScope`) ∪
+   *  their inventory. */
   items: Set<string>;
-  /** PLACE ids in scope — scenes and roads alike (the citation
-   *  grammar has one `scene` kind for "a place"): the actor's current
-   *  location plus everything one hop from it. Connections are NOT citable:
+  /** PLACE ids the actor may cite — scenes and roads alike (the citation
+   *  grammar has one `scene` kind for "a place"): where they stand, the ways
+   *  out they can see, and every place they were shown. Connections are NOT citable:
    *  a passage is topology bookkeeping — the prose points at the place it
    *  leads to, and a door that matters as an object is an item. */
   scenes: Set<string>;
@@ -108,9 +114,56 @@ export function descriptionIdentifier(profile: DynamicNPCProfile): string {
   return bits.length > 0 ? `the ${bits.join(", ")}` : "an unfamiliar person";
 }
 
+/**
+ * What this actor has been shown, beyond where they stand. Callers that know
+ * it (the controller, for the renderer and the trust boundary alike) pass the
+ * SAME scope to both, or the rendered set and the citable set stop agreeing.
+ */
+export interface CitationScope {
+  /** Every `[tag]` in the actor's perception stream and memories. */
+  knownIds: ReadonlySet<string>;
+  /** Ids shown this minute beyond the current place — carried by the
+   *  occurrences the actor perceives. */
+  shownIds?: ReadonlySet<string>;
+  /** What the actor noticed this minute beyond plain view. */
+  noticed?: NoticedThisMinute;
+}
+
+const TAG_RE = /\[([^\[\]\s]+)\]/g;
+
+/** Every `[tag]` in these texts — what a character has been shown. */
+export function tagsIn(texts: Iterable<string>): Set<string> {
+  const out = new Set<string>();
+  for (const text of texts) {
+    for (const m of text.matchAll(TAG_RE)) out.add(m[1]);
+  }
+  return out;
+}
+
+function allItemIds(dgsm: DynamicGameStateManager): Set<string> {
+  const ids = new Set<string>();
+  const state = dgsm.getState();
+  for (const scene of state.scenes?.values() ?? []) {
+    for (const item of scene.items ?? []) ids.add(item.id);
+  }
+  for (const road of dgsm.getTopology()?.roads?.values() ?? []) {
+    for (const item of road.items ?? []) ids.add(item.id);
+  }
+  for (const npc of state.npcCharacters ?? []) {
+    for (const item of dgsm.getNpcInventory(npc.id)) ids.add(item.id);
+  }
+  for (const vehicle of dgsm.getVehicles?.() ?? []) ids.add(vehicle.id);
+  return ids;
+}
+
+function isPlace(dgsm: DynamicGameStateManager, id: string): boolean {
+  return dgsm.getScene(id) != null || !!dgsm.getTopology()?.roads?.has(id);
+}
+
 export function buildPerceivableDirectory(
   actorId: string,
-  dgsm: DynamicGameStateManager
+  dgsm: DynamicGameStateManager,
+  scope?: CitationScope
 ): PerceivableDirectory {
   const characters = new Set<string>();
   const items = new Set<string>();
@@ -135,38 +188,53 @@ export function buildPerceivableDirectory(
   // whoever is walking beside them.
   for (const id of charactersAtSameLocation(actorId, dgsm)) characters.add(id);
 
-  // ── Items & places: every real id in the world ──────────────────
+  // ── Items & places ──────────────────────────────────────────────
   //
-  // Citability asks ONE thing: does this name something real. It does not ask
-  // whether the thing is within reach — that is the Engine's question,
-  // answered in full context, and better answered as something the actor
-  // perceives ("you would have to go down to the kitchen first") than as a
-  // rejection they never see.
+  // A character points only at what they were shown (concealment design
+  // §5.4): what is in plain view where they stand, what they carry, what they
+  // noticed this minute, what a perceived occurrence named, and every tag in
+  // their own perception stream and memories. Nothing is guessed — an id that
+  // names something real but never reached this character is refused, which
+  // is what keeps an unnoticed thing secret and a place they never heard of
+  // unreachable (the loss-in-the-woods mechanic).
   //
-  // Scoping this to the current location used to make the renderer and the
-  // boundary disagree about the same paragraph: the renderer prints an
-  // adjacent scene's WHOLE description (llmRenderer's `Adjacent scene: … /
-  // Description: …`) and a v2 description is prose with `[item.*]` tags
-  // written inline, so the actor was SHOWN ids the boundary then refused.
-  // Measured live: Dolores upstairs smelled the kitchen below, named the oven
-  // the prose had just handed her, and the citation was rejected.
-  //
-  // Two exclusions survive, because neither is about reach:
-  //   - `hidden` items stay out. That is not "can you get to it" but "do you
-  //     know it is there" — citing an undiscovered thing leaks the secret
-  //     whichever way the Engine then rules.
-  //   - Strangers keep their per-tick alias (below). A canonical name must
-  //     never enter the actor's context.
-  for (const scene of dgsm.getState().scenes?.values() ?? []) {
-    scenes.add(scene.id);
-    for (const item of scene.items ?? []) {
-      if (!item.hidden) items.add(item.id);
+  // Whether the thing is still within reach is NOT asked here — that is the
+  // Engine's question, answered as something the actor perceives ("the
+  // display where the daisies were is empty").
+  if (scope) {
+    const here = resolvePerceivedLocation(
+      dgsm.getCharacterPosition(actorId),
+      dgsm,
+      actorId,
+      scope.noticed
+    );
+    if (here) {
+      scenes.add(here.id);
+      for (const id of here.adjacentIds) scenes.add(id);
+      for (const item of here.items) items.add(item.id);
     }
-  }
-  for (const road of dgsm.getTopology()?.roads?.values() ?? []) {
-    scenes.add(road.id);
-    for (const item of road.items ?? []) {
-      if (!item.hidden) items.add(item.id);
+    const realItems = allItemIds(dgsm);
+    for (const id of [...scope.knownIds, ...(scope.shownIds ?? [])]) {
+      if (realItems.has(id)) items.add(id);
+      else if (isPlace(dgsm, id)) scenes.add(id);
+    }
+  } else {
+    // No scope given: the caller has not been wired to pass what the actor
+    // was shown yet. Fall back to every place and every item in plain view
+    // anywhere — the pre-§5.4 rule minus unnoticed things.
+    for (const scene of dgsm.getState().scenes?.values() ?? []) {
+      scenes.add(scene.id);
+      const cited = citedIds(scene.description);
+      for (const item of scene.items ?? []) {
+        if (cited.has(item.id)) items.add(item.id);
+      }
+    }
+    for (const road of dgsm.getTopology()?.roads?.values() ?? []) {
+      scenes.add(road.id);
+      const cited = citedIds(road.description);
+      for (const item of road.items ?? []) {
+        if (cited.has(item.id)) items.add(item.id);
+      }
     }
   }
   // Read inventory from runtime npcInventories (mutated by item.move /

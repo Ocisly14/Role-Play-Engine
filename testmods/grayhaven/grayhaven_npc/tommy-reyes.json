@@ -32,7 +32,6 @@
   "skills": {
     "Athletics": 65,
     "Stealth & Security": 55,
-    "Social": 50,
     "Investigation": 30,
     "Survival & Navigation": 40
   },
@@ -53,7 +52,6 @@
       "id": "item.tommy.cigar_box",
       "name": "装着 23.75 美元的雪茄盒",
       "properties": {
-        "hidden": true,
         "note": "装有 23.75 美元的旧雪茄盒，是 Tommy 悄悄攒下、不愿让家人知道的钱。"
       }
     }
@@ -148,11 +146,11 @@
   "memory": [
     {
       "type": "secret",
-      "content": "我和 Denny、Priya 正收集雷德利站有鬼的证据，登记簿在 Priya 那儿，联络用对讲机。这事不能让任何大人知道，包括妈妈。"
+      "content": "我和 Denny、Priya 正收集雷德利站有鬼的证据，登记簿 [item.batra_priya.evidence_notebook] 在 Priya 那儿，联络用对讲机 [item.tommy.walkie_talkie]。这事不能让任何大人知道，包括妈妈。"
     },
     {
       "type": "secret",
-      "content": "我床底下的雪茄盒里攒了 23 块 7 毛 5，是带妈妈走的钱；谁也不知道。"
+      "content": "我床底下的雪茄盒 [item.tommy.cigar_box] 里攒了 23 块 7 毛 5，是带妈妈走的钱；谁也不知道。"
     },
     {
       "type": "secret",
@@ -160,7 +158,7 @@
     },
     {
       "type": "general",
-      "content": "放暑假后我白天在店里后仓搬货、拆箱、盖邮戳；干完活就去找 Denny 和 Priya。"
+      "content": "放暑假后我白天在店里后仓 [SCN_grocery_backroom] 搬货、拆箱、盖邮戳；干完活就去找 Denny 和 Priya。"
     },
     {
       "type": "general",
@@ -168,51 +166,51 @@
     },
     {
       "type": "general",
-      "content": "Priya 的改装收音机能收到 KGRV 底下有规律的杂音；我听着只是滋滋响，但我信她。"
+      "content": "Priya 的改装收音机 [item.batra_priya.modified_radio] 能收到 KGRV 底下有规律的杂音；我听着只是滋滋响，但我信她。"
     },
     {
       "type": "general",
-      "content": "海滩冲上死鱼那回，我们跑去看过；一整片银白色，隔一条街都闻得到腥味。"
+      "content": "海滩 [SCN_dock] 冲上死鱼那回，我们跑去看过；一整片银白色，隔一条街都闻得到腥味。"
     },
     {
       "type": "plan",
-      "content": "这礼拜再去一次锯木厂；出发前先在林道口试对讲机信号。"
+      "content": "这礼拜再去一次锯木厂 [SCN_sawmill]；出发前先在林道口 [SCN_trailhead] 试对讲机 [item.tommy.walkie_talkie] 信号。"
     },
     {
       "type": "plan",
-      "content": "找机会问妈妈，后仓帮工能不能一天涨到五毛。"
+      "content": "找机会问妈妈，后仓 [SCN_grocery_backroom] 帮工能不能一天涨到五毛。"
     },
     {
       "type": "map",
-      "content": "主街我骑车一口气就能冲完，北口到南口用不了五分钟——走路要一刻钟，谁走啊。北边挨着蓝鸟餐馆、我们杂货店、警长办公室；南边是星港街机厅、巴特拉家电视铺（Priya 家在楼上），再往下是诊所。"
+      "content": "主街 [ROAD_main_street] 我骑车一口气就能冲完，北口 [SCN_main_north] 到南口 [SCN_main_south] 用不了五分钟——走路要一刻钟，谁走啊。北边挨着蓝鸟餐馆 [SCN_bluebird_dining]、我们杂货店 [SCN_grocery_store]、警长办公室 [SCN_sheriff_front]；南边是星港街机厅 [SCN_arcade]、巴特拉家电视铺 [SCN_batra_shop]（Priya 家在楼上 [SCN_batra_living]），再往下是诊所 [SCN_clinic_waiting]。"
     },
     {
       "type": "map",
-      "content": "主街北口往北拐霍尔特巷是 Denny 家，一趟车的功夫就到；再往北是旧海岸公路，骑上去二十五分钟能到汽车旅馆。"
+      "content": "主街北口 [SCN_main_north] 往北拐霍尔特巷 [ROAD_holt_lane] 是 Denny 家，一趟车的功夫就到；再往北是旧海岸公路 [ROAD_old_coast_road]，骑上去二十五分钟能到汽车旅馆 [SCN_motel]。"
     },
     {
       "type": "map",
-      "content": "主街南口下坡道到码头，骑车比走路快多了；南口出后巷抄近道回家，八分钟到家门口——妈妈账还没算完我就能蹿回去。"
+      "content": "主街南口 [SCN_main_south] 下坡道 [ROAD_dock_slope] 到码头 [SCN_dock]，骑车比走路快多了；南口出后巷 [ROAD_backstreet] 抄近道回家，八分钟到家门口 [SCN_reyes_gate]——妈妈账还没算完我就能蹿回去。"
     },
     {
       "type": "map",
-      "content": "汽车旅馆边上有条车行道往山上去，一直通到雷德利站前的大门，说是政府的气象站，反正没人能进去；除了 Holt 先生开货车送货，没人从旅馆那边再往上走过。"
+      "content": "汽车旅馆 [SCN_motel] 边上有条车行道 [ROAD_station_drive] 往山上去，一直通到雷德利站前的大门 [SCN_gate]，说是政府的气象站，反正没人能进去；除了 Holt 先生开货车 [VEH_frank_truck] 送货，没人从旅馆那边再往上走过。"
     },
     {
       "type": "map",
-      "content": "林道口在主街北口往北骑十分钟就到，全镇进林子就这一个口子；Denny 家后院有个豁口抄近道，也是十分钟能汇进林道，他半夜溜出来不用经过客厅。"
+      "content": "林道口 [SCN_trailhead] 在主街北口 [SCN_main_north] 往北骑十分钟就到，全镇进林子就这一个口子；Denny 家后院 [SCN_holt_backyard] 有个豁口抄近道，也是十分钟能汇进林道 [ROAD_trail_access]，他半夜溜出来不用经过客厅 [SCN_holt_common]。"
     },
     {
       "type": "map",
-      "content": "进林子往灰溪渡口，一个多钟头，踏石头过溪，涨水就断了只能干等；过溪再走将近一个半钟头到旧锯木厂——这条我们走熟了。"
+      "content": "进林子往灰溪渡口 [SCN_creek_ford]，一个多钟头，踏石头过溪，涨水就断了只能干等；过溪再走将近一个半钟头到旧锯木厂 [SCN_sawmill]——这条我们走熟了。"
     },
     {
       "type": "map",
-      "content": "林道口还有条岔路通旧铁路路基，走一个钟头，笔直好认，绕是绕但不会迷路；我们赶时间从来不走这条，留着当保底路线。"
+      "content": "林道口 [SCN_trailhead] 还有条岔路通旧铁路路基 [SCN_railbed]，走一个钟头，笔直好认，绕是绕但不会迷路；我们赶时间从来不走这条，留着当保底路线。"
     },
     {
       "type": "map",
-      "content": "旧锯木厂是我们的前进营地，证据大多是在那儿收的。再往里锯木厂过去还有个叫雾谷的地方、一圈老红杉，我们没真去过，就是听大孩子提过；围栏在山那头，单程听说要走整整六个钟头，总有一天。"
+      "content": "旧锯木厂 [SCN_sawmill] 是我们的前进营地 [item.sawmill.forward_camp]，证据大多是在那儿收的。再往里锯木厂过去还有个叫雾谷 [SCN_fog_hollow] 的地方、一圈老红杉 [SCN_redwood_ring]，我们没真去过，就是听大孩子提过；围栏 [SCN_fence] 在山那头，单程听说要走整整六个钟头，总有一天。"
     }
   ]
 }

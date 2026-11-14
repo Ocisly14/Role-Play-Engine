@@ -333,62 +333,56 @@ describe("one flag per edge — the last writer wins, whoever they are", () => {
   });
 });
 
-// `hidden` is the world's answer to "can anyone see this"; `discoveredBy` is
-// each viewer's answer to "have I found it". Both live on the passage, so
-// nothing has to be kept in step with anything else — and finding is not
-// private, so the operation carries a list.
-describe("connectionDiscovered", () => {
+// `concealed` is the passage's physical state — the same for everyone. There
+// is no per-viewer discovery: finding a door is the finder's own knowledge,
+// and exposing it for good (the bookshelf pushed aside) is this operation.
+describe("connectionConcealed", () => {
   const CONN = "connection.home.junc";
 
-  function discovery(characterIds: string[]): SourcedWorldDelta {
+  function concealment(concealed: boolean): SourcedWorldDelta {
     return {
       source: { kind: "action", actionId: "a1" },
-      causalBasis: "he prised the panel away and they all saw it",
+      causalBasis: "he pushed the bookshelf aside",
       delta: {
         domain: "scene",
         sceneId: "S_HOME",
-        operation: {
-          kind: "connectionDiscovered",
-          connectionId: CONN,
-          characterIds,
-        },
+        operation: { kind: "connectionConcealed", connectionId: CONN, concealed },
       },
     };
   }
 
-  /** The character-ref guard drops a change naming nobody, so the fixture has
-   *  to contain the people who are supposed to find the door. */
-  function withCast() {
-    const f = makeFixture();
-    f.state.npcCharacters.push(
-      ...["npc_1", "npc_2", "npc_3"].map(
-        (id) => ({ id, name: id, status: { conditions: [] } }) as never
-      )
-    );
-    return f;
-  }
+  const connection = (state: ReturnType<typeof makeFixture>["state"]) =>
+    state.scenes.get("S_HOME")?.connections?.find((c) => c.id === CONN);
 
-  it("records everyone named, on the connection itself", () => {
-    const { applier, state } = withCast();
-    applier.flush([], T, [discovery(["npc_1", "npc_2"])]);
+  it("conceals and exposes the passage on the connection itself", () => {
+    const { applier, state } = fixture;
+    applier.flush([], T, [concealment(true)]);
+    expect(connection(state)?.concealed).toBe(true);
 
-    const discoveredBy = state.scenes
-      .get("S_HOME")
-      ?.connections?.find((c) => c.id === CONN)?.discoveredBy;
-    expect(discoveredBy).toContain("npc_1");
-    expect(discoveredBy).toContain("npc_2");
-    // The one who was not in the room learns nothing.
-    expect(discoveredBy).not.toContain("npc_3");
+    applier.flush([], T, [concealment(false)]);
+    expect(connection(state)?.concealed).toBe(false);
   });
 
-  it("is idempotent — finding the same door twice is one discovery", () => {
-    const { applier, state } = withCast();
-    applier.flush([], T, [discovery(["npc_1"])]);
-    applier.flush([], T, [discovery(["npc_1"])]);
-
-    const connection = state.scenes
-      .get("S_HOME")
-      ?.connections?.find((c) => c.id === CONN);
-    expect(connection?.discoveredBy).toEqual(["npc_1"]);
+  it("warns, and does not throw, for an id that names nothing", () => {
+    const { applier } = fixture;
+    expect(() =>
+      applier.flush([], T, [
+        {
+          ...concealment(false),
+          delta: {
+            domain: "scene",
+            sceneId: "S_HOME",
+            operation: {
+              kind: "connectionConcealed",
+              connectionId: "connection.nowhere.door",
+              concealed: false,
+            },
+          },
+        },
+      ])
+    ).not.toThrow();
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('unknown connection id "connection.nowhere.door"')
+    );
   });
 });

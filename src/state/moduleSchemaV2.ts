@@ -227,7 +227,11 @@ function parseItem(
   const id = checkRequiredString(value, "id", path, problems);
   const name = checkRequiredString(value, "name", path, problems);
   const description = checkOptionalString(value, "description", path, problems);
-  const hidden = checkOptionalBoolean(value, "hidden", path, problems);
+  if (value.hidden !== undefined) {
+    problems.push(
+      `${path}.hidden: items have no hidden flag — an item its place's description does not cite is simply not yet noticed; remove the key`
+    );
+  }
   const isLightSource = checkOptionalBoolean(
     value,
     "isLightSource",
@@ -244,7 +248,6 @@ function parseItem(
   }
   const item: Item = { id, name };
   if (description !== undefined) item.description = description;
-  if (hidden !== undefined) item.hidden = hidden;
   if (isLightSource !== undefined) item.isLightSource = isLightSource;
   if (lightLevel !== undefined) item.lightLevel = lightLevel;
   if (position !== undefined) item.position = position;
@@ -265,7 +268,15 @@ function parseConnection(
   const targetId = checkRequiredString(value, "targetId", path, problems);
   const name = checkOptionalString(value, "name", path, problems);
   const description = checkOptionalString(value, "description", path, problems);
-  const hidden = checkOptionalBoolean(value, "hidden", path, problems);
+  if (value.hidden !== undefined) {
+    problems.push(`${path}.hidden: renamed to "concealed"`);
+  }
+  if (value.discoveredBy !== undefined) {
+    problems.push(
+      `${path}.discoveredBy: removed — who knows about a passage is that character's own knowledge`
+    );
+  }
+  const concealed = checkOptionalBoolean(value, "concealed", path, problems);
   const position = checkOptionalNumber(value, "position", path, problems);
   let role: RoadConnectionRole | undefined;
   if (value.role !== undefined) {
@@ -287,7 +298,7 @@ function parseConnection(
   const connection: PlaceFileV2Connection = { id, targetId };
   if (name !== undefined) connection.name = name;
   if (description !== undefined) connection.description = description;
-  if (hidden !== undefined) connection.hidden = hidden;
+  if (concealed !== undefined) connection.concealed = concealed;
   if (role !== undefined) connection.role = role;
   if (position !== undefined) connection.position = position;
   return connection;
@@ -490,7 +501,7 @@ function rejectRoadOnlyFields(
     const connection: SceneConnection = { id: c.id, targetId: c.targetId };
     if (c.name !== undefined) connection.name = c.name;
     if (c.description !== undefined) connection.description = c.description;
-    if (c.hidden !== undefined) connection.hidden = c.hidden;
+    if (c.concealed !== undefined) connection.concealed = c.concealed;
     out.push(connection);
   }
   return out;
@@ -573,7 +584,7 @@ export function buildRoadV2(file: PlaceFileV2): RoadNode {
     };
     if (c.name !== undefined) connection.name = c.name;
     if (c.description !== undefined) connection.description = c.description;
-    if (c.hidden !== undefined) connection.hidden = c.hidden;
+    if (c.concealed !== undefined) connection.concealed = c.concealed;
     if (c.position !== undefined) connection.position = c.position;
     connections.push(connection);
   }
@@ -723,13 +734,14 @@ interface PlaceForValidation {
  * - every place id and reference id shares one module-wide namespace (no dupes);
  * - every `[citation]` in a description resolves to a local item/condition or
  *   to the target place of one of this place's connections;
- * - every non-hidden item is cited exactly once; hidden items are exempt and
- *   must NOT be cited (the prose would leak them);
+ * - an item is cited at most once; an item the description does NOT cite is
+ *   in the place but not yet noticed (there is no hidden flag — not being in
+ *   the prose is what being unnoticed means);
  * - conditions must always be cited;
  * - connections are topology bookkeeping, never citable by their own id: the
  *   prose points at the PLACE a passage leads to, not at the passage. Every
- *   non-hidden connection's targetId must be cited exactly once; a hidden
- *   connection's target must NOT be cited. (A door that matters as an object
+ *   non-concealed connection's targetId must be cited exactly once; a target
+ *   reached only through a concealed connection must NOT be cited. (A door that matters as an object
  *   — lockable, breakable — is authored as an item.)
  * - every connection targetId exists and is not the owner itself.
  * Exit symmetry (a reverse connection) is deliberately NOT required.
@@ -794,24 +806,25 @@ export function validateModuleReferences(module: {
       citationCounts.set(cited, (citationCounts.get(cited) ?? 0) + 1);
     }
 
-    const localReferences = new Map<string, { hidden: boolean }>();
+    // `optional`: an item may go uncited (it is there, unnoticed); a
+    // condition is always part of what anyone here perceives.
+    const localReferences = new Map<string, { optional: boolean }>();
     for (const item of place.items) {
-      localReferences.set(item.id, { hidden: item.hidden === true });
+      localReferences.set(item.id, { optional: true });
     }
     for (const condition of place.conditions) {
       if (condition.id !== undefined) {
-        // Conditions cannot be hidden — always require a citation.
-        localReferences.set(condition.id, { hidden: false });
+        localReferences.set(condition.id, { optional: false });
       }
     }
 
     // Where can you go from here — cited by TARGET place id, never by the
-    // connection's own id. A target reachable both hidden and visibly counts
-    // as visible.
+    // connection's own id. A target reachable both through a concealed and an
+    // open passage counts as visible.
     const visibleTargets = new Set<string>();
     const hiddenTargets = new Set<string>();
     for (const connection of place.connections) {
-      (connection.hidden === true ? hiddenTargets : visibleTargets).add(
+      (connection.concealed === true ? hiddenTargets : visibleTargets).add(
         connection.targetId
       );
     }
@@ -823,7 +836,7 @@ export function validateModuleReferences(module: {
       if (localReferences.has(cited) || visibleTargets.has(cited)) continue;
       if (hiddenTargets.has(cited)) {
         problems.push(
-          `${place.id}: description cites [${cited}], the target of a hidden connection (the prose would reveal it)`
+          `${place.id}: description cites [${cited}], reached only through a concealed connection (the prose would reveal it)`
         );
       } else if (placeIds.has(cited)) {
         problems.push(
@@ -836,18 +849,10 @@ export function validateModuleReferences(module: {
       }
     }
 
-    // Every item/condition: hidden must not be cited; visible must be cited exactly once.
-    for (const [refId, { hidden }] of localReferences) {
+    // Items at most once; conditions exactly once.
+    for (const [refId, { optional }] of localReferences) {
       const count = citationCounts.get(refId) ?? 0;
-      if (hidden) {
-        if (count > 0) {
-          problems.push(
-            `${place.id}: hidden reference "${refId}" must not be cited in the description (the prose would reveal it)`
-          );
-        }
-        continue;
-      }
-      if (count === 0) {
+      if (count === 0 && !optional) {
         problems.push(
           `${place.id}: reference "${refId}" is never cited in the description (every visible reference must appear exactly once as [${refId}])`
         );

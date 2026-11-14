@@ -24,11 +24,15 @@ import {
 import { NpcMemoryManager } from "../../../src/memory/NpcMemoryManager.js";
 import { ModelProviderName } from "../../../src/models/types.js";
 import { resolveDisplayLocationName } from "../../../src/planning/sceneMapFormatter.js";
+import { PLAYER_STATE_KEY } from "../../../src/player/playerState.js";
 import { EmbeddingClient } from "../../../src/rag/embedding.js";
 import { seedNpcLongTermIntents } from "../../../src/roleSim/seedIntents.js";
 import { resolveModuleIdByName } from "../../../src/shared/agents/memory/database/moduleScope.js";
 import { resolveEmailId } from "../../../src/shared/agents/memory/database/userContext.js";
-import { SimulationRunner } from "../../../src/simulation/SimulationRunner.js";
+import {
+  PENDING_DELIVERY_KEY,
+  SimulationRunner,
+} from "../../../src/simulation/SimulationRunner.js";
 import {
   deleteSimulationRuntime,
   listSimulationRuntimeRecords,
@@ -190,6 +194,12 @@ export async function getRunner(
           typeof runner.hydrateFromRuntime
         >[0]["persistedTickEngineState"]
       | undefined,
+    persistedPlayerState: (runtime.gameState as Record<string, unknown>)[
+      PLAYER_STATE_KEY
+    ],
+    persistedPendingDelivery: (runtime.gameState as Record<string, unknown>)[
+      PENDING_DELIVERY_KEY
+    ],
   });
   runner.setModuleName(runtime.moduleName ?? "");
   if (runtime.simulationState === "running") {

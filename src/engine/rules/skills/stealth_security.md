@@ -21,7 +21,7 @@ is exposed, bypassed, or left behind on failure.
   a false document.
 - Rejected for defeating an electrical alarm or a mechanism that must be
   repaired rather than bypassed (Repair & Engineering), and for talking a way
-  past someone who has already noticed the actor (Social).
+  past someone who has already noticed the actor. That exchange uses no check.
 - Tools matter and their absence is stated: picks, materials, a costume. A
   lock attempted bare-handed is at a higher required level or rejected
   outright.

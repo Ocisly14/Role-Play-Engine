@@ -17,9 +17,9 @@ bound what is achievable — name what is missing when it is.
 ## Applicability
 
 - Accepted for stopping bleeding, stabilizing, splinting, diagnosing illness or
-  injury, administering treatment, and talking someone down or through.
-- Rejected for reading someone's intent in conversation (Social) and for
-  laboratory analysis of a substance (Science & Nature).
+  injury, and administering treatment.
+- Talking someone down or reading their intent is interpersonal and needs no
+  check. Laboratory analysis of a substance uses Science & Nature.
 - Without supplies, first aid is improvised at a higher required level and its
   effect is smaller; surgery without instruments is a rejection.
 
@@ -28,8 +28,7 @@ bound what is achievable — name what is missing when it is.
 - **Regular** — Resolve the specific feasible treatment: pressure may stop
   bleeding, a dressing may protect the wound, a splint may support the limb.
   These are not automatic HP recovery, a healed fracture or all conditions
-  cleared. A diagnosis yields supported findings; conversation yields the
-  clinician's conduct, not a prescribed feeling or decision in the patient.
+  cleared. A diagnosis yields supported findings.
 - **Hard** — More precise work within the same assessed time and resources.
   Notice a secondary problem only if evidence supports it; do not automatically
   make the patient ambulatory.
@@ -39,8 +38,7 @@ bound what is achievable — name what is missing when it is.
 
 ## Failure
 
-- No measurable change. The wound is neither better nor worse, the diagnosis
-  will not come, the session does not land. Record only supplies actually used, in representable amounts; do not destroy
+- No measurable change or supported diagnosis. Record only supplies actually used, in representable amounts; do not destroy
   an entire medical kit to account for one dressing.
 - **Fumble** — Handled wrongly: a tourniquet too tight, a wound contaminated, a
   concrete harmful intervention. Record only proportionate bodily harm or an

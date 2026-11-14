@@ -72,7 +72,7 @@
         "targetId": "SCN_station_hall",
         "name": "内门",
         "description": "装卸区尽头的灰色内门,从没开过。",
-        "hidden": true
+        "concealed": true
       }
     ],
     "conditions": []

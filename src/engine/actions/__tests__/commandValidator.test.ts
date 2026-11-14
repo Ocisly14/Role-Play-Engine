@@ -1,5 +1,5 @@
 // Trust-boundary tests: raw `act` args → validated args → trusted
-// ActionCommand. Covers required/optional fields, object-ref roles, duration
+// ActionCommand. Covers required/optional fields, object refs, duration
 // boundaries, perceivable-scope enforcement, envelope non-forgeability and
 // the immediate-skill-roll invariant (declaredSkillId ⇔ skillRoll).
 
@@ -31,7 +31,7 @@ const world = {
 function args(overrides: Record<string, unknown> = {}) {
   return {
     description: "I try to pick the lock with my picks.",
-    objectRefs: [{ kind: "item", id: "cabinet_lock", role: "target" }],
+    objectRefs: [{ kind: "item", id: "cabinet_lock" }],
     proposedDurationTicks: 3,
     ...overrides,
   };
@@ -48,7 +48,7 @@ describe("validateActArgs", () => {
     expect(result.args.description).toBe("padded");
     expect(result.args.utterance).toBe("hello");
     expect(result.args.objectRefs).toEqual([
-      { kind: "item", id: "cabinet_lock", role: "target" },
+      { kind: "item", id: "cabinet_lock" },
     ]);
   });
 
@@ -84,7 +84,7 @@ describe("validateActArgs", () => {
 
     // And no label at all is fine too.
     const bare = validateActArgs(
-      args({ objectRefs: [{ id: "SCN_1", role: "destination" }] }),
+      args({ objectRefs: [{ id: "SCN_1" }] }),
       world
     );
     expect(bare.ok).toBe(true);
@@ -92,27 +92,18 @@ describe("validateActArgs", () => {
     expect(bare.args.objectRefs[0].kind).toBe("scene");
   });
 
-  it("rejects a ref with an invalid role", () => {
-    const result = validateActArgs(
-      args({ objectRefs: [{ kind: "item", id: "ITEM_1", role: "weapon" }] }),
-      world
-    );
-    expect(result).toMatchObject({ ok: false, code: "invalid_object_refs" });
-  });
-
-  it("accepts every legal role and a role-less ref", () => {
-    for (const role of ["target", "tool", "destination", "recipient"]) {
+  it("ignores a stray role — refs carry only an id", () => {
+    // `role` was removed from refs; a model still sending it out of habit
+    // is neither refused nor passed through.
+    for (const role of ["target", "weapon", 7]) {
       const result = validateActArgs(
-        args({ objectRefs: [{ kind: "item", id: "ITEM_1", role }] }),
+        args({ objectRefs: [{ id: "ITEM_1", role }] }),
         world
       );
       expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.args.objectRefs).toEqual([{ kind: "item", id: "ITEM_1" }]);
     }
-    const bare = validateActArgs(
-      args({ objectRefs: [{ kind: "item", id: "ITEM_1" }] }),
-      world
-    );
-    expect(bare.ok).toBe(true);
   });
 
   it("rejects a ref outside the perceivable scope", () => {
@@ -130,7 +121,7 @@ describe("validateActArgs", () => {
     // door leads to, and a door that matters as an object is an item. An
     // `connection.*` id therefore names nothing an actor may cite.
     const result = validateActArgs(
-      args({ objectRefs: [{ id: "connection.scn1.door", role: "destination" }] }),
+      args({ objectRefs: [{ id: "connection.scn1.door" }] }),
       world
     );
     expect(result).toMatchObject({ ok: false, code: "unknown_ref" });
@@ -156,14 +147,14 @@ describe("validateActArgs", () => {
   it("resolves a stranger's alias to the real id", () => {
     const result = validateActArgs(
       args({
-        objectRefs: [{ kind: "character", id: HOLLINS_ALIAS, role: "target" }],
+        objectRefs: [{ kind: "character", id: HOLLINS_ALIAS }],
       }),
       world
     );
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.args.objectRefs).toEqual([
-      { kind: "character", id: "Hollins", role: "target" },
+      { kind: "character", id: "Hollins" },
     ]);
   });
 
@@ -204,6 +195,31 @@ describe("validateActArgs", () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.args.skillId).toBeUndefined();
+  });
+
+  it("carries sleep: true through", () => {
+    const result = validateActArgs(args({ sleep: true }), world);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.args.sleep).toBe(true);
+  });
+
+  it("leaves sleep out when it is absent or false", () => {
+    for (const extra of [{}, { sleep: false }]) {
+      const result = validateActArgs(args(extra), world);
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.args).not.toHaveProperty("sleep");
+    }
+  });
+
+  it.each([
+    ["string", "yes"],
+    ["number", 1],
+    ["null", null],
+  ])("rejects a %s sleep", (_label, sleep) => {
+    const result = validateActArgs(args({ sleep }), world);
+    expect(result).toMatchObject({ ok: false, code: "invalid_sleep" });
   });
 });
 
@@ -361,6 +377,18 @@ describe("buildActionCommand", () => {
     expect(result.command.skillRoll).toBeUndefined();
   });
 
+  it("copies sleep onto the command only when the actor set it", () => {
+    const slept = buildActionCommand("npc_1", args({ sleep: true }), { dgsm });
+    expect(slept.ok).toBe(true);
+    if (!slept.ok) return;
+    expect(slept.command.sleep).toBe(true);
+
+    const awake = buildActionCommand("npc_1", args(), { dgsm });
+    expect(awake.ok).toBe(true);
+    if (!awake.ok) return;
+    expect(awake.command).not.toHaveProperty("sleep");
+  });
+
   it("returns the validator rejection for an out-of-scope ref", () => {
     const result = buildActionCommand(
       "npc_1",
@@ -379,7 +407,7 @@ describe("what a citation is scoped to", () => {
   // learns from — rather than by a rejection she cannot act on and cannot see.
   it("accepts an item that exists but is nowhere near the actor", () => {
     const result = validateActArgs(
-      args({ objectRefs: [{ kind: "item", id: "ITEM_FAR", role: "target" }] }),
+      args({ objectRefs: [{ kind: "item", id: "ITEM_FAR" }] }),
       world
     );
     expect(result.ok).toBe(true);
@@ -388,7 +416,7 @@ describe("what a citation is scoped to", () => {
   it("accepts a place that exists but is not adjacent", () => {
     const result = validateActArgs(
       args({
-        objectRefs: [{ kind: "scene", id: "SCN_FAR", role: "destination" }],
+        objectRefs: [{ kind: "scene", id: "SCN_FAR" }],
       }),
       world
     );

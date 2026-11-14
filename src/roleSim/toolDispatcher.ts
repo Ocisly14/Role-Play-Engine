@@ -2,7 +2,7 @@
 //
 // Instant-tool dispatcher. Executes the agent's non-terminal tools
 // (`writeMemory` — the only one) against the memory store and DGSM. Terminal
-// tools (act / continue) never flow through here — the agent loop returns
+// tools (act / continue / askFriend) never flow through here — the agent loop returns
 // them to the controller, which is the single place engine submission
 // happens.
 //
@@ -18,8 +18,10 @@ import {
   knownAs,
 } from "../state/perceivableDirectory.js";
 
-/** Tools that consume a tick — calling one ends the agent loop. Decision 17. */
-export const TERMINAL_TOOLS = new Set<string>(["act", "continue"]);
+/** Tools that consume a tick — calling one ends the agent loop. Decision 17.
+ *  `askFriend` is offered only to a delegated player character; the agent
+ *  loop treats a call as terminal only when the tool was actually offered. */
+export const TERMINAL_TOOLS = new Set<string>(["act", "continue", "askFriend"]);
 
 /** Per-tool call budget within a single decide() call. Decision 19. */
 export const TOOL_CAPS: Record<string, number> = {
@@ -27,7 +29,12 @@ export const TOOL_CAPS: Record<string, number> = {
 };
 
 /** Whitelist of valid tool names — used for LLM output validation. */
-export const VALID_TOOLS = new Set<string>(["act", "continue", "writeMemory"]);
+export const VALID_TOOLS = new Set<string>([
+  "act",
+  "continue",
+  "writeMemory",
+  "askFriend",
+]);
 
 export interface DispatcherDeps {
   memory: NpcMemoryManager;

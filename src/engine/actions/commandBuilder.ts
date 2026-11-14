@@ -3,13 +3,16 @@
 // Trusted Action Intake: turns untrusted `act` Tool args into a trusted,
 // immutable ActionCommand. The model never authors the envelope — actorId,
 // time and scene come from live DGSM state, replacesActionId from the Engine.
-// A declared skill is checked for existence only (any known CoC skill; the
-// actor's trained value or the base value) and rolled immediately; semantic
-// applicability is judged later by the Engine with the roll in hand.
+// Intake resolves a declared skill's name. The Engine judges applicability at
+// start, and code rolls when the action ends.
 
 import { randomBytes } from "node:crypto";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
-import { aliasFor } from "../../state/perceivableDirectory.js";
+import {
+  type CitationScope,
+  aliasFor,
+  buildPerceivableDirectory,
+} from "../../state/perceivableDirectory.js";
 import type { CommandRejectionCode } from "./commandValidator.js";
 import { validateActArgs } from "./commandValidator.js";
 import { canonicalDisplayName, resolveSkillValue } from "./skillRollService.js";
@@ -20,6 +23,11 @@ export interface BuildCommandDeps {
   /** Live action to replace, queried from the Engine by the caller. The old
    *  action is NOT cancelled here — replacement is resolved next tick (D4). */
   replacesActionId?: string;
+  /** What the actor was shown (concealment design §5.4). Given, items and
+   *  places must be in it — an id that names something real but never
+   *  reached this actor is refused. Absent, the boundary asks only whether
+   *  the id names something real (callers not yet passing a scope). */
+  citationScope?: CitationScope;
 }
 
 export type BuildCommandResult =
@@ -33,10 +41,20 @@ export function buildActionCommand(
 ): BuildCommandResult {
   const { dgsm } = deps;
 
+  // Built only when a ref asks, and once: most acts cite few things, and an
+  // act citing nothing never needs it.
+  let directory: ReturnType<typeof buildPerceivableDirectory> | undefined;
+  const scoped = () => {
+    if (!deps.citationScope) return null;
+    directory ??= buildPerceivableDirectory(actorId, dgsm, deps.citationScope);
+    return directory;
+  };
   const validated = validateActArgs(rawArgs, {
     resolveCharacter: (handle) => resolveCharacterHandle(handle, actorId, dgsm),
-    hasItem: (id) => itemExists(id, dgsm),
-    hasPlace: (id) => dgsm.getScene(id) !== null || dgsm.getRoad(id) !== null,
+    hasItem: (id) => scoped()?.items.has(id) ?? itemExists(id, dgsm),
+    hasPlace: (id) =>
+      scoped()?.scenes.has(id) ??
+      (dgsm.getScene(id) !== null || dgsm.getRoad(id) !== null),
   });
   if (!validated.ok) return validated;
   const args = validated.args;
@@ -61,6 +79,7 @@ export function buildActionCommand(
     objectRefs: args.objectRefs,
     proposedDurationTicks: args.proposedDurationTicks,
     ...(args.utterance !== undefined ? { utterance: args.utterance } : {}),
+    ...(args.sleep === true ? { sleep: true } : {}),
   };
 
   if (args.skillId !== undefined) {
@@ -123,7 +142,7 @@ export function buildActionCommand(
       return {
         ok: false,
         code: "invalid_skill",
-        reason: `"${args.skillId}" is not a skill this world knows — declare a real CoC skill name, or omit skillId`,
+        reason: `"${args.skillId}" is not an available skill — use a skill from the catalog, or omit skillId`,
       };
     }
     // Only the NAME is settled here. The dice wait for the action to run

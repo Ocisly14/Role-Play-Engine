@@ -6,6 +6,7 @@
 // skipping that NPC's decide() this tick. No god-eye fallback (D6).
 
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
+import type { CitationScope } from "../../state/perceivableDirectory.js";
 import { renderViaLLM } from "./llmRenderer.js";
 import type { PerceivedBundle, RenderedPerception } from "./types.js";
 
@@ -15,6 +16,7 @@ export type {
   RenderedPerception,
 } from "./types.js";
 export { buildPerceivedBundle } from "./buildBundle.js";
+export { idsCarriedBy } from "./llmRenderer.js";
 
 export interface RenderParams {
   npcId: string;
@@ -29,6 +31,8 @@ export interface RenderParams {
     location: string;
     narrative: string;
   }>;
+  /** Same scope the trust boundary is given — see RenderViaLLMParams. */
+  citationScope?: CitationScope;
 }
 
 /**

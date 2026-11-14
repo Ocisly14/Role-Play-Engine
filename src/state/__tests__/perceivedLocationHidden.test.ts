@@ -1,17 +1,23 @@
-// Hidden things must not reach perception until revealed — not the perceived
-// location (what the renderer narrates) and not the perceivable directory
-// (what the actor may cite). `resolvePerceivedLocation` is the single choke
-// point: both location kinds filter `hidden` items, and each kind's
-// adjacency filters hidden connections (scene exits, node-scene connections,
-// road access points). Flipping the flag on the object is the whole reveal —
-// the next resolve sees it, and the directory follows.
+// Unnoticed things must not reach perception — not the perceived location
+// (what the renderer narrates) and not the perceivable directory (what the
+// actor may cite). There is no hidden flag: an item is IN PLAIN VIEW iff its
+// place's description cites it as `[id]`; an uncited item is there but not
+// yet noticed. A passage marked `concealed` is physically obscured, the same
+// for everyone. `resolvePerceivedLocation` is the single choke point: both
+// location kinds filter uncited items, and each kind's adjacency filters
+// concealed connections (scene exits, node-scene connections, road access
+// points) — unless THIS viewer noticed the thing this minute (`noticed`).
+// Exposing something for everyone is a change to the world: cite the item in
+// the description, or flip `concealed` to false.
 
 import { describe, expect, it } from "vitest";
 import type { DynamicGameStateManager } from "../DynamicGameState.js";
 import { buildPerceivableDirectory } from "../perceivableDirectory.js";
 import {
+  citedIds,
   resolveLocationById,
   resolvePerceivedLocation,
+  unnoticedCandidates,
 } from "../perceivedLocation.js";
 import {
   type CharacterPosition,
@@ -28,21 +34,22 @@ interface World {
   setActorPosition(position: CharacterPosition): void;
 }
 
-/** Fresh fixtures per test — reveal tests mutate `hidden` in place. */
+/** Fresh fixtures per test — exposure tests mutate descriptions and
+ *  `concealed` in place. */
 function makeWorld(): World {
   const scene: DynamicScene = {
     id: "S_PARLOR",
     name: "Parlour",
-    description: "A parlour.",
+    description: "A parlour with [ITEM_CHAIR] by the hearth.",
     parentLocationId: "B_HOUSE",
     items: [
       { id: "ITEM_CHAIR", name: "a chair" },
-      { id: "ITEM_DAGGER", name: "a dagger", hidden: true },
+      { id: "ITEM_DAGGER", name: "a dagger" }, // uncited: unnoticed
     ],
     conditions: [],
     connections: [
       { id: "connection.parlor.shop", targetId: "S_SHOP" },
-      { id: "connection.parlor.cellar", targetId: "S_CELLAR", hidden: true },
+      { id: "connection.parlor.cellar", targetId: "S_CELLAR", concealed: true },
     ],
   };
   const otherScenes: DynamicScene[] = ["S_SHOP", "S_CELLAR", "S_HUT"].map(
@@ -61,22 +68,22 @@ function makeWorld(): World {
   const junction: DynamicScene = {
     id: "J_X",
     name: "Crossing",
-    description: "A crossing.",
+    description: "A crossing under [ITEM_LAMP].",
     items: [
       { id: "ITEM_LAMP", name: "a lamppost" },
-      { id: "ITEM_COIN", name: "a buried coin", hidden: true },
+      { id: "ITEM_COIN", name: "a buried coin" }, // uncited: unnoticed
     ],
     conditions: [],
     connections: [
       { id: "connection.junc_x.shop", targetId: "S_SHOP" },
-      { id: "connection.junc_x.cellar", targetId: "S_CELLAR", hidden: true },
+      { id: "connection.junc_x.cellar", targetId: "S_CELLAR", concealed: true },
     ],
   };
 
   const road: RoadNode = {
     id: "R_MAIN",
     name: "Star Avenue",
-    description: "A long avenue.",
+    description: "A long avenue; [ITEM_GLOVE] lies in the gutter.",
     connections: [
       { id: "connection.r_main.a", targetId: "J_X", role: "endpointA" },
       { id: "connection.r_main.b", targetId: "J_Y", role: "endpointB" },
@@ -91,20 +98,20 @@ function makeWorld(): World {
         targetId: "S_HUT",
         role: "access",
         position: 0.7,
-        hidden: true,
+        concealed: true,
       },
     ],
     endpointA: "J_X",
     endpointB: "J_Y",
     travelTimeMinutes: 10,
-    // Derived incl. hidden — the hidden flag lives on the access connection.
+    // Derived incl. concealed — the flag lives on the access connection.
     alongConnections: [
       { sceneId: "S_SHOP", position: 0.3 },
       { sceneId: "S_HUT", position: 0.7 },
     ],
     items: [
       { id: "ITEM_GLOVE", name: "a dropped glove" },
-      { id: "ITEM_KNIFE", name: "a knife in the ditch", hidden: true },
+      { id: "ITEM_KNIFE", name: "a knife in the ditch" }, // uncited
     ],
     conditions: [],
   };
@@ -144,254 +151,290 @@ function makeWorld(): World {
   };
 }
 
-describe("hidden items stay out of perception", () => {
-  it("filters hidden items in both location kinds", () => {
+const PARLOR = { type: "scene", sceneId: "S_PARLOR" } as const;
+const JUNCTION = { type: "scene", sceneId: "J_X" } as const;
+const MID_ROAD = { type: "road", roadId: "R_MAIN", position: 0.5 } as const;
+
+const items = (ids: string[]) => ({ itemIds: new Set(ids) });
+const passages = (ids: string[]) => ({ connectionIds: new Set(ids) });
+
+describe("citedIds", () => {
+  it("reads every [id] in a piece of prose", () => {
+    expect(citedIds("a [ITEM_A] and [SCN_B], not [two words]")).toEqual(
+      new Set(["ITEM_A", "SCN_B"])
+    );
+    expect(citedIds(undefined)).toEqual(new Set());
+  });
+});
+
+describe("uncited items stay out of perception", () => {
+  it("keeps only the cited items in both location kinds", () => {
     const { dgsm } = makeWorld();
-    const atScene = resolvePerceivedLocation(
-      { type: "scene", sceneId: "S_PARLOR" },
-      dgsm
-    );
-    expect(atScene?.items.map((i) => i.id)).toEqual(["ITEM_CHAIR"]);
-
-    const atJunction = resolvePerceivedLocation(
-      { type: "scene", sceneId: "J_X" },
-      dgsm
-    );
-    expect(atJunction?.items.map((i) => i.id)).toEqual(["ITEM_LAMP"]);
-
-    const onRoad = resolvePerceivedLocation(
-      { type: "road", roadId: "R_MAIN", position: 0.5 },
-      dgsm
-    );
-    expect(onRoad?.items.map((i) => i.id)).toEqual(["ITEM_GLOVE"]);
+    expect(
+      resolvePerceivedLocation(PARLOR, dgsm)?.items.map((i) => i.id)
+    ).toEqual(["ITEM_CHAIR"]);
+    expect(
+      resolvePerceivedLocation(JUNCTION, dgsm)?.items.map((i) => i.id)
+    ).toEqual(["ITEM_LAMP"]);
+    expect(
+      resolvePerceivedLocation(MID_ROAD, dgsm)?.items.map((i) => i.id)
+    ).toEqual(["ITEM_GLOVE"]);
   });
 
-  it("keeps hidden items out of the perceivable directory's citable set", () => {
-    const { dgsm, setActorPosition } = makeWorld();
+  it("adds an item this viewer noticed this minute — and only for that read", () => {
+    const { dgsm } = makeWorld();
+    expect(
+      resolvePerceivedLocation(
+        PARLOR,
+        dgsm,
+        "actor",
+        items(["ITEM_DAGGER"])
+      )?.items.map((i) => i.id)
+    ).toEqual(["ITEM_CHAIR", "ITEM_DAGGER"]);
+    expect(
+      resolvePerceivedLocation(
+        MID_ROAD,
+        dgsm,
+        "actor",
+        items(["ITEM_KNIFE"])
+      )?.items.map((i) => i.id)
+    ).toEqual(["ITEM_GLOVE", "ITEM_KNIFE"]);
+    // Noticing something somewhere else adds nothing here.
+    expect(
+      resolvePerceivedLocation(
+        JUNCTION,
+        dgsm,
+        "actor",
+        items(["ITEM_DAGGER"])
+      )?.items.map((i) => i.id)
+    ).toEqual(["ITEM_LAMP"]);
+  });
 
-    // Citability is world-wide now — it asks only whether a name is real, and
-    // reach is the Engine's question. So the set does NOT vary with position;
-    // what it must still never contain is a hidden thing, because that is not
-    // "can you get to it" but "do you know it is there".
+  it("keeps uncited items out of the legacy (unscoped) directory", () => {
+    const { dgsm, setActorPosition } = makeWorld();
+    // Without a scope the directory falls back to every item in plain view
+    // anywhere — it does NOT vary with position, but it never contains an
+    // uncited thing, because that is not "can you get to it" but "do you
+    // know it is there".
     const everywhere = new Set(["ITEM_CHAIR", "ITEM_LAMP", "ITEM_GLOVE"]);
-    for (const at of [
-      { type: "scene", sceneId: "S_PARLOR" },
-      { type: "scene", sceneId: "J_X" },
-    ] as const) {
+    for (const at of [PARLOR, JUNCTION, MID_ROAD]) {
       setActorPosition(at);
       const set = buildPerceivableDirectory("actor", dgsm).items;
       expect(set).toEqual(everywhere);
       expect(set.has("ITEM_DAGGER")).toBe(false);
       expect(set.has("ITEM_COIN")).toBe(false);
+      expect(set.has("ITEM_KNIFE")).toBe(false);
     }
-
-    setActorPosition({ type: "road", roadId: "R_MAIN", position: 0.5 });
-    // ITEM_LAMP rides along from the adjacent node scene: the renderer prints
-    // J_X's whole description to anyone one hop away, tags and all, so the
-    // boundary has to accept what that paragraph just showed them. The hidden
-    // ITEM_COIN in the same scene still does not come with it — which is what
-    // this test is actually guarding.
-    expect(buildPerceivableDirectory("actor", dgsm).items).toEqual(everywhere);
   });
 });
 
-describe("hidden connections stay out of adjacency", () => {
-  it("filters a hidden scene exit from adjacentIds", () => {
-    const { dgsm } = makeWorld();
-    const loc = resolvePerceivedLocation(
-      { type: "scene", sceneId: "S_PARLOR" },
-      dgsm
-    );
-    expect(loc?.adjacentIds).toEqual(["S_SHOP"]);
-  });
-
-  it("derives node-scene adjacency from non-hidden connections, keeping roads", () => {
-    const { dgsm } = makeWorld();
-    const loc = resolvePerceivedLocation(
-      { type: "scene", sceneId: "J_X" },
-      dgsm
-    );
-    // S_CELLAR's connection is hidden, so it stays out of adjacency.
-    expect(loc?.adjacentIds.sort()).toEqual(["R_MAIN", "S_SHOP"]);
-  });
-
-  it("filters a hidden road access; endpoints are always visible", () => {
-    const { dgsm } = makeWorld();
-    const loc = resolvePerceivedLocation(
-      { type: "road", roadId: "R_MAIN", position: 0.5 },
-      dgsm
-    );
-    expect(loc?.adjacentIds.sort()).toEqual(["J_X", "J_Y", "S_SHOP"]);
-  });
-
-  it("keeps hidden places out of the directory's scene set", () => {
+describe("the scoped directory: only what the actor was shown", () => {
+  it("is the current place, its visible ways out, and its plain-view items", () => {
     const { dgsm, setActorPosition } = makeWorld();
-    setActorPosition({ type: "scene", sceneId: "S_PARLOR" });
+    setActorPosition(PARLOR);
+    const directory = buildPerceivableDirectory("actor", dgsm, {
+      knownIds: new Set(),
+    });
+    expect(directory.items).toEqual(new Set(["ITEM_CHAIR"]));
+    expect(directory.scenes).toEqual(new Set(["S_PARLOR", "S_SHOP"]));
+  });
+
+  it("adds what was noticed this minute — the item, and the place a concealed passage leads to", () => {
+    const { dgsm, setActorPosition } = makeWorld();
+    setActorPosition(PARLOR);
+    const directory = buildPerceivableDirectory("actor", dgsm, {
+      knownIds: new Set(),
+      noticed: {
+        itemIds: new Set(["ITEM_DAGGER"]),
+        connectionIds: new Set(["connection.parlor.cellar"]),
+      },
+    });
+    expect(directory.items.has("ITEM_DAGGER")).toBe(true);
+    expect(directory.scenes.has("S_CELLAR")).toBe(true);
+  });
+
+  it("adds real ids from the actor's own stream/memories and this minute's occurrences, never guesses", () => {
+    const { dgsm, setActorPosition } = makeWorld();
+    setActorPosition(PARLOR);
+    const directory = buildPerceivableDirectory("actor", dgsm, {
+      knownIds: new Set(["ITEM_KNIFE", "S_HUT", "ITEM_NOT_REAL", "S_NOWHERE"]),
+      shownIds: new Set(["ITEM_COIN"]),
+    });
+    expect(directory.items.has("ITEM_KNIFE")).toBe(true);
+    expect(directory.items.has("ITEM_COIN")).toBe(true);
+    expect(directory.scenes.has("S_HUT")).toBe(true);
+    expect(directory.items.has("ITEM_NOT_REAL")).toBe(false);
+    expect(directory.scenes.has("S_NOWHERE")).toBe(false);
+    // Uncited and never shown: still refused.
+    expect(directory.items.has("ITEM_DAGGER")).toBe(false);
+    expect(directory.scenes.has("S_CELLAR")).toBe(false);
+  });
+});
+
+describe("concealed connections stay out of adjacency", () => {
+  it("filters a concealed scene exit from adjacentIds", () => {
+    const { dgsm } = makeWorld();
+    expect(resolvePerceivedLocation(PARLOR, dgsm)?.adjacentIds).toEqual([
+      "S_SHOP",
+    ]);
+  });
+
+  it("derives node-scene adjacency from unconcealed connections, keeping roads", () => {
+    const { dgsm } = makeWorld();
+    // S_CELLAR's connection is concealed, so it stays out of adjacency.
+    expect(
+      resolvePerceivedLocation(JUNCTION, dgsm)?.adjacentIds.sort()
+    ).toEqual(["R_MAIN", "S_SHOP"]);
+  });
+
+  it("filters a concealed road access; endpoints are always visible", () => {
+    const { dgsm } = makeWorld();
+    expect(
+      resolvePerceivedLocation(MID_ROAD, dgsm)?.adjacentIds.sort()
+    ).toEqual(["J_X", "J_Y", "S_SHOP"]);
+  });
+
+  it("the legacy directory names every place; the renderer's adjacency still drops the concealed one", () => {
+    const { dgsm, setActorPosition } = makeWorld();
+    setActorPosition(PARLOR);
     const directory = buildPerceivableDirectory("actor", dgsm);
-    // World-wide: every real place is a real name.
     expect(directory.scenes.has("S_PARLOR")).toBe(true);
     expect(directory.scenes.has("S_SHOP")).toBe(true);
-    // Adjacency — what the RENDERER shows — still drops the unfound door, so
-    // the actor is never handed the cellar's id in the first place.
-    expect(
-      resolvePerceivedLocation({ type: "scene", sceneId: "S_PARLOR" }, dgsm)
-        ?.adjacentIds
-    ).toEqual(["S_SHOP"]);
+    // Adjacency — what the RENDERER shows — drops the concealed door, so the
+    // actor is never handed the cellar's id in the first place.
+    expect(resolvePerceivedLocation(PARLOR, dgsm)?.adjacentIds).toEqual([
+      "S_SHOP",
+    ]);
   });
 
   it("resolveLocationById agrees with resolvePerceivedLocation", () => {
     const { dgsm } = makeWorld();
     for (const id of ["S_PARLOR", "J_X", "R_MAIN"]) {
       const byId = resolveLocationById(id, dgsm);
-      expect(byId?.items.every((i) => !i.hidden)).toBe(true);
+      expect(
+        byId?.items.every((i) => byId?.description.includes(`[${i.id}]`))
+      ).toBe(true);
       expect(byId?.adjacentIds).not.toContain("S_CELLAR");
       expect(byId?.adjacentIds).not.toContain("S_HUT");
     }
   });
 });
 
-describe("revealing (flipping the hidden flag) restores visibility", () => {
-  it("a revealed item appears in the location and the directory", () => {
+describe("exposing something changes the world for everyone", () => {
+  it("an item cited into the description appears in the location and the directory", () => {
     const { dgsm, scene, junction, road, setActorPosition } = makeWorld();
 
-    const dagger = scene.items.find((i) => i.id === "ITEM_DAGGER");
-    if (dagger) dagger.hidden = false;
-    const coin = junction.items.find((i) => i.id === "ITEM_COIN");
-    if (coin) coin.hidden = false;
-    const knife = road.items.find((i) => i.id === "ITEM_KNIFE");
-    if (knife) knife.hidden = false;
+    scene.description += " A [ITEM_DAGGER] lies on the mantel.";
+    junction.description += " A [ITEM_COIN] glints in the dirt.";
+    road.description += " A [ITEM_KNIFE] shows in the ditch.";
 
     expect(
-      resolvePerceivedLocation(
-        { type: "scene", sceneId: "S_PARLOR" },
-        dgsm
-      )?.items.map((i) => i.id)
+      resolvePerceivedLocation(PARLOR, dgsm)?.items.map((i) => i.id)
     ).toEqual(["ITEM_CHAIR", "ITEM_DAGGER"]);
     expect(
-      resolvePerceivedLocation(
-        { type: "scene", sceneId: "J_X" },
-        dgsm
-      )?.items.map((i) => i.id)
+      resolvePerceivedLocation(JUNCTION, dgsm)?.items.map((i) => i.id)
     ).toEqual(["ITEM_LAMP", "ITEM_COIN"]);
     expect(
-      resolvePerceivedLocation(
-        { type: "road", roadId: "R_MAIN", position: 0.5 },
-        dgsm
-      )?.items.map((i) => i.id)
+      resolvePerceivedLocation(MID_ROAD, dgsm)?.items.map((i) => i.id)
     ).toEqual(["ITEM_GLOVE", "ITEM_KNIFE"]);
 
-    setActorPosition({ type: "scene", sceneId: "S_PARLOR" });
-    // All three were flipped visible above; revealing is what puts them in.
-    const revealed = buildPerceivableDirectory("actor", dgsm).items;
-    expect(revealed.has("ITEM_DAGGER")).toBe(true);
-    expect(revealed.has("ITEM_COIN")).toBe(true);
-    expect(revealed.has("ITEM_KNIFE")).toBe(true);
+    setActorPosition(PARLOR);
+    const exposed = buildPerceivableDirectory("actor", dgsm).items;
+    expect(exposed.has("ITEM_DAGGER")).toBe(true);
+    expect(exposed.has("ITEM_COIN")).toBe(true);
+    expect(exposed.has("ITEM_KNIFE")).toBe(true);
   });
 
-  it("a revealed connection joins adjacency and the directory", () => {
+  it("an unconcealed connection joins adjacency and the scoped directory", () => {
     const { dgsm, scene, junction, road, setActorPosition } = makeWorld();
 
-    const cellarExit = scene.connections.find(
-      (c) => c.id === "connection.parlor.cellar"
-    );
-    if (cellarExit) cellarExit.hidden = false;
-    const junctionCellar = junction.connections.find(
-      (c) => c.id === "connection.junc_x.cellar"
-    );
-    if (junctionCellar) junctionCellar.hidden = false;
-    const hutAccess = road.connections.find(
-      (c) => c.id === "connection.r_main.hut"
-    );
-    if (hutAccess) hutAccess.hidden = false;
+    for (const c of [
+      ...scene.connections,
+      ...junction.connections,
+      ...road.connections,
+    ]) {
+      if (c.concealed) c.concealed = false;
+    }
 
+    expect(resolvePerceivedLocation(PARLOR, dgsm)?.adjacentIds).toEqual([
+      "S_SHOP",
+      "S_CELLAR",
+    ]);
     expect(
-      resolvePerceivedLocation({ type: "scene", sceneId: "S_PARLOR" }, dgsm)
-        ?.adjacentIds
-    ).toEqual(["S_SHOP", "S_CELLAR"]);
-    expect(
-      resolvePerceivedLocation(
-        { type: "scene", sceneId: "J_X" },
-        dgsm
-      )?.adjacentIds.sort()
+      resolvePerceivedLocation(JUNCTION, dgsm)?.adjacentIds.sort()
     ).toEqual(["R_MAIN", "S_CELLAR", "S_SHOP"]);
     expect(
-      resolvePerceivedLocation(
-        { type: "road", roadId: "R_MAIN", position: 0.5 },
-        dgsm
-      )?.adjacentIds.sort()
+      resolvePerceivedLocation(MID_ROAD, dgsm)?.adjacentIds.sort()
     ).toEqual(["J_X", "J_Y", "S_HUT", "S_SHOP"]);
 
-    setActorPosition({ type: "scene", sceneId: "S_PARLOR" });
+    setActorPosition(PARLOR);
     expect(
-      buildPerceivableDirectory("actor", dgsm).scenes.has("S_CELLAR")
+      buildPerceivableDirectory("actor", dgsm, { knownIds: new Set() }).scenes.has(
+        "S_CELLAR"
+      )
     ).toBe(true);
   });
 });
 
-// `hidden` is the world's answer to "can anyone see this"; `discoveredBy` is
-// this viewer's answer to "have I found it". One passage, both facts on it —
-// so nothing has to be kept in step with anything else.
-describe("a passage one character has found", () => {
-  function world() {
-    const scenes = new Map<string, DynamicScene>([
-      [
-        "SCN_A",
-        {
-          id: "SCN_A",
-          name: "Dock",
-          description: "d",
-          conditions: [],
-          items: [],
-          connections: [
-            {
-              id: "connection.a.inner",
-              targetId: "SCN_B",
-              hidden: true,
-              discoveredBy: ["npc_finder"],
-            },
-          ],
-        } as unknown as DynamicScene,
-      ],
-      [
-        "SCN_B",
-        {
-          id: "SCN_B",
-          name: "Hall",
-          description: "d",
-          conditions: [],
-          items: [],
-          connections: [],
-        } as unknown as DynamicScene,
-      ],
-    ]);
-    return {
-      getScene: (id: string) => scenes.get(id) ?? null,
-      getState: () => ({ scenes, roads: new Map(), characterPositions: {} }),
-      getSceneConditions: () => [],
-      getTopology: () => ({
-        nodeSceneIds: new Set(),
-        roads: new Map(),
-        sceneToRoads: new Map(),
-        sceneToParent: new Map(),
-      }),
-      getVehicleByInterior: () => null,
-      getVehicles: () => [],
-    } as unknown as DynamicGameStateManager;
-  }
-  const at = { type: "scene" as const, sceneId: "SCN_A" };
-
-  it("is in the finder's perception", () => {
-    const loc = resolvePerceivedLocation(at, world(), "npc_finder");
-    expect(loc?.adjacentIds).toContain("SCN_B");
+// A concealed passage is the same for everyone; what differs between viewers
+// is only whether THIS one noticed it this minute. There is no per-viewer
+// "found by" list on the passage.
+describe("a concealed passage one viewer noticed", () => {
+  it("is in the perception of the viewer who noticed it", () => {
+    const { dgsm } = makeWorld();
+    expect(
+      resolvePerceivedLocation(
+        PARLOR,
+        dgsm,
+        "npc_finder",
+        passages(["connection.parlor.cellar"])
+      )?.adjacentIds
+    ).toContain("S_CELLAR");
+    expect(
+      resolvePerceivedLocation(
+        MID_ROAD,
+        dgsm,
+        "npc_finder",
+        passages(["connection.r_main.hut"])
+      )?.adjacentIds
+    ).toContain("S_HUT");
   });
 
   it("is not in anyone else's", () => {
-    const loc = resolvePerceivedLocation(at, world(), "npc_other");
-    expect(loc?.adjacentIds).not.toContain("SCN_B");
+    const { dgsm } = makeWorld();
+    expect(
+      resolvePerceivedLocation(PARLOR, dgsm, "npc_other")?.adjacentIds
+    ).not.toContain("S_CELLAR");
   });
 
   it("is not there for a viewerless read — naming a place is not looking", () => {
-    const loc = resolvePerceivedLocation(at, world());
-    expect(loc?.adjacentIds).not.toContain("SCN_B");
+    const { dgsm } = makeWorld();
+    expect(resolvePerceivedLocation(PARLOR, dgsm)?.adjacentIds).not.toContain(
+      "S_CELLAR"
+    );
+  });
+});
+
+describe("unnoticedCandidates", () => {
+  it("lists the uncited items and concealed passages where the viewer stands", () => {
+    const { dgsm } = makeWorld();
+    const parlor = unnoticedCandidates(PARLOR, dgsm);
+    expect(parlor.items.map((i) => i.id)).toEqual(["ITEM_DAGGER"]);
+    expect(parlor.connectionIds).toEqual(["connection.parlor.cellar"]);
+
+    const road = unnoticedCandidates(MID_ROAD, dgsm);
+    expect(road.items.map((i) => i.id)).toEqual(["ITEM_KNIFE"]);
+    expect(road.connectionIds).toEqual(["connection.r_main.hut"]);
+  });
+
+  it("is empty where everything is in plain view — no request needed", () => {
+    const { dgsm } = makeWorld();
+    expect(
+      unnoticedCandidates({ type: "scene", sceneId: "S_SHOP" }, dgsm)
+    ).toEqual({ items: [], connectionIds: [] });
+    expect(unnoticedCandidates(null, dgsm)).toEqual({
+      items: [],
+      connectionIds: [],
+    });
   });
 });

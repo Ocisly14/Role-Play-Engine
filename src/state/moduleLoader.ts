@@ -20,6 +20,7 @@ import type { DynamicGameState } from "./DynamicGameState.js";
 import { normalizeSpot } from "./characterSpot.js";
 import { ISO_DATE_RE, makeDateTime } from "./gameClock.js";
 import {
+  ModuleSchemaError,
   buildRoadV2,
   buildSceneV2,
   parsePlaceFileV2,
@@ -152,6 +153,22 @@ export async function loadModule(
     where: { moduleId },
   });
   const npcs = npcRows.map((row) => row.data as unknown as DynamicNPCProfile);
+  // A character can point only at what they were shown, and a seeded memory
+  // is shown to them — so every tag in one must name something real, and a
+  // map memory must name at least one place, or the character cannot go there.
+  validateSeededMemoryTags(npcs, {
+    placeIds: new Set([
+      ...placeIds,
+      ...vehicles.map((v) => v.id),
+      ...vehicles.map((v) => v.interiorSceneId),
+    ]),
+    itemIds: new Set([
+      ...[...scenes.values()].flatMap((s) => (s.items ?? []).map((i) => i.id)),
+      ...[...roads.values()].flatMap((r) => (r.items ?? []).map((i) => i.id)),
+      ...npcs.flatMap((n) => (n.inventory ?? []).map((i) => i.id)),
+    ]),
+    npcIds: new Set(npcs.map((n) => n.id)),
+  });
 
   // Load scripted events from disk: `<modsDir>/<moduleName>/scripted-events/*.json`.
   // Missing directory → empty array (module is valid with no scripted events).
@@ -327,6 +344,52 @@ export async function createSession(
         metadata: entry.metadata,
       });
     }
+  }
+}
+
+const MEMORY_TAG_RE = /\[([^\[\]\s]+)\]/g;
+
+/**
+ * Every `[tag]` in a seeded memory names a real place, item or character, and
+ * every `map` memory carries at least one place tag. Throws one aggregated
+ * ModuleSchemaError, like the place-file checks.
+ */
+export function validateSeededMemoryTags(
+  npcs: DynamicNPCProfile[],
+  known: {
+    placeIds: ReadonlySet<string>;
+    itemIds: ReadonlySet<string>;
+    npcIds: ReadonlySet<string>;
+  }
+): void {
+  const problems: string[] = [];
+  for (const npc of npcs) {
+    for (const [i, entry] of (npc.memory ?? []).entries()) {
+      const content = entry.content ?? "";
+      const tags = [...content.matchAll(MEMORY_TAG_RE)].map((m) => m[1]);
+      for (const tag of tags) {
+        if (
+          !known.placeIds.has(tag) &&
+          !known.itemIds.has(tag) &&
+          !known.npcIds.has(tag)
+        ) {
+          problems.push(
+            `npc ${npc.id} memory[${i}]: [${tag}] names nothing in this module`
+          );
+        }
+      }
+      if (
+        canonicalMemoryType(entry.type, `npc ${npc.id}`) === "map" &&
+        !tags.some((t) => known.placeIds.has(t))
+      ) {
+        problems.push(
+          `npc ${npc.id} memory[${i}]: a map memory must tag at least one place it names, as [SCN_*] / [ROAD_*] — a place the character cannot cite is a place they cannot go`
+        );
+      }
+    }
+  }
+  if (problems.length > 0) {
+    throw new ModuleSchemaError("__seeded_memories__", problems);
   }
 }
 

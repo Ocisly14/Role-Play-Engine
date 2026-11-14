@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import * as path from "node:path";
-import type { PrismaClient } from "@prisma/client";
+import type { NpcMemoryType, PrismaClient } from "@prisma/client";
+import type { EngineAction } from "../engine/actions/types.js";
 import {
   type TickEngine,
   createTickEngine,
@@ -12,6 +13,22 @@ import type {
 } from "../engine/core/types.js";
 import { createDefaultSubsystemRegistry } from "../engine/registerDefaults.js";
 import type { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
+import type { PlayerPort, PlayerStepTranslator } from "../player/playerPort.js";
+import {
+  PLAYER_STATE_KEY,
+  type PlayerMode,
+  type PlayerPending,
+  type PlayerState,
+  createPlayerState,
+  isPlayerState,
+  setQueue,
+  switchMode,
+} from "../player/playerState.js";
+import {
+  type VisitTopology,
+  type VisitedMap,
+  recordPosition,
+} from "../player/visitedMap.js";
 import { LLMRoleSimAgent } from "../roleSim/llmAgent.js";
 import { NpcActionController } from "../roleSim/npcActionController.js";
 import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
@@ -37,9 +54,12 @@ import {
 } from "./runtimePersistence.js";
 import {
   DEFAULT_TICK_INTERVAL_MS,
+  type PauseReason,
   type PlaybackStatus,
+  type PlayerView,
   type SimulationConfig,
   type SimulationEvent,
+  type SimulationEventType,
   type SimulationState,
   type SimulationStatus,
   type StopReason,
@@ -47,6 +67,9 @@ import {
 
 const ONE_MINUTE_MS = 60_000;
 const TICK_ENGINE_PERSISTED_KEY = "_tickEngine";
+/** The wake gate's held occurrences (design §6.1): saved so a restart never
+ *  drops what a sleeping character has yet to perceive. */
+export const PENDING_DELIVERY_KEY = "_pendingDelivery";
 
 function alignToMinuteBoundary(timestampMs: number): number {
   const remainder = timestampMs % ONE_MINUTE_MS;
@@ -104,12 +127,80 @@ export class SimulationRunner {
   private broadcastCallback: ((events: SimulationEvent[]) => void) | null =
     null;
 
+  // ==================== The player ====================
+
+  /** The player's state, or null when this session has no player. Saved
+   *  with the runtime under PLAYER_STATE_KEY, so a pause that is waiting on
+   *  the player survives a restart. */
+  private playerState: PlayerState | null = null;
+  /** Held occurrences from a saved runtime, handed to the controller when it
+   *  is built. */
+  private pendingDeliveryState: unknown = undefined;
+  /** Why the runner is paused; null while it runs (and before it ever ran). */
+  private pauseReason: PauseReason | null = null;
+  /** The player's whole stream, for the view. The controller keeps its own,
+   *  possibly compacted, copy for the prompts. */
+  private playerPerceptions: PlayerView["perceptions"] = [];
+  /** Loading the player's stream back after a restart. Awaited before the
+   *  controller is built, so no live paragraph can arrive ahead of it. */
+  private playerStreamLoad: Promise<void> | null = null;
+  /** The report of the tick being executed, stashed by `tickCompleted`. */
+  private lastTickReport: TickReport | null = null;
+  /** One tick (and, when scheduled, its post-tick transition) in flight. */
+  private tickCycle: Promise<void> | null = null;
+  /** Bumped each time a post-tick cycle is claimed. A post-tick waiter that
+   *  sees it moved knows another one already ticked and scheduled. */
+  private postTickGeneration = 0;
+  /** Player operations run one at a time, each between two ticks. */
+  private playerOpChain: Promise<void> = Promise.resolve();
+  /** The player operation currently holding the world still. */
+  private activePlayerOp: Promise<void> | null = null;
+
+  private readonly playerTranslator?: PlayerStepTranslator;
+  private readonly playerSplitter: (text: string) => Promise<string[]>;
+  private readonly onAutosaveRequested: (info: {
+    characterId: string;
+    gameDateTime: string;
+    sceneId: string;
+  }) => Promise<void>;
+
+  /** What the controller reads and writes the player through. Always handed
+   *  over: with no player, `playerId()` is null and every character is an
+   *  NPC. */
+  private readonly playerPort: PlayerPort = {
+    playerId: () => this.playerState?.characterId ?? null,
+    get: () => {
+      if (!this.playerState) throw new Error("this session has no player");
+      return this.playerState;
+    },
+    set: (next) => {
+      this.playerState = next;
+    },
+    requestPause: (pending) => this.requestPlayerPause(pending),
+  };
+
   constructor(params: {
     config: SimulationConfig;
     dgsm: DynamicGameStateManager;
     language: string;
     memoryManager?: NpcMemoryManager;
     prisma: PrismaClient;
+    /** Manual mode: turns a queued step into a decision. Absent, a step that
+     *  comes up pauses for the player instead. */
+    playerTranslator?: PlayerStepTranslator;
+    /** Manual mode: splits what the player typed into queue steps. Defaults
+     *  to one step holding the whole text. */
+    playerSplitter?: (text: string) => Promise<string[]>;
+    /** Called once at the end of a tick in which the player's sleep began,
+     *  after the runtime was saved. Defaults to doing nothing. Runs INSIDE the
+     *  tick cycle: it must not call a player operation (submitPlayerInput,
+     *  setPlayerMode, …) and await it — the operation waits for the tick to
+     *  end, and the tick waits for the hook: a deadlock. */
+    onAutosaveRequested?: (info: {
+      characterId: string;
+      gameDateTime: string;
+      sceneId: string;
+    }) => Promise<void>;
   }) {
     this.config = params.config;
     this.sessionId = params.config.sessionId;
@@ -117,6 +208,16 @@ export class SimulationRunner {
     this.language = params.language;
     this.memoryManager = params.memoryManager;
     this.prisma = params.prisma;
+    this.playerTranslator = params.playerTranslator;
+    this.playerSplitter =
+      params.playerSplitter ??
+      (async (text) => {
+        const step = text.trim();
+        if (step === "") throw new Error("empty instruction");
+        return [step];
+      });
+    this.onAutosaveRequested =
+      params.onAutosaveRequested ?? (async () => undefined);
 
     this.events = new SimulationEventEmitter(this.sessionId, this.dgsm);
 
@@ -239,6 +340,11 @@ export class SimulationRunner {
     ticksExecuted: number;
     stopReason?: StopReason;
     persistedTickEngineState?: ReturnType<TickEngine["serialize"]>;
+    /** `gameState[PENDING_DELIVERY_KEY]` of the saved runtime. */
+    persistedPendingDelivery?: unknown;
+    /** `gameState[PLAYER_STATE_KEY]` of the saved runtime. Adopted only when
+     *  it is a well-formed PlayerState. */
+    persistedPlayerState?: unknown;
   }): void {
     this.state =
       params.state === "running" || params.state === "initializing"
@@ -254,12 +360,67 @@ export class SimulationRunner {
     if (params.persistedTickEngineState) {
       this.pendingTickEngineState = params.persistedTickEngineState;
     }
+    if (params.persistedPendingDelivery !== undefined) {
+      this.pendingDeliveryState = params.persistedPendingDelivery;
+    }
+
+    if (params.persistedPlayerState !== undefined) {
+      if (isPlayerState(params.persistedPlayerState)) {
+        this.playerState = params.persistedPlayerState;
+      } else {
+        console.warn(
+          `[SimulationRunner] ${this.sessionId}: saved player state is malformed; the session continues without a player`
+        );
+        this.playerState = null;
+      }
+    }
+    const player = this.playerState;
+    if (player) {
+      // A player who died without the pause being recorded (a crash between
+      // the two) is dead all the same.
+      if (
+        !this.dgsm.isNpcAlive(player.characterId) &&
+        player.pending?.kind !== "dead"
+      ) {
+        this.playerState = this.withDeath(player);
+      }
+      this.playerPerceptions = [];
+      this.playerStreamLoad = this.loadPlayerStream(player.characterId);
+    }
+
+    // Loaded paused, a question still waiting is still the player's to
+    // answer — and answering it resumes the world, as it would have before
+    // the restart. Anything else stays paused until someone resumes it.
+    const pending = this.playerState?.pending ?? null;
+    this.pauseReason =
+      this.state !== "paused"
+        ? null
+        : pending?.kind === "dead"
+          ? "dead"
+          : pending
+            ? "player"
+            : "manual";
   }
 
   async saveRuntime(): Promise<void> {
     const gameState = this.dgsm.serialize();
     if (this.tickEngine) {
       gameState[TICK_ENGINE_PERSISTED_KEY] = this.tickEngine.serialize();
+    } else if (this.pendingTickEngineState) {
+      // Saved before the first tick of a resumed session: the engine has not
+      // been rebuilt yet, and its queue must not be dropped from the row.
+      gameState[TICK_ENGINE_PERSISTED_KEY] = this.pendingTickEngineState;
+    }
+    if (this.playerState) {
+      gameState[PLAYER_STATE_KEY] = this.playerState;
+    }
+    // Optional calls: a controller test double need not implement the
+    // wake-gate buffer.
+    const pendingDelivery = this.npcController?.serializePendingDelivery?.();
+    if (pendingDelivery !== undefined) {
+      gameState[PENDING_DELIVERY_KEY] = pendingDelivery;
+    } else if (this.pendingDeliveryState !== undefined) {
+      gameState[PENDING_DELIVERY_KEY] = this.pendingDeliveryState;
     }
     await persistSimulationRuntime({
       prisma: this.prisma,
@@ -281,6 +442,7 @@ export class SimulationRunner {
     this.state = "initializing";
     this.shouldStop = false;
     this.shouldPause = false;
+    this.pauseReason = null;
     const event = this.emitStateChange();
     await this.persistAndBroadcastEvents([event]);
     await this.saveRuntime();
@@ -290,13 +452,19 @@ export class SimulationRunner {
       return;
     }
 
-    await this.executeTick();
-    await this.handlePostTickTransition();
+    await this.runTickCycle(true);
   }
 
   async pause(): Promise<void> {
+    // Pressed while the world waits on the player: it now stays paused after
+    // they answer, until someone resumes it.
+    if (this.state === "paused" && this.pauseReason === "player") {
+      this.pauseReason = "manual";
+      return;
+    }
     if (this.state !== "running" && this.state !== "initializing") return;
     this.shouldPause = true;
+    this.pauseReason = "manual";
 
     if (!this.tickInProgress) {
       this.clearScheduledTick();
@@ -307,8 +475,15 @@ export class SimulationRunner {
     }
   }
 
+  /** ▶ from outside. Refused while the world waits on the player — a dead
+   *  player's town does not run on without them (load or start anew), and a
+   *  waiting question or decision is answered, which resumes the world by
+   *  itself. `step()` stays the debug way past either. */
   async resume(): Promise<void> {
     if (this.state !== "paused") return;
+    const pending = this.playerState?.pending ?? null;
+    if (pending?.kind === "dead") throw new Error("player is dead");
+    if (pending) throw new Error("the player has not answered yet");
     return this.start();
   }
 
@@ -317,7 +492,7 @@ export class SimulationRunner {
 
     for (let i = 0; i < ticks; i++) {
       if (this.isTerminal()) break;
-      await this.executeTick();
+      await this.runTickCycle(false);
     }
   }
 
@@ -333,6 +508,10 @@ export class SimulationRunner {
     profile: DynamicNPCProfile,
     intent: string
   ): Promise<void> {
+    // The injected character IS the player, and a session has one.
+    if (this.playerState) {
+      throw new Error("a player character already exists");
+    }
     if (this.state !== "paused") {
       throw new Error(
         `Cannot inject character while simulation is ${this.state}. Pause first.`
@@ -351,6 +530,19 @@ export class SimulationRunner {
     injectCharacterIntoState(this.dgsm, profile, entrySceneId);
 
     const gameState = this.dgsm.getState();
+    const player = createPlayerState(profile.id);
+    this.playerState = {
+      ...player,
+      // Where they walk in is the first place they have been.
+      visited: recordPosition(
+        player.visited,
+        this.dgsm.getCharacterPosition(profile.id),
+        this.visitTopology(),
+        gameState.gameDateTime
+      ),
+    };
+    this.playerPerceptions = [];
+    this.playerStreamLoad = null;
     if (this.memoryManager) {
       await this.memoryManager.add({
         npcId: profile.id,
@@ -378,6 +570,14 @@ export class SimulationRunner {
       this.sessionId,
       characterId
     );
+    if (this.playerState?.characterId === characterId) {
+      this.playerState = null;
+      this.playerPerceptions = [];
+      this.playerStreamLoad = null;
+      if (this.pauseReason === "player" || this.pauseReason === "dead") {
+        this.pauseReason = "manual";
+      }
+    }
     await this.saveRuntime();
   }
 
@@ -415,6 +615,546 @@ export class SimulationRunner {
     );
   }
 
+  // ==================== The player: public surface ====================
+
+  getPlayerView(): PlayerView | null {
+    const player = this.playerState;
+    if (!player) return null;
+    const live = this.livePlayerAction(player.characterId);
+    return {
+      // A copy: the caller must not be able to edit the live state.
+      state: structuredClone(player),
+      alive: this.dgsm.isNpcAlive(player.characterId),
+      currentAction: live
+        ? {
+            description: live.command.description,
+            progressMinutes: live.progressMinutes,
+            ...(live.resolvedDurationTicks !== undefined
+              ? { resolvedDurationTicks: live.resolvedDurationTicks }
+              : {}),
+          }
+        : null,
+      perceptions: this.playerPerceptions.slice(),
+      paused: this.state === "paused",
+    };
+  }
+
+  /** Manual: what the player typed becomes the queue, and its first step
+   *  goes in now. Delegated: the friend speaks — an answer when a question
+   *  is waiting, otherwise words the character reads next tick (the world
+   *  is neither paused nor resumed for them). */
+  async submitPlayerInput(text: string): Promise<void> {
+    if (text.trim() === "") throw new Error("empty instruction");
+    await this.playerOp(async () => {
+      const player = this.requireLivePlayer();
+      if (player.mode === "manual") {
+        const steps = (await this.playerSplitter(text))
+          .map((s) => s.trim())
+          .filter((s) => s !== "");
+        if (steps.length === 0) throw new Error("empty instruction");
+        const pending = this.requireLivePlayer().pending;
+        this.playerState = setQueue(this.requireLivePlayer(), steps);
+        await this.resolvePlayer({ kind: "steps" }, pending);
+        return;
+      }
+      if (player.pending?.kind === "consult") {
+        await this.answerConsult(text);
+        return;
+      }
+      this.playerState = {
+        ...player,
+        friendLog: [
+          ...player.friendLog,
+          { gameDateTime: this.dgsm.getGameDateTime(), answer: text.trim() },
+        ],
+        forceWake: true,
+      };
+    });
+  }
+
+  /** "Go on": the current action runs on, or the queue's next step goes in. */
+  async continuePlayer(): Promise<void> {
+    await this.playerOp(async () => {
+      const pending = this.requireLivePlayer().pending;
+      await this.resolvePlayer({ kind: "continue" }, pending);
+      // A question let go unanswered still happened: the character remembers
+      // asking it, and that no answer came.
+      const player = this.playerState;
+      if (pending?.kind === "consult" && player) {
+        this.playerState = {
+          ...player,
+          friendLog: [
+            ...player.friendLog,
+            {
+              gameDateTime: this.dgsm.getGameDateTime(),
+              question: pending.question,
+              answer: "(no answer)",
+            },
+          ],
+        };
+      }
+    });
+  }
+
+  /** The friend answers the question the character asked. */
+  async answerFriend(text: string): Promise<void> {
+    if (text.trim() === "") throw new Error("empty answer");
+    await this.playerOp(async () => {
+      await this.answerConsult(text);
+    });
+  }
+
+  async setPlayerMode(mode: PlayerMode): Promise<void> {
+    await this.playerOp(async () => {
+      // To delegated, a decision waiting on the player is the character's
+      // now: `switchMode` clears it and wakes them, and the world — when it
+      // was paused for the player — resumes as after any answer.
+      let next = switchMode(this.requireLivePlayer(), mode);
+      // The friend's unprompted words were for the delegated character; the
+      // player now speaks for themselves.
+      if (mode === "manual" && next.forceWake) {
+        next = { ...next, forceWake: false };
+      }
+      this.playerState = next;
+    });
+  }
+
+  /** Replace the steps not yet done. Nothing is submitted: the next step
+   *  goes in when the current one ends or the player says "go on". */
+  async replacePlayerQueue(steps: string[]): Promise<void> {
+    await this.playerOp(async () => {
+      const player = this.requireLivePlayer();
+      if (player.mode !== "manual") {
+        throw new Error("the step queue belongs to manual mode");
+      }
+      const texts = steps.map((s) => s.trim()).filter((s) => s !== "");
+      // Only the steps still waiting are replaced: the running one keeps
+      // its action id (so its end settles it) and the done ones stay as
+      // history.
+      const kept = player.queue.filter((q) => q.status !== "pending");
+      const fresh = setQueue({ ...player, queue: [] }, texts).queue;
+      this.playerState = { ...player, queue: [...kept, ...fresh] };
+    });
+  }
+
+  /** The player edits their character's memories directly — the same rows
+   *  the character writes with `writeMemory`. */
+  async editPlayerMemory(
+    op:
+      | { op: "add"; type: NpcMemoryType; content: string }
+      | { op: "replace"; memoryId: string; content: string }
+      | { op: "delete"; memoryId: string }
+  ): Promise<void> {
+    await this.playerOp(async () => {
+      const player = this.requireLivePlayer();
+      const memory = this.memoryManager;
+      if (!memory) throw new Error("this session has no memory store");
+      const npcId = player.characterId;
+      switch (op.op) {
+        case "add": {
+          const content = op.content.trim();
+          if (content === "") throw new Error("empty memory");
+          // `writeMemory` refuses these too: a view of someone needs to say
+          // who, and the relationship graph is written alongside it.
+          if (op.type === "relationship") {
+            throw new Error(
+              "a relationship memory needs the person it is about; write it in play"
+            );
+          }
+          const position = this.dgsm.getCharacterPosition(npcId);
+          await memory.add({
+            npcId,
+            sessionId: this.sessionId,
+            moduleId: this.config.moduleId,
+            type: op.type,
+            content,
+            gameDateTime: this.dgsm.getGameDateTime(),
+            ...(position
+              ? { location: this.dgsm.resolveLocationId(position) }
+              : {}),
+          });
+          return;
+        }
+        case "replace": {
+          const content = op.content.trim();
+          if (content === "") throw new Error("empty memory");
+          const ok = await memory.reviseOwn({
+            memoryId: op.memoryId,
+            sessionId: this.sessionId,
+            npcId,
+            content,
+            // As `writeMemory`'s replace stamps it.
+            metadata: { revisedAt: this.dgsm.getGameDateTime() },
+          });
+          if (!ok) throw new Error(`memory "${op.memoryId}" not found`);
+          return;
+        }
+        case "delete": {
+          const ok = await memory.retractOwn({
+            memoryId: op.memoryId,
+            sessionId: this.sessionId,
+            npcId,
+          });
+          if (!ok) throw new Error(`memory "${op.memoryId}" not found`);
+          return;
+        }
+      }
+    });
+  }
+
+  // ==================== The player: internals ====================
+
+  /** Run one player operation between two ticks: wait for the tick in
+   *  flight, hold the next one off while `fn` runs, then save — the answer
+   *  and whatever the controller did with it must survive a restart. Resumes
+   *  the world afterwards only when it was paused for the player and nothing
+   *  new is waiting on them; a world someone paused by hand stays paused. */
+  private async playerOp(fn: () => Promise<void>): Promise<void> {
+    const prev = this.playerOpChain;
+    let release: () => void = () => undefined;
+    const mine = new Promise<void>((resolve) => {
+      release = () => resolve();
+    });
+    this.playerOpChain = prev.then(() => mine);
+    await prev;
+
+    let resume = false;
+    try {
+      while (this.tickCycle) {
+        await this.tickCycle.catch(() => undefined);
+      }
+      // Claimed in the same synchronous step as the last check above, so no
+      // tick can start in between.
+      this.activePlayerOp = mine;
+      if (this.state === "stopped" || this.state === "completed") {
+        throw new Error("simulation has ended");
+      }
+
+      const events: SimulationEvent[] = [];
+      const collect = (event: SimulationEvent): void => {
+        events.push(event);
+      };
+      this.events.on("simulation_event", collect);
+      const before = this.playerState;
+      try {
+        await fn();
+        // The controller paused again while the world was running: stop now,
+        // not a tick later.
+        if (
+          this.shouldPause &&
+          (this.state === "running" || this.state === "initializing")
+        ) {
+          this.shouldPause = false;
+          this.clearScheduledTick();
+          this.state = "paused";
+          this.emitStateChange();
+        }
+        this.emitPlayerChanges(before);
+      } finally {
+        this.events.off("simulation_event", collect);
+      }
+      await this.persistAndBroadcastEvents(events);
+      // A paragraph rendered while paused (an empty stream falls back to a
+      // fresh render) is flushed now rather than with the next tick.
+      await this.persistPerceptions();
+      await this.saveRuntime();
+
+      resume =
+        this.state === "paused" &&
+        this.pauseReason === "player" &&
+        this.playerState?.pending === null;
+    } finally {
+      this.activePlayerOp = null;
+      release();
+    }
+    // Not awaited: the operation is done once its own work is applied and
+    // saved. The resumed world's first tick (model calls included) is the
+    // world's business, reported through its own events.
+    if (resume) {
+      void this.start().catch((err) => {
+        console.error(
+          "[SimulationRunner] resume after the player answered failed:",
+          err
+        );
+      });
+    }
+  }
+
+  /** The player, alive. Every operation but the view starts here. */
+  private requireLivePlayer(): PlayerState {
+    const player = this.playerState;
+    if (!player) throw new Error("this session has no player");
+    if (
+      player.pending?.kind === "dead" ||
+      !this.dgsm.isNpcAlive(player.characterId)
+    ) {
+      throw new Error("player is dead");
+    }
+    return player;
+  }
+
+  /** Hand the answer to the controller, then clear what it answered — only
+   *  after it returns and only if it is still the same pause. If the controller
+   *  paused again, its new question stays. */
+  private async resolvePlayer(
+    input: { kind: "continue" } | { kind: "steps" } | { kind: "advice" },
+    answered: PlayerPending | null
+  ): Promise<void> {
+    const { controller } = await this.ensureTickEngine();
+    await controller.resolvePlayer(input);
+    const player = this.playerState;
+    if (answered && player && player.pending === answered) {
+      this.playerState = { ...player, pending: null };
+    }
+  }
+
+  private async answerConsult(text: string): Promise<void> {
+    const player = this.requireLivePlayer();
+    const pending = player.pending;
+    if (pending?.kind !== "consult") {
+      throw new Error("no question is waiting for an answer");
+    }
+    this.playerState = {
+      ...player,
+      friendLog: [
+        ...player.friendLog,
+        {
+          gameDateTime: this.dgsm.getGameDateTime(),
+          question: pending.question,
+          answer: text.trim(),
+        },
+      ],
+    };
+    // The controller reads the answer from `friendLog` while it decides, so
+    // the note goes in first; if the decision throws, it comes out again —
+    // a retry must not find the same answer twice.
+    try {
+      await this.resolvePlayer({ kind: "advice" }, pending);
+    } catch (err) {
+      const now = this.playerState;
+      if (now) this.playerState = { ...now, friendLog: player.friendLog };
+      throw err;
+    }
+  }
+
+  /** PlayerPort.requestPause: record what the player must answer, and pause
+   *  after this tick when the world is running. A manual pause already
+   *  requested keeps its reason — answering must not override it. */
+  private requestPlayerPause(pending: PlayerPending): void {
+    const player = this.playerState;
+    if (!player) return;
+    this.playerState = { ...player, pending };
+    if (this.state === "running" || this.state === "initializing") {
+      this.shouldPause = true;
+      if (this.pauseReason === null) this.pauseReason = "player";
+    }
+  }
+
+  private withDeath(player: PlayerState): PlayerState {
+    return {
+      ...player,
+      queue: [],
+      forceWake: false,
+      pending: { kind: "dead", since: this.dgsm.getGameDateTime() },
+    };
+  }
+
+  /** Emit `player_state` when the state object changed since `before`, and
+   *  `player_pending` when a new question or decision is now waiting. Goes
+   *  through the emitter, so whoever is collecting (the tick, or a player
+   *  operation) persists and broadcasts it. */
+  private emitPlayerChanges(before: PlayerState | null): void {
+    const player = this.playerState;
+    if (!player || player === before) return;
+    const gameDateTime = this.dgsm.getGameDateTime();
+    const location = this.playerLocation(player.characterId);
+    const pending = player.pending;
+    if (pending && pending.kind !== "dead" && pending !== before?.pending) {
+      this.events.emitSimulationEvent(
+        "player_pending",
+        player.characterId,
+        location,
+        gameDateTime,
+        { pending }
+      );
+    }
+    this.events.emitSimulationEvent(
+      "player_state",
+      player.characterId,
+      location,
+      gameDateTime,
+      { state: player }
+    );
+  }
+
+  private playerLocation(characterId: string): string {
+    const position = this.dgsm.getCharacterPosition(characterId);
+    return position ? this.dgsm.resolveLocationId(position) : "unknown";
+  }
+
+  /** The player's live action (active preferred, else queued). Before the
+   *  first tick of a resumed session the engine is not rebuilt yet, so the
+   *  saved snapshot answers instead. */
+  private livePlayerAction(characterId: string): EngineAction | undefined {
+    const actions: ReadonlyArray<EngineAction> = this.tickEngine
+      ? this.tickEngine.getActorActions(characterId)
+      : (this.pendingTickEngineState?.actions ?? []).filter(
+          (a) => a.command.actorId === characterId
+        );
+    return (
+      actions.find((a) => a.status === "active") ??
+      actions.find((a) => a.status === "queued")
+    );
+  }
+
+  /** Roads as the visited map needs them. */
+  private visitTopology(): VisitTopology {
+    return {
+      road: (id) => {
+        const road = this.dgsm.getRoad(id);
+        return road
+          ? { endpointA: road.endpointA, endpointB: road.endpointB }
+          : null;
+      },
+      roadsBetween: (a, b) =>
+        (this.dgsm.getTopology()?.sceneToRoads.get(a) ?? [])
+          .filter(
+            (r) =>
+              (r.endpointA === a && r.endpointB === b) ||
+              (r.endpointA === b && r.endpointB === a)
+          )
+          .map((r) => r.id),
+    };
+  }
+
+  /** Fold the player's position after this tick into their visited map;
+   *  `player_map_updated` only when a place or road was added. */
+  private recordPlayerVisit(): void {
+    const player = this.playerState;
+    if (!player) return;
+    const before: VisitedMap = player.visited;
+    const after = recordPosition(
+      before,
+      this.dgsm.getCharacterPosition(player.characterId),
+      this.visitTopology(),
+      this.dgsm.getGameDateTime()
+    );
+    if (after === before) return;
+    this.playerState = { ...player, visited: after };
+    const grew =
+      Object.keys(after.scenes).length !== Object.keys(before.scenes).length ||
+      Object.keys(after.roads).length !== Object.keys(before.roads).length;
+    if (!grew) return;
+    this.events.emitSimulationEvent(
+      "player_map_updated",
+      player.characterId,
+      this.playerLocation(player.characterId),
+      this.dgsm.getGameDateTime(),
+      { visited: after }
+    );
+  }
+
+  /** After the tick's save: when the player's sleep began this tick, ask
+   *  for an autosave — once, however many of their actions started. */
+  private async requestAutosaveIfAsleep(engine: TickEngine): Promise<void> {
+    const player = this.playerState;
+    const report = this.lastTickReport;
+    if (!player || !report) return;
+    const fellAsleep = report.transitions.some(
+      (t) =>
+        t.actorId === player.characterId &&
+        t.to === "active" &&
+        engine.getAction(t.actionId)?.command.sleep === true
+    );
+    if (!fellAsleep) return;
+
+    const info = {
+      characterId: player.characterId,
+      gameDateTime: this.dgsm.getGameDateTime(),
+      sceneId: this.playerLocation(player.characterId),
+    };
+    try {
+      await this.onAutosaveRequested(info);
+    } catch (err) {
+      console.warn(
+        `[SimulationRunner] autosave request failed: ${err instanceof Error ? err.message : String(err)}`
+      );
+    }
+    const event = this.events.emitSimulationEvent(
+      "player_autosave_requested",
+      info.characterId,
+      info.sceneId,
+      info.gameDateTime,
+      { sceneId: info.sceneId }
+    );
+    await this.persistAndBroadcastEvents([event]);
+  }
+
+  /** Broadcast the player's paragraph the moment it is rendered. Built by
+   *  hand rather than through the emitter, so neither the tick's nor an
+   *  operation's collector picks it up: the paragraph is already stored as
+   *  the player's `npc_perceived` row. */
+  private broadcastPlayerPerceived(entry: {
+    npcId: string;
+    gameDateTime: string;
+    location: string;
+    narrative: string;
+  }): void {
+    this.playerPerceptions.push({
+      gameDateTime: entry.gameDateTime,
+      location: entry.location,
+      narrative: entry.narrative,
+    });
+    const type: SimulationEventType = "player_perceived";
+    this.broadcastCallback?.([
+      {
+        id: randomUUID(),
+        sessionId: this.sessionId,
+        tick: this.ticksExecuted,
+        gameDateTime: entry.gameDateTime,
+        type,
+        actorNpcId: entry.npcId,
+        location: entry.location,
+        data: { narrative: entry.narrative },
+        timestamp: new Date(),
+      },
+    ]);
+  }
+
+  /** The player's whole stream from storage — every paragraph, not the
+   *  compacted view the prompts get. Failure leaves the view empty; the
+   *  prompts have their own copy. */
+  private async loadPlayerStream(characterId: string): Promise<void> {
+    try {
+      const rows = await this.prisma.simulationEvent.findMany({
+        where: {
+          sessionId: this.sessionId,
+          type: "npc_perceived",
+          actorNpcId: characterId,
+        },
+        orderBy: [{ gameDateTime: "asc" }, { timestamp: "asc" }],
+        select: { gameDateTime: true, location: true, data: true },
+      });
+      const stream: PlayerView["perceptions"] = [];
+      for (const r of rows) {
+        const narrative = (r.data as { narrative?: unknown } | null)?.narrative;
+        if (typeof narrative !== "string" || narrative === "") continue;
+        stream.push({
+          gameDateTime: r.gameDateTime,
+          location: r.location,
+          narrative,
+        });
+      }
+      if (this.playerState?.characterId === characterId) {
+        this.playerPerceptions = stream;
+      }
+    } catch (err) {
+      console.warn(
+        `[SimulationRunner] could not load the player's stream: ${String(err)}`
+      );
+    }
+  }
+
   private isTerminal(): boolean {
     return this.state === "stopped" || this.state === "completed";
   }
@@ -422,12 +1162,66 @@ export class SimulationRunner {
   private scheduleNextTick(): void {
     if (this.state !== "running" && this.state !== "initializing") return;
 
+    // Backstop: one timer chain, ever. A timer overwritten here without
+    // being cleared would tick on as a second chain.
+    this.clearScheduledTick();
     const delay = this.getNextTickDelayMs();
     this.intervalId = setTimeout(async () => {
       this.intervalId = null;
-      await this.executeTick();
-      await this.handlePostTickTransition();
+      await this.runTickCycle(true);
     }, delay);
+  }
+
+  /** One tick, and with `withTransition` the post-tick transition (pause,
+   *  stop, schedule the next). Never starts while a player operation holds
+   *  the world still, and is what a player operation waits on — so a
+   *  player's answer lands between two ticks, never inside one. */
+  private async runTickCycle(withTransition: boolean): Promise<void> {
+    const generation = this.postTickGeneration;
+    // Wait out whatever holds the world: a player operation, or a tick
+    // already in flight (a `step`, when `start()` comes in — skipping it
+    // would leave the runner in `initializing` with nothing scheduled).
+    for (;;) {
+      if (this.activePlayerOp) {
+        await this.activePlayerOp;
+        continue;
+      }
+      if (this.tickCycle) {
+        await this.tickCycle.catch(() => undefined);
+        continue;
+      }
+      break;
+    }
+    // While this waited, an operation may have paused the world (the
+    // controller asked again) or someone pressed pause or stop. A tick that
+    // ran anyway would decide over the player's waiting question.
+    if (
+      withTransition
+        ? this.state !== "running" && this.state !== "initializing"
+        : this.state !== "paused"
+    ) {
+      return;
+    }
+    // Two post-tick waiters (a timer that came due behind an operation, and
+    // a `start()` pressed meanwhile) must not both tick: the first one ran
+    // the tick and scheduled the next, so the second is redundant — and
+    // running it would start a second timer chain.
+    if (withTransition && this.postTickGeneration !== generation) return;
+    // A pause or stop requested while this waited is honoured without
+    // spending another tick.
+    const skipTick = withTransition && (this.shouldStop || this.shouldPause);
+    // Claimed in the same synchronous step as the checks above.
+    if (withTransition) this.postTickGeneration++;
+    const cycle = (async () => {
+      if (!skipTick) await this.executeTick();
+      if (withTransition) await this.handlePostTickTransition();
+    })();
+    this.tickCycle = cycle;
+    try {
+      await cycle;
+    } finally {
+      if (this.tickCycle === cycle) this.tickCycle = null;
+    }
   }
 
   private getNextTickDelayMs(): number {
@@ -496,6 +1290,12 @@ export class SimulationRunner {
       return { engine: this.tickEngine, controller: this.npcController };
     }
 
+    // The player's stream must be back before anything new is appended to it.
+    if (this.playerStreamLoad) {
+      await this.playerStreamLoad;
+      this.playerStreamLoad = null;
+    }
+
     const subsystemRegistry = createDefaultSubsystemRegistry();
     const scriptedEvents = this.moduleName
       ? loadScriptedEventsForModule(this.moduleName)
@@ -529,15 +1329,26 @@ export class SimulationRunner {
       language: this.language,
       // Buffered here and flushed once per tick: one row per character per
       // tick, written in a single createMany rather than a query per paragraph.
-      onPerception: (entry) => this.pendingPerceptions.push(entry),
+      onPerception: (entry) => {
+        this.pendingPerceptions.push(entry);
+        if (entry.npcId === this.playerState?.characterId) {
+          this.broadcastPlayerPerceived(entry);
+        }
+      },
       onPerceptionCompacted: (entry) =>
         this.pendingPerceptionSummaries.push(entry),
+      player: this.playerPort,
+      ...(this.playerTranslator
+        ? { playerTranslator: this.playerTranslator }
+        : {}),
     });
 
     this.wireEngineEvents(engine);
 
     this.tickEngine = engine;
     this.npcController = controller;
+    controller.restorePendingDelivery?.(this.pendingDeliveryState);
+    this.pendingDeliveryState = undefined;
     // Before the first decide(): a character resumed with an empty stream
     // reintroduces the room as if they had just walked in, and their own
     // prompt loses the day they lived.
@@ -569,8 +1380,9 @@ export class SimulationRunner {
         { eventType: e.type, ...(e.data ?? {}) }
       );
     });
-    engine.on("tickCompleted", (_report: TickReport) => {
-      // Reserved for future per-tick aggregations (e.g., damage summaries).
+    engine.on("tickCompleted", (report: TickReport) => {
+      // Read after the save, for the player's sleep (`requestAutosaveIfAsleep`).
+      this.lastTickReport = report;
     });
   }
 
@@ -593,6 +1405,8 @@ export class SimulationRunner {
       const dateBefore = datePart(gameState.gameDateTime);
 
       const { engine } = await this.ensureTickEngine();
+      this.lastTickReport = null;
+      const playerBefore = this.playerState;
 
       // Phase F: per-tick polling moved into NpcActionController.processTickReport
       // (driven by `tickCompleted`). One-time bootstrap happens via
@@ -619,6 +1433,9 @@ export class SimulationRunner {
       }
 
       await this.checkDerivedEvents();
+
+      this.recordPlayerVisit();
+      this.emitPlayerChanges(playerBefore);
 
       const stateAfterTick = this.dgsm.getState();
       const currentActions = await this.getCurrentNpcActions();
@@ -651,6 +1468,7 @@ export class SimulationRunner {
       // the socket for a view that is not per-character anyway.
       await this.persistPerceptions();
       await this.saveRuntime();
+      await this.requestAutosaveIfAsleep(engine);
     } catch (error) {
       console.error(
         `[SimulationRunner] Error during tick ${this.ticksExecuted}:`,
@@ -735,6 +1553,24 @@ export class SimulationRunner {
           hp: npc.status.hp ?? 0,
         }
       );
+
+      // (4) The player: nothing they queued will happen, and the world stops
+      // — `decide()` skips the dead, so without this it would run on.
+      const player = this.playerState;
+      if (player && player.characterId === npc.id) {
+        this.playerState = this.withDeath(player);
+        if (this.state === "running" || this.state === "initializing") {
+          this.shouldPause = true;
+        }
+        this.pauseReason = "dead";
+        this.events.emitSimulationEvent(
+          "player_died",
+          npc.id,
+          locationId,
+          gameState.gameDateTime,
+          { npcName: npc.name }
+        );
+      }
     }
   }
 

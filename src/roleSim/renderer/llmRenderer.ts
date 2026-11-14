@@ -17,10 +17,12 @@ import type { PromptSegment } from "../../models/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import { formatForPrompt } from "../../state/gameClock.js";
 import {
+  type CitationScope,
   buildPerceivableDirectory,
   descriptionIdentifier,
   isKnownTo,
   knownAs,
+  tagsIn,
 } from "../../state/perceivableDirectory.js";
 import { resolveLocationById } from "../../state/perceivedLocation.js";
 import type { DynamicNPCProfile } from "../../state/types.js";
@@ -379,11 +381,35 @@ export function scrubStrangerCanonicalLabels(
   return scrubbed;
 }
 
+/**
+ * The ids an occurrence hands this viewer — its location, the places and
+ * items its facts name, and any `[tag]` in their content — skipping a trace,
+ * which has no source to name. What a finder found arrives this way.
+ */
+export function idsCarriedBy(
+  bundle: PerceivedBundle,
+  viewpointId: string
+): Set<string> {
+  const out = new Set<string>();
+  for (const occ of bundle.occurrences ?? []) {
+    if (clarityFor(occ, viewpointId) === "trace") continue;
+    if (occ.locationId) out.add(occ.locationId);
+    for (const fact of occ.facts) {
+      for (const ref of fact.entityRefs) {
+        if (ref.kind !== "character") out.add(ref.id);
+      }
+      for (const id of tagsIn([fact.content])) out.add(id);
+    }
+  }
+  return out;
+}
+
 function buildCitationTags(
   npcId: string,
-  dgsm: DynamicGameStateManager
+  dgsm: DynamicGameStateManager,
+  scope?: CitationScope
 ): CitationTags {
-  const directory = buildPerceivableDirectory(npcId, dgsm);
+  const directory = buildPerceivableDirectory(npcId, dgsm, scope);
   const characters = new Map<string, string>();
   for (const [handle, realId] of directory.characterHandles) {
     characters.set(realId, handle);
@@ -594,12 +620,26 @@ export interface RenderViaLLMParams {
     location: string;
     narrative: string;
   }>;
+  /** What the viewer was shown before (tags in their stream and memories)
+   *  and noticed this minute. The trust boundary must be given the same
+   *  scope. Absent: the pre-§5.4 world-wide scope (callers not yet wired). */
+  citationScope?: CitationScope;
 }
 
 export async function renderViaLLM(
   params: RenderViaLLMParams
 ): Promise<string> {
-  const tags = buildCitationTags(params.npcId, params.dgsm);
+  const tags = buildCitationTags(
+    params.npcId,
+    params.dgsm,
+    params.citationScope && {
+      ...params.citationScope,
+      shownIds: new Set([
+        ...(params.citationScope.shownIds ?? []),
+        ...idsCarriedBy(params.bundle, params.npcId),
+      ]),
+    }
+  );
   const strangerIdentities = buildStrangerIdentities(params.dgsm, tags);
   const segments = buildUserPromptSegments(params, tags);
   const langName = params.language?.startsWith("zh") ? "Chinese" : "English";
@@ -1028,7 +1068,9 @@ function formatOwnAction(bundle: PerceivedBundle): string {
           `Result (actor outcome; render supported evidence within current state and speech timing): ${own.reason}`
         );
       } else {
-        lines.push("Lifecycle ended; no additional result supplied. Do not reconstruct the command or recap the interval; render only current state and routed occurrences.");
+        lines.push(
+          "Lifecycle ended; no additional result supplied. Do not reconstruct the command or recap the interval; render only current state and routed occurrences."
+        );
       }
       return lines.join("\n");
     }

@@ -68,9 +68,13 @@ export async function resumeSimulation(req: Request, res: Response) {
     await simulationService.resumeSimulation(prisma, req.params.id);
     return res.json({ success: true });
   } catch (error) {
-    return res.status(404).json({
-      error: error instanceof Error ? error.message : "Not found",
-    });
+    const message = error instanceof Error ? error.message : "Not found";
+    // The world waits on the player (an unanswered question, or a death):
+    // the session exists, it just cannot run yet.
+    const conflict =
+      message === "player is dead" ||
+      message === "the player has not answered yet";
+    return res.status(conflict ? 409 : 404).json({ error: message });
   }
 }
 

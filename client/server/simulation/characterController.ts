@@ -49,7 +49,9 @@ export async function injectCharacter(req: Request, res: Response) {
     const message = error instanceof Error ? error.message : "Unknown error";
     const status = message.includes("Invalid residence")
       ? 400
-      : message.includes("only inject") || message.includes("Cannot inject")
+      : message.includes("only inject") ||
+          message.includes("Cannot inject") ||
+          message.includes("a player character already exists")
         ? 409
         : 500;
     return res.status(status).json({ error: message });

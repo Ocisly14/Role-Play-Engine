@@ -161,9 +161,6 @@ export class Applier {
       case "memory.event":
       case "memory.witness":
         return known(c.characterId);
-      case "connection.discovered":
-        // A list, not one id: the first stranger in it is the offender.
-        return c.characterIds.map(known).find((id) => id !== null) ?? null;
       default:
         return null;
     }
@@ -276,20 +273,12 @@ export class Applier {
               reason: op.reason,
             },
           ];
-        case "connectionDiscovered":
+        case "connectionConcealed":
           return [
             {
-              kind: "connection.discovered",
+              kind: "connection.setConcealed",
               connectionId: op.connectionId,
-              characterIds: op.characterIds,
-            },
-          ];
-        case "connectionHidden":
-          return [
-            {
-              kind: "connection.setHidden",
-              connectionId: op.connectionId,
-              hidden: op.hidden,
+              concealed: op.concealed,
             },
           ];
         case "environmentContribute":
@@ -345,9 +334,6 @@ export class Applier {
                   : {}),
                 ...(typeof op.appendDescription === "string"
                   ? { appendDescription: op.appendDescription }
-                  : {}),
-                ...(typeof op.hidden === "boolean"
-                  ? { hidden: op.hidden }
                   : {}),
                 ...(typeof op.isLightSource === "boolean"
                   ? { isLightSource: op.isLightSource }
@@ -563,16 +549,8 @@ export class Applier {
           );
           break;
         }
-        case "connection.setHidden":
-          this.dgsm.setConnectionHiddenById(c.connectionId, c.hidden);
-          break;
-        case "connection.discovered":
-          // Written straight onto the passage. Idempotent per character, and
-          // a warn (not a throw) for an id that names nothing — a bad
-          // discovery must not take the tick down with it.
-          for (const characterId of c.characterIds) {
-            this.dgsm.recordConnectionDiscovery(characterId, c.connectionId);
-          }
+        case "connection.setConcealed":
+          this.dgsm.setConnectionConcealedById(c.connectionId, c.concealed);
           break;
         case "character.addCondition":
           this.dgsm.addCharacterCondition(c.characterId, c.condition);
@@ -607,7 +585,6 @@ export class Applier {
             ...(c.appendDescription !== undefined
               ? { appendDescription: c.appendDescription }
               : {}),
-            ...(c.hidden !== undefined ? { hidden: c.hidden } : {}),
             ...(c.isLightSource !== undefined
               ? { isLightSource: c.isLightSource }
               : {}),

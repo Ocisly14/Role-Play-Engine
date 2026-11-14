@@ -62,7 +62,7 @@ describe("effectiveSkillValue", () => {
       ["Athletics", -5],
     ]);
     expect(effectiveSkillValue("Athletics", 60, p)).toBe(45);
-    expect(effectiveSkillValue("Social", 60, p)).toBe(50);
+    expect(effectiveSkillValue("Investigation", 60, p)).toBe(50);
   });
 
   it("penalizes a value the skills record never held", () => {
@@ -79,14 +79,14 @@ describe("effectiveSkillValue", () => {
   it("floors a stacked handicap at severe rather than impossible", () => {
     const p = new Map([["*", -45]]);
     expect(MAX_AGGREGATE_SKILL_PENALTY).toBe(-40);
-    expect(effectiveSkillValue("Social", 60, p)).toBe(20);
+    expect(effectiveSkillValue("Athletics", 60, p)).toBe(20);
   });
 
   it("never drops a skill below 1", () => {
-    expect(effectiveSkillValue("Social", 10, new Map([["*", -40]]))).toBe(1);
+    expect(effectiveSkillValue("Athletics", 10, new Map([["*", -40]]))).toBe(1);
   });
 
   it("returns the value untouched when nothing is wrong with the character", () => {
-    expect(effectiveSkillValue("Social", 55, new Map())).toBe(55);
+    expect(effectiveSkillValue("Athletics", 55, new Map())).toBe(55);
   });
 });

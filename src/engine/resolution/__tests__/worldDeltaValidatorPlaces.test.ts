@@ -2,8 +2,10 @@
 // + full-world itemHolders), so node scenes and roads are first-class places —
 // their items are movable, their conditions removable — and connection ids
 // are checked against the registry-backed edge list. New operations:
-// setDescription, connectionHidden, removeCondition-by-id, item.create with a
-// stable id, item.set hidden.
+// setDescription, connectionConcealed, removeCondition-by-id, item.create with
+// a stable id, and the start row's one-use viaConcealedConnectionId grant.
+// (Items have no hidden flag any more: an item is in plain view iff its
+// place's description cites it, so a public reveal is a setDescription.)
 
 import { describe, expect, it } from "vitest";
 import type { ActionCommand } from "../../actions/types.js";
@@ -76,7 +78,9 @@ function makeContext(): EngineResolutionContext {
         "connection.home.junc",
         "connection.junc.home",
         "connection.rmain.a",
+        "connection.junc.cellar",
       ],
+      concealedConnectionIds: ["connection.junc.cellar"],
       places: [],
       items: [],
       itemHolders: {
@@ -234,7 +238,7 @@ describe("removeCondition predicate shapes", () => {
   });
 });
 
-describe("connectionBlock / connectionHidden take registry ids", () => {
+describe("connectionBlock / connectionConcealed take registry ids", () => {
   it("rejects a connection id that names nothing real", () => {
     const errors = validate({
       sceneChanges: [
@@ -272,9 +276,9 @@ describe("connectionBlock / connectionHidden take registry ids", () => {
             ...sourced,
             sceneId: "SCN_1",
             operation: {
-              kind: "connectionHidden",
+              kind: "connectionConcealed",
               connectionId: "connection.home.junc",
-              hidden: false,
+              concealed: false,
             },
           },
         ],
@@ -282,7 +286,7 @@ describe("connectionBlock / connectionHidden take registry ids", () => {
     ).toBe("");
   });
 
-  it("rejects connectionHidden without its boolean or with a fake id", () => {
+  it("rejects connectionConcealed without its boolean or with a fake id", () => {
     expect(
       validate({
         sceneChanges: [
@@ -290,13 +294,13 @@ describe("connectionBlock / connectionHidden take registry ids", () => {
             ...sourced,
             sceneId: "SCN_1",
             operation: {
-              kind: "connectionHidden",
+              kind: "connectionConcealed",
               connectionId: "connection.home.junc",
             },
           },
         ],
       })
-    ).toContain("requires hidden boolean");
+    ).toContain("requires concealed boolean");
     expect(
       validate({
         sceneChanges: [
@@ -304,14 +308,64 @@ describe("connectionBlock / connectionHidden take registry ids", () => {
             ...sourced,
             sceneId: "SCN_1",
             operation: {
-              kind: "connectionHidden",
+              kind: "connectionConcealed",
               connectionId: "connection.ghost",
-              hidden: true,
+              concealed: true,
             },
           },
         ],
       })
     ).toContain("names nothing real");
+  });
+
+  it("rejects the retired connectionHidden / connectionDiscovered operations", () => {
+    for (const operation of [
+      { kind: "connectionHidden", connectionId: "connection.home.junc", hidden: false },
+      {
+        kind: "connectionDiscovered",
+        connectionId: "connection.home.junc",
+        characterIds: ["npc_1"],
+      },
+    ]) {
+      expect(
+        validate({
+          sceneChanges: [{ ...sourced, sceneId: "SCN_1", operation }],
+        })
+      ).not.toBe("");
+    }
+  });
+});
+
+describe("movement.viaConcealedConnectionId — the one-use grant through a concealed passage", () => {
+  const via = (viaConcealedConnectionId: string): string =>
+    text(
+      validateRawResolution(
+        {
+          starting: [
+            {
+              actionId: ACTION_ID,
+              movement: { route: ["J_A"], viaConcealedConnectionId },
+            },
+          ],
+        },
+        makeContext()
+      )
+    );
+
+  it("accepts a grant naming a concealed connection", () => {
+    expect(via("connection.junc.cellar")).not.toContain(
+      "viaConcealedConnectionId"
+    );
+  });
+
+  it("rejects a grant naming an open connection — it needs none", () => {
+    expect(via("connection.junc.home")).toContain("is not concealed");
+  });
+
+  it("rejects a grant naming no connection at all", () => {
+    expect(via("connection.ghost")).toContain(
+      'viaConcealedConnectionId "connection.ghost" names no connection'
+    );
   });
 });
 
@@ -465,15 +519,15 @@ describe("item.create with an explicit id", () => {
   });
 });
 
-describe("item.set hidden and scene setDescription", () => {
-  it("accepts a set that carries only the hidden flag (the reveal)", () => {
+describe("item.set and scene setDescription", () => {
+  it("accepts a set that carries only a lighting change", () => {
     expect(
       validate({
         itemChanges: [
           {
             ...sourced,
             itemId: "item_glove",
-            operation: { kind: "set", hidden: false },
+            operation: { kind: "set", lightLevel: 0 },
           },
         ],
       })
@@ -487,7 +541,23 @@ describe("item.set hidden and scene setDescription", () => {
           { ...sourced, itemId: "item_glove", operation: { kind: "set" } },
         ],
       })
-    ).toContain("at least one of description, appendDescription, hidden");
+    ).toContain(
+      "set needs at least one of description, appendDescription, isLightSource, lightLevel"
+    );
+  });
+
+  it("does not take the retired hidden flag as a change — a reveal is a setDescription now", () => {
+    expect(
+      validate({
+        itemChanges: [
+          {
+            ...sourced,
+            itemId: "item_glove",
+            operation: { kind: "set", hidden: false },
+          },
+        ],
+      })
+    ).toContain("set needs at least one of");
   });
 
   it("accepts setDescription with prose and rejects an empty one", () => {

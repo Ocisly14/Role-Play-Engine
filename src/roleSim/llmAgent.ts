@@ -15,7 +15,7 @@ import type {
 } from "../models/providers/types.js";
 import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
 import type { RoleSimAgent, RoleSimContext, RoleSimDecision } from "./agent.js";
-import { SYSTEM_PROMPT } from "./systemPrompt.js";
+import { PLAYER_SYSTEM_PROMPT, SYSTEM_PROMPT } from "./systemPrompt.js";
 import {
   type DispatcherDeps,
   TERMINAL_TOOLS,
@@ -23,7 +23,7 @@ import {
   VALID_TOOLS,
   dispatchInstantTool,
 } from "./toolDispatcher.js";
-import { AGENT_TOOLS } from "./tools/schemas.js";
+import { AGENT_TOOLS, PLAYER_DELEGATED_TOOLS } from "./tools/schemas.js";
 import { buildUserPromptSegments } from "./userPromptBuilder.js";
 
 const MAX_TOTAL_ITERATIONS = 14;
@@ -60,6 +60,23 @@ export class LLMRoleSimAgent implements RoleSimAgent {
     const caps = { ...TOOL_CAPS };
     const dispatcherDeps = this.buildDispatcherDeps(ctx);
 
+    // A delegated player character gets the NPC prompt verbatim plus the
+    // player-only section, and the player's tool set. Everyone else —
+    // every NPC, and a player in any other mode — gets exactly what NPCs
+    // have always got.
+    const delegated = ctx.player?.mode === "delegated";
+    const systemPrompt = delegated ? PLAYER_SYSTEM_PROMPT : SYSTEM_PROMPT;
+    const tools = delegated ? PLAYER_DELEGATED_TOOLS : AGENT_TOOLS;
+    // A tool counts only if it was offered: TERMINAL_TOOLS and VALID_TOOLS
+    // also name `askFriend`, which an NPC must never be able to end on — a
+    // stray call is answered as an unknown tool, exactly as it was before
+    // the name existed.
+    const offered = new Set(tools.map((tool) => tool.name));
+    const isTerminal = (name: string) =>
+      TERMINAL_TOOLS.has(name) && offered.has(name);
+    const isValid = (name: string) =>
+      VALID_TOOLS.has(name) && offered.has(name);
+
     // The opening user turn holds the whole situation. A turn that failed to
     // terminate appends an assistant turn plus its tool results, so the
     // prefix only ever grows — every earlier turn stays byte-identical and
@@ -80,14 +97,14 @@ export class LLMRoleSimAgent implements RoleSimAgent {
 
     for (let i = 0; i < MAX_TOTAL_ITERATIONS; i++) {
       const { toolCalls, assistantMessage } = await generateToolCalls({
-        customSystemPrompt: SYSTEM_PROMPT,
+        customSystemPrompt: systemPrompt,
         // SYSTEM_PROMPT is assembled once at module import from constant tool
         // docs — ~12k chars, byte-identical for every NPC on every tick. The
         // breakpoint here also covers the tool definitions, which render
         // ahead of the system prompt.
         cacheSystemPrompt: true,
         messages,
-        tools: AGENT_TOOLS,
+        tools,
         // The model must call something: this is what removes the old failure
         // mode where it answered in prose and the decision was discarded.
         toolChoice: "any",
@@ -107,8 +124,8 @@ export class LLMRoleSimAgent implements RoleSimAgent {
         });
       }
 
-      const terminal = toolCalls.filter((c) => TERMINAL_TOOLS.has(c.name));
-      const instant = toolCalls.filter((c) => !TERMINAL_TOOLS.has(c.name));
+      const terminal = toolCalls.filter((c) => isTerminal(c.name));
+      const instant = toolCalls.filter((c) => !isTerminal(c.name));
 
       // A terminal turn ends the decision. Every non-terminal tool returns
       // nothing the agent must read before deciding, so any that rode along
@@ -116,7 +133,7 @@ export class LLMRoleSimAgent implements RoleSimAgent {
       // nothing further is sent, so those calls need no results.
       if (terminal.length > 0) {
         for (const call of instant) {
-          if (!VALID_TOOLS.has(call.name)) {
+          if (!isValid(call.name)) {
             console.warn(
               `[LLMRoleSimAgent] ${ctx.npcId} called unknown tool "${call.name}" on the terminal turn`
             );
@@ -147,7 +164,7 @@ export class LLMRoleSimAgent implements RoleSimAgent {
       const results: ToolResultRecord[] = [];
 
       for (const call of instant) {
-        if (!VALID_TOOLS.has(call.name)) {
+        if (!isValid(call.name)) {
           results.push({
             toolCallId: call.id,
             content: `Error: unknown tool "${call.name}".`,
@@ -200,6 +217,15 @@ export class LLMRoleSimAgent implements RoleSimAgent {
           typeof parsed.utterance === "string" && parsed.utterance !== ""
             ? parsed.utterance
             : undefined,
+        // Only the boolean `true` means anything; the key is absent otherwise
+        // so an NPC's decision has exactly the shape it always had.
+        ...(parsed.sleep === true ? { sleep: true } : {}),
+      };
+    }
+    if (parsed.tool === "askFriend") {
+      return {
+        tool: "askFriend",
+        question: typeof parsed.question === "string" ? parsed.question : "",
       };
     }
     return {

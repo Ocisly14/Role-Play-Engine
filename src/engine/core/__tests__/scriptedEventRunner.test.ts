@@ -1,5 +1,5 @@
 // Recurring scripted events + the stage-set-economy verbs and guards:
-// item.create(skipIfExists) / item.move / connection.setHidden, the
+// item.create(skipIfExists) / item.move / connection.setConcealed, the
 // timeOfDay window, the sceneOccupied witness guard, and the recurring
 // cooldown that makes "once per night" expressible.
 
@@ -305,9 +305,9 @@ describe("recurring scripted events", () => {
       fireWhen: { op: "timeOfDay", cmp: "eq", value: "03:00" },
       onComplete: [
         {
-          kind: "connection.setHidden",
+          kind: "connection.setConcealed",
           connectionId: "connection.station_dock.inner_door",
-          hidden: false,
+          concealed: false,
         },
       ],
     };
@@ -315,9 +315,9 @@ describe("recurring scripted events", () => {
     const changes = run(runner, dgsm, 180, "1985-07-08T03:00:00");
     expect(changes).toEqual([
       {
-        kind: "connection.setHidden",
+        kind: "connection.setConcealed",
         connectionId: "connection.station_dock.inner_door",
-        hidden: false,
+        concealed: false,
       },
     ]);
     expect(dgsm.getScriptedEventState("evt_open_inner_door")?.status).toBe(

@@ -21,7 +21,7 @@ const scenes = new Map<string, DynamicScene>([
     {
       id: "J_A",
       name: "Crossing",
-      description: "A windswept crossing.",
+      description: "A windswept crossing under a lamppost [ITEM_J].",
       items: [{ id: "ITEM_J", name: "a lamppost" }],
       conditions: [{ featureId: "weather", description: "sleet" }],
       connections: [{ id: "connection.junc_a.home", targetId: "S_HOME" }],
@@ -32,7 +32,7 @@ const scenes = new Map<string, DynamicScene>([
     {
       id: "S_HOME",
       name: "Home",
-      description: "A parlour.",
+      description: "A parlour with a chair [ITEM_S].",
       parentLocationId: "B_HOUSE",
       conditions: [],
       items: [{ id: "ITEM_S", name: "a chair" }],
@@ -57,7 +57,7 @@ const roads = new Map<string, RoadNode>([
     {
       id: "R_MAIN",
       name: "Star Avenue",
-      description: "A long avenue.",
+      description: "A long avenue: a dropped glove [ITEM_R], a fallen sign [ITEM_NEAR], a mile marker [ITEM_FAR].",
       connections: [],
       endpointA: "J_A",
       endpointB: "J_B",

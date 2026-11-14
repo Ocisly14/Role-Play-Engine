@@ -187,7 +187,7 @@ const EFFECT_KINDS = [
   "scene.addCondition",
   "scene.removeCondition",
   "connection.setBlock",
-  "connection.setHidden",
+  "connection.setConcealed",
   "weather.set",
   "item.create",
   "item.move",
@@ -852,12 +852,12 @@ function validateEffect(
       }
       return;
     }
-    case "connection.setHidden": {
+    case "connection.setConcealed": {
       if (!isString(item.connectionId)) {
         pushErr(errors, file, `${path}.connectionId`, "required string");
       }
-      if (!isBoolean(item.hidden)) {
-        pushErr(errors, file, `${path}.hidden`, "required boolean");
+      if (!isBoolean(item.concealed)) {
+        pushErr(errors, file, `${path}.concealed`, "required boolean");
       }
       return;
     }
@@ -1334,7 +1334,7 @@ export function validateScriptedEventReferences(
         walkScenePredicate(eventId, `${path}.sceneFilter`, effect.sceneFilter);
         return;
       case "connection.setBlock":
-      case "connection.setHidden":
+      case "connection.setConcealed":
         connection(eventId, `${path}.connectionId`, effect.connectionId);
         return;
       // weather.set names a weather REGION, which module_setup declares and

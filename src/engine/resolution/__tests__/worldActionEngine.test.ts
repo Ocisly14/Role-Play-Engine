@@ -9,7 +9,14 @@
 // global fault; and — when a phase cannot converge, the budget runs out, or
 // the model fails — a result that applies nothing at all.
 
+import { mkdtempSync, readFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  type DecisionsTransport,
+  setDecisionsTransport,
+} from "../../../models/decisions.js";
 import type { ToolCallOptions } from "../../../models/types.js";
 import type { DynamicGameStateManager } from "../../../state/DynamicGameState.js";
 import type { ActionCommand, EngineAction } from "../../actions/types.js";
@@ -467,7 +474,7 @@ describe("exitsFromHere — code's passability verdict beside the command", () =
           {
             connectionId: "connection.greatroom.upstairs",
             targetId: "SCN_upstairs",
-            hidden: true,
+            concealed: true,
           },
         ],
       },
@@ -681,6 +688,371 @@ describe("resolveTick — the staged runner", () => {
     );
     expect(closed).toMatchObject({ to: "completed" });
     expect(closed?.reason).toBeUndefined();
+  });
+
+  it("delivers an interrogation's observable conduct and exact words without a check", async () => {
+    const context = makeContext({ kind: "settlement", talk: true });
+    const [action] = context.actions.activeActions;
+    action.command.description =
+      "I spread the ledger open and point at the date.";
+    action.command.utterance = "Where were you that night?";
+    const conduct = "She spreads the ledger open and points at the date.";
+    const perceivers = [{ characterId: "npc_1", clarity: "full" }];
+    script(
+      ...settlementPath({
+        endings: {
+          endings: [{ actionId: TALK, mode: "outcome", outcome: conduct }],
+        },
+        occurrences: {
+          occurrences: [
+            { actionIds: [TALK], speech: false, content: conduct, perceivers },
+            {
+              actionIds: [TALK],
+              speech: true,
+              targetIds: ["npc_1"],
+              perceivers,
+            },
+          ],
+        },
+      })
+    );
+
+    const result = await resolveTick(context, makeDeps());
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const [gesture, speech] = result.resolution.occurrences;
+    expect(gesture.facts[0].content).toBe(conduct);
+    expect(speech.facts[0].content).toBe("Where were you that night?");
+    expect(gesture.perceivers).toEqual(perceivers);
+    expect(speech.perceivers).toEqual(perceivers);
+    expect(speech.participants).toContainEqual({
+      characterId: "npc_1",
+      role: "target",
+    });
+    expect(result.resolution.characterChanges).toEqual([]);
+  });
+
+  describe("skipping change phases when nothing has an outcome (DECISIONS_PHASE_SKIP)", () => {
+    // No Decisions call may reach the network from a test: without a key the
+    // client answers `no_key` and the phase falls back to the model.
+    beforeEach(() => {
+      vi.stubEnv("OPENAI_API_KEY", "");
+    });
+    afterEach(() => {
+      vi.unstubAllEnvs();
+    });
+
+    const NO_CHANGE = { endings: [{ actionId: LIVE, mode: "no_change" }] };
+    const TALK_ROW = {
+      occurrences: [
+        {
+          actionIds: [TALK],
+          speech: true,
+          targetIds: ["npc_1"],
+          perceivers: [{ characterId: "npc_1", clarity: "full" }],
+        },
+      ],
+    };
+
+    it("on: every ending no_change → only endings and occurrences are requested", async () => {
+      vi.stubEnv("DECISIONS_PHASE_SKIP", "on");
+      script(
+        accept("endings", NO_CHANGE),
+        accept("occurrences", BASE_ANSWERS.occurrences)
+      );
+
+      const result = await resolveTick(
+        makeContext({ kind: "settlement", ending: true }),
+        makeDeps()
+      );
+
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(phasesRequested()).toEqual(["endings", "occurrences"]);
+      expect(result.resolution.characterChanges).toEqual([]);
+      expect(result.resolution.itemChanges).toEqual([]);
+      expect(result.resolution.sceneChanges).toEqual([]);
+      expect(gate).toHaveBeenCalledTimes(1);
+    });
+
+    it("on: a pure_speech ending skips them too", async () => {
+      vi.stubEnv("DECISIONS_PHASE_SKIP", "on");
+      script(
+        accept("endings", {
+          endings: [{ actionId: TALK, mode: "pure_speech" }],
+        }),
+        accept("occurrences", TALK_ROW)
+      );
+
+      const result = await resolveTick(
+        makeContext({ kind: "settlement", talk: true }),
+        makeDeps()
+      );
+
+      expect(result.ok).toBe(true);
+      expect(phasesRequested()).toEqual(["endings", "occurrences"]);
+    });
+
+    it("on: one outcome among the endings runs all five phases", async () => {
+      vi.stubEnv("DECISIONS_PHASE_SKIP", "on");
+      script(...settlementPath(SETTLES_LIVE));
+
+      const result = await resolveTick(
+        makeContext({ kind: "settlement", ending: true }),
+        makeDeps()
+      );
+
+      expect(result.ok).toBe(true);
+      expect(phasesRequested()).toEqual([...SESSION_PHASES.settlement]);
+    });
+
+    it("on: a rewind into a skipped phase runs it", async () => {
+      vi.stubEnv("DECISIONS_PHASE_SKIP", "on");
+      gate.mockImplementationOnce((): ResolutionError[] => [
+        {
+          target: { kind: "itemChange", index: 0 },
+          message: "the prose of SCN_1 still cites the lamp that left it",
+        },
+      ]);
+      script(
+        accept("endings", NO_CHANGE),
+        accept("occurrences", BASE_ANSWERS.occurrences),
+        accept("itemChanges", BASE_ANSWERS.itemChanges),
+        accept("sceneChanges", BASE_ANSWERS.sceneChanges),
+        accept("occurrences", BASE_ANSWERS.occurrences)
+      );
+
+      const result = await resolveTick(
+        makeContext({ kind: "settlement", ending: true }),
+        makeDeps()
+      );
+
+      expect(result.ok).toBe(true);
+      expect(phasesRequested()).toEqual([
+        "endings",
+        "occurrences",
+        "itemChanges",
+        "sceneChanges",
+        "occurrences",
+      ]);
+      expect(gate).toHaveBeenCalledTimes(2);
+    });
+
+    it("shadow: all five run, and three shadow lines say agree: true", async () => {
+      const file = join(mkdtempSync(join(tmpdir(), "phaseskip-")), "s.jsonl");
+      vi.stubEnv("DECISIONS_PHASE_SKIP", "shadow");
+      vi.stubEnv("DECISIONS_SHADOW_LOG", file);
+      script(...settlementPath({ endings: NO_CHANGE }));
+
+      const result = await resolveTick(
+        makeContext({ kind: "settlement", ending: true }),
+        makeDeps()
+      );
+
+      expect(result.ok).toBe(true);
+      expect(phasesRequested()).toEqual([...SESSION_PHASES.settlement]);
+      const lines = readFileSync(file, "utf8")
+        .trim()
+        .split("\n")
+        .map((l) => JSON.parse(l));
+      expect(lines.map((l) => l.phase)).toEqual([
+        "characterChanges",
+        "itemChanges",
+        "sceneChanges",
+      ]);
+      expect(lines.every((l) => l.agree === true && l.rows === 0)).toBe(true);
+    });
+
+    /** A Decisions stub answering every question it is asked: predicates
+     *  with `p`, choices with `choiceP` on the last option. */
+    function answerAll(p: number, choiceP = 0.9): DecisionsTransport {
+      return async (_url, init) => {
+        const body = JSON.parse(init.body) as {
+          questions: Array<{
+            name: string;
+            type: string;
+            choices?: Array<{ value: string }>;
+          }>;
+        };
+        return {
+          status: 200,
+          json: async () => ({
+            answers: body.questions.map((q) =>
+              q.type === "predicate"
+                ? { type: "predicate", name: q.name, probability: p }
+                : {
+                    type: "choice",
+                    name: q.name,
+                    probabilities: (q.choices ?? []).map((c, i, all) => ({
+                      value: c.value,
+                      probability: i === all.length - 1 ? choiceP : 0.01,
+                    })),
+                  }
+            ),
+          }),
+        };
+      };
+    }
+
+    it("on, with perceivers: a words-only minute settles with no model call at all", async () => {
+      vi.stubEnv("DECISIONS_PHASE_SKIP", "on");
+      vi.stubEnv("DECISIONS_PERCEIVERS", "on");
+      vi.stubEnv("OPENAI_API_KEY", "test-key");
+      setDecisionsTransport(answerAll(0.02));
+      try {
+        const result = await resolveTick(
+          makeContext({ kind: "settlement", talk: true }),
+          makeDeps()
+        );
+        expect(result.ok).toBe(true);
+        if (!result.ok) return;
+        expect(generateToolCalls).not.toHaveBeenCalled();
+        expect(result.resolution.transitions).toContainEqual(
+          expect.objectContaining({ actionId: TALK, to: "completed" })
+        );
+        const row = result.resolution.occurrences[0];
+        expect(row.sourceActionIds).toEqual([TALK]);
+        expect(row.facts.some((f) => f.type === "utterance")).toBe(true);
+        // The speaker hears themself; the other person in the room, at the
+        // grade the stub gave (the last option, "full").
+        expect(row.perceivers).toEqual(
+          expect.arrayContaining([
+            { characterId: "npc_2", clarity: "full" },
+            { characterId: "npc_1", clarity: "full" },
+          ])
+        );
+      } finally {
+        setDecisionsTransport(null);
+      }
+    });
+
+    it("perceivers on: the model writes the rows without perceivers, Decisions fills them in", async () => {
+      vi.stubEnv("DECISIONS_PERCEIVERS", "on");
+      vi.stubEnv("OPENAI_API_KEY", "test-key");
+      setDecisionsTransport(answerAll(0.02));
+      try {
+        script(
+          ...settlementPath({
+            endings: LIVE_OUTCOME,
+            occurrences: {
+              occurrences: [
+                {
+                  actionIds: [LIVE],
+                  speech: false,
+                  content: "The cabinet door gives way.",
+                },
+              ],
+            },
+          })
+        );
+        const result = await resolveTick(
+          makeContext({ kind: "settlement", ending: true }),
+          makeDeps()
+        );
+        expect(result.ok).toBe(true);
+        if (!result.ok) return;
+        // The occurrences request offered the tool with no perceivers field.
+        const occTool = requests()[4].tools?.[0] as unknown as {
+          inputSchema: {
+            properties: {
+              occurrences: { items: { properties: Record<string, unknown> } };
+            };
+          };
+        };
+        expect(
+          occTool.inputSchema.properties.occurrences.items.properties
+        ).not.toHaveProperty("perceivers");
+        expect(result.resolution.occurrences[0].perceivers).toEqual(
+          expect.arrayContaining([
+            { characterId: "npc_1", clarity: "full" },
+            { characterId: "npc_2", clarity: "full" },
+          ])
+        );
+      } finally {
+        setDecisionsTransport(null);
+      }
+    });
+
+    it("perceivers on: when Decisions fails, the model is asked again with the full tool", async () => {
+      vi.stubEnv("DECISIONS_PERCEIVERS", "on");
+      vi.stubEnv("OPENAI_API_KEY", "test-key");
+      setDecisionsTransport(async () => ({
+        status: 500,
+        json: async () => ({}),
+      }));
+      try {
+        script(
+          ...settlementPath({
+            endings: LIVE_OUTCOME,
+            occurrences: {
+              occurrences: [
+                {
+                  actionIds: [LIVE],
+                  speech: false,
+                  content: "The cabinet door gives way.",
+                },
+              ],
+            },
+          }),
+          accept("occurrences", LIVE_TRACE)
+        );
+        const result = await resolveTick(
+          makeContext({ kind: "settlement", ending: true }),
+          makeDeps()
+        );
+        expect(result.ok).toBe(true);
+        expect(phasesRequested()).toEqual([
+          ...SESSION_PHASES.settlement,
+          "occurrences",
+        ]);
+        const retryTool = requests()[5].tools?.[0] as unknown as {
+          inputSchema: {
+            properties: {
+              occurrences: { items: { properties: Record<string, unknown> } };
+            };
+          };
+        };
+        expect(
+          retryTool.inputSchema.properties.occurrences.items.properties
+        ).toHaveProperty("perceivers");
+      } finally {
+        setDecisionsTransport(null);
+      }
+    });
+
+    it("on: an unsure Decisions answer leaves the endings to the model", async () => {
+      vi.stubEnv("DECISIONS_PHASE_SKIP", "on");
+      vi.stubEnv("OPENAI_API_KEY", "test-key");
+      setDecisionsTransport(answerAll(0.5));
+      try {
+        script(
+          accept("endings", {
+            endings: [{ actionId: TALK, mode: "pure_speech" }],
+          }),
+          accept("occurrences", TALK_ROW)
+        );
+        const result = await resolveTick(
+          makeContext({ kind: "settlement", talk: true }),
+          makeDeps()
+        );
+        expect(result.ok).toBe(true);
+        expect(phasesRequested()).toEqual(["endings", "occurrences"]);
+      } finally {
+        setDecisionsTransport(null);
+      }
+    });
+
+    it("off: all five run (unchanged)", async () => {
+      script(...settlementPath({ endings: NO_CHANGE }));
+
+      const result = await resolveTick(
+        makeContext({ kind: "settlement", ending: true }),
+        makeDeps()
+      );
+
+      expect(result.ok).toBe(true);
+      expect(phasesRequested()).toEqual([...SESSION_PHASES.settlement]);
+    });
   });
 
   it("a physical ending without a speech:false row is refused in the occurrence phase, and by the gate", async () => {
@@ -1797,7 +2169,7 @@ describe("renderWorldGraph", () => {
           connectionId: "connection.home.secret",
           from: "J_A",
           to: "R_MAIN",
-          hidden: true,
+          concealed: true,
         },
         {
           connectionId: "connection.road.a",
@@ -1811,7 +2183,7 @@ describe("renderWorldGraph", () => {
       "Outdoor node scenes:",
       // Authored prose rides along, newlines flattened.
       "- J_A (Crossing): A windswept crossing.",
-      "  connections: [connection.home.secret] -> R_MAIN (hidden)",
+      "  connections: [connection.home.secret] -> R_MAIN (concealed)",
       "Roads:",
       // No description and no prose — the node line stands alone.
       "- R_MAIN (Star Avenue)",

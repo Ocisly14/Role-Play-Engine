@@ -2,8 +2,8 @@
 // SKELETON — macro locations + top-level node scenes/roads, interior-scene
 // edges lifted to their parent, blocked state split out into the volatile
 // blockedEdges list; Tier 2 carries full snapshots of only the involved
-// places, node scenes/roads included, with hidden items and connection ids
-// visible to the all-knowing Engine. Full-world validation lookups
+// places, node scenes/roads included, with unnoticed (uncited) items and
+// concealed connections visible, flagged, to the all-knowing Engine. Full-world validation lookups
 // (placeKinds/connectionIds/itemHolders) stay untrimmed by either tier.
 
 import { describe, expect, it } from "vitest";
@@ -23,16 +23,17 @@ function makeDgsm(): DynamicGameStateManager {
   const home: DynamicScene = {
     id: "S_HOME",
     name: "Home",
-    description: "A parlour with a daisy display.",
+    // The chair is in plain view (cited); the bills are not — unnoticed.
+    description: "A parlour with a daisy display and [item_chair].",
     parentLocationId: "LOC_TOWN",
     items: [
       { id: "item_chair", name: "a chair" },
-      { id: "item_bills", name: "duplicate bills", hidden: true },
+      { id: "item_bills", name: "duplicate bills" },
     ],
     conditions: [{ id: "cond.home.dust", description: "dust everywhere" }],
     connections: [
       { id: "connection.home.junc", targetId: "J_A" },
-      { id: "connection.home.secret", targetId: "R_MAIN", hidden: true },
+      { id: "connection.home.secret", targetId: "R_MAIN", concealed: true },
       // Interior edge within LOC_TOWN — must vanish from the skeleton.
       { id: "connection.home.far", targetId: "S_FAR" },
     ],
@@ -42,7 +43,7 @@ function makeDgsm(): DynamicGameStateManager {
   const far: DynamicScene = {
     id: "S_FAR",
     name: "Far house",
-    description: "Nobody's business today.",
+    description: "Nobody's business today. A [item_vase] by the door.",
     parentLocationId: "LOC_TOWN",
     items: [{ id: "item_vase", name: "a vase" }],
     conditions: [],
@@ -53,7 +54,7 @@ function makeDgsm(): DynamicGameStateManager {
   const junction: DynamicScene = {
     id: "J_A",
     name: "Crossing",
-    description: "A windswept crossing.",
+    description: "A windswept crossing under [item_lamppost].",
     items: [{ id: "item_lamppost", name: "a lamppost" }],
     conditions: [],
     connections: [
@@ -74,7 +75,7 @@ function makeDgsm(): DynamicGameStateManager {
   const road: RoadNode = {
     id: "R_MAIN",
     name: "Star Avenue",
-    description: "A long avenue.",
+    description: "A long avenue; [item_glove] lies in the gutter.",
     connections: [
       { id: "connection.road.a", targetId: "J_A", role: "endpointA" },
       { id: "connection.road.b", targetId: "J_B", role: "endpointB" },
@@ -196,7 +197,7 @@ describe("Tier 1 — the skeleton: macro locations + geography", () => {
     // Each node carries its authored description: the skeleton renders in the
     // same description-plus-references shape as the v2 place files.
     expect(graph.places.find((p) => p.id === "J_A")?.description).toBe(
-      "A windswept crossing."
+      "A windswept crossing under [item_lamppost]."
     );
   });
 
@@ -224,8 +225,10 @@ describe("Tier 1 — the skeleton: macro locations + geography", () => {
       to: "J_A",
       travelTimeMinutes: 15,
     });
-    // Hidden connections stay in the graph, flagged: the Engine is all-knowing.
-    expect(byId.get("connection.home.secret")?.hidden).toBe(true);
+    // Concealed connections stay in the graph, flagged: the Engine is
+    // all-knowing.
+    expect(byId.get("connection.home.secret")?.concealed).toBe(true);
+    expect(byId.get("connection.junc.road")).not.toHaveProperty("concealed");
     // Blocked state never rides on the (cached) skeleton.
     for (const edge of graph.edges) {
       expect(edge).not.toHaveProperty("blockedReason");
@@ -254,6 +257,8 @@ describe("Tier 1 — the skeleton: macro locations + geography", () => {
     // The dropped interior edge is still a real connection to the validator.
     expect(state.connectionIds).toContain("connection.home.far");
     expect([...state.connectionIds].sort()).toHaveLength(8);
+    // The concealed subset — the lookup `viaConcealedConnectionId` checks.
+    expect(state.concealedConnectionIds).toEqual(["connection.home.secret"]);
   });
 });
 
@@ -283,7 +288,7 @@ describe("Tier 2 — full snapshots of the involved places only", () => {
     ]);
   });
 
-  it("shows hidden items and hidden exits to the Engine, flagged", () => {
+  it("shows unnoticed items and concealed exits to the Engine, flagged", () => {
     const home = state.places.find((p) => p.id === "S_HOME");
     expect(home?.conditions).toEqual([
       { id: "cond.home.dust", description: "dust everywhere" },
@@ -291,10 +296,16 @@ describe("Tier 2 — full snapshots of the involved places only", () => {
     const secret = home?.connections.find(
       (c) => c.connectionId === "connection.home.secret"
     );
-    expect(secret?.hidden).toBe(true);
+    expect(secret?.concealed).toBe(true);
 
+    // Uncited in S_HOME's description: there, but nobody has noticed it.
     const bills = state.items.find((i) => i.id === "item_bills");
-    expect(bills).toMatchObject({ holder: "scene:S_HOME", hidden: true });
+    expect(bills).toMatchObject({ holder: "scene:S_HOME", unnoticed: true });
+    // Cited: in plain view, no flag. Carried items are never unnoticed.
+    const chair = state.items.find((i) => i.id === "item_chair");
+    expect(chair).not.toHaveProperty("unnoticed");
+    const coin = state.items.find((i) => i.id === "item_coin");
+    expect(coin).not.toHaveProperty("unnoticed");
   });
 
   it("trims items to the involved places and actors, but never the holder map", () => {

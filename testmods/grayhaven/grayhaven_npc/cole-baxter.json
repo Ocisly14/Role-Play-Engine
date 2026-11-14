@@ -29,7 +29,6 @@
     "conditions": []
   },
   "skills": {
-    "Social": 40,
     "Knowledge & Craft": 40,
     "Science & Nature": 15,
     "Investigation": 65,
@@ -175,11 +174,11 @@
     },
     {
       "type": "general",
-      "content": "1984 年第一天，Ray 指着一张桌子和半盒没削的铅笔，说镇上没什么事。我第一个月都在重贴档案柜标签和编案号。"
+      "content": "1984 年第一天，Ray 指着一张桌子 [item.sheriff_front.cole_desk] 和半盒没削的铅笔，说镇上没什么事。我第一个月都在重贴档案柜 [item.sheriff_front.incident_files] 标签和编案号。"
     },
     {
       "type": "general",
-      "content": "异常报案有条时间线：1984 年十二月起灯光闪烁，三月起电视和收音机串台，五月海滩死鱼，六月 Earl 三次报告雾中灯光。"
+      "content": "异常报案有条时间线：1984 年十二月起灯光闪烁，三月起电视和收音机串台，五月海滩 [SCN_dock] 死鱼，六月 Earl 三次报告雾中灯光。"
     },
     {
       "type": "general",
@@ -187,7 +186,7 @@
     },
     {
       "type": "general",
-      "content": "Ray 从不打开前厅档案柜。上次我提起 Earl 的灯光报案，他停了一瞬，然后说雾大时别看得太仔细。"
+      "content": "Ray 从不打开前厅 [SCN_sheriff_front] 档案柜 [item.sheriff_front.incident_files]。上次我提起 Earl 的灯光报案，他停了一瞬，然后说雾大时别看得太仔细。"
     },
     {
       "type": "general",
@@ -195,7 +194,7 @@
     },
     {
       "type": "plan",
-      "content": "本周完成 1985 年上半年 GH-X 案件的编号和索引卡，再做一份按日期排列的清单。"
+      "content": "本周完成 1985 年上半年 GH-X 案件的编号和索引卡 [item.cole.ghx_index]，再做一份按日期排列的清单。"
     },
     {
       "type": "plan",
@@ -203,31 +202,31 @@
     },
     {
       "type": "map",
-      "content": "主街是一条街，我从头巡到尾：靠北口那头是蓝鸟餐馆、杂货店兼邮局、警长办公室门口，靠南口那头是街机厅、巴特拉维修铺楼下、诊所——南北口走到底，我拿表测过，整条十五分钟，雾大脚下放慢能多出一两分钟。"
+      "content": "主街 [ROAD_main_street] 是一条街，我从头巡到尾：靠北口 [SCN_main_north] 那头是蓝鸟餐馆 [SCN_bluebird_dining]、杂货店兼邮局 [SCN_grocery_store]、警长办公室 [SCN_sheriff_front] 门口，靠南口 [SCN_main_south] 那头是街机厅 [SCN_arcade]、巴特拉维修铺 [SCN_batra_shop] 楼下、诊所 [SCN_clinic_waiting]——南北口走到底，我拿表测过，整条十五分钟，雾大脚下放慢能多出一两分钟。"
     },
     {
       "type": "map",
-      "content": "主街北口往外三条岔路我记得清楚：旧海岸公路到汽车旅馆二十五分钟，霍尔特巷到 Holt 家院门二十分钟，林道走到林道口十分钟；南口往外，下坡道到码头海滩十五分钟，后巷抄近路到雷耶斯家门口八分钟——都是我巡逻表上的固定项。"
+      "content": "主街北口 [SCN_main_north] 往外三条岔路我记得清楚：旧海岸公路 [ROAD_old_coast_road] 到汽车旅馆 [SCN_motel] 二十五分钟，霍尔特巷 [ROAD_holt_lane] 到 Holt 家院门 [SCN_holt_gate] 二十分钟，林道 [ROAD_trail_access] 走到林道口 [SCN_trailhead] 十分钟；南口 [SCN_main_south] 往外，下坡道 [ROAD_dock_slope] 到码头海滩 [SCN_dock] 十五分钟，后巷 [ROAD_backstreet] 抄近路到雷耶斯家门口 [SCN_reyes_gate] 八分钟——都是我巡逻表上的固定项。"
     },
     {
       "type": "map",
-      "content": "巡逻车开到旧海岸公路靠汽车旅馆那一段，树影挡得手台信号断断续续，我跟前台约好了，联系不上就等我回程再报平安，不算出事。"
+      "content": "巡逻车 [VEH_patrol_car] 开到旧海岸公路 [ROAD_old_coast_road] 靠汽车旅馆 [SCN_motel] 那一段，树影挡得手台信号断断续续，我跟前台约好了，联系不上就等我回程再报平安，不算出事。"
     },
     {
       "type": "map",
-      "content": "一年巡逻下来，主街沿街每家店铺的后门和堆货口我都摸熟了，哪几盏路灯总在夜里闪也认得是哪几根杆。镇子以外说不上熟——林子我只到过林道口，没进去过深处，听说旧锯木厂废墟在林子深处，是孩子们爱去的地方。"
+      "content": "一年巡逻下来，主街 [ROAD_main_street] 沿街每家店铺的后门和堆货口我都摸熟了，哪几盏路灯总在夜里闪也认得是哪几根杆。镇子以外说不上熟——林子我只到过林道口 [SCN_trailhead]，没进去过深处，听说旧锯木厂 [SCN_sawmill] 废墟在林子深处，是孩子们爱去的地方。"
     },
     {
       "type": "map",
-      "content": "码头往灯塔崖那条崖间小径是唯一的路，巡逻走过来回，路上有条岔路通向 Earl 老爷子的小屋。灯塔从八二年起锁着，我没必要进去。"
+      "content": "码头 [SCN_dock] 往灯塔崖 [SCN_lighthouse_cliff] 那条崖间小径 [ROAD_cliff_path] 是唯一的路，巡逻走过来回，路上有条岔路通向 Earl 老爷子的小屋 [SCN_earl_cabin]。灯塔从八二年起锁着，我没必要进去。"
     },
     {
       "type": "map",
-      "content": "汽车旅馆旁那条车行道往山上去，尽头是一道自动大门，过了那儿就是雷德利站——镇上人都叫它气象观测站。普通人到大门为止，我巡逻从没往那条车道上走过，知道的都是镇上人闲聊来的。"
+      "content": "汽车旅馆 [SCN_motel] 旁那条车行道 [ROAD_station_drive] 往山上去，尽头是一道自动大门 [SCN_gate]，过了那儿就是雷德利站 [SCN_station_yard]——镇上人都叫它气象观测站。普通人到大门为止，我巡逻从没往那条车道上走过，知道的都是镇上人闲聊来的。"
     },
     {
       "type": "map",
-      "content": "档案柜里几份林区报案记的是方位，不是路线——大致说是林道口往里某个方向、多远，我按规程归了档，但从没照着这些方位走进去核实过。"
+      "content": "档案柜 [item.sheriff_front.incident_files] 里几份林区报案记的是方位，不是路线——大致说是林道口 [SCN_trailhead] 往里某个方向、多远，我按规程归了档，但从没照着这些方位走进去核实过。"
     }
   ]
 }

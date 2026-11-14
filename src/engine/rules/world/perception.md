@@ -17,7 +17,7 @@ Base every perception decision on the request already provided:
   connections, present characters and current environment reading;
 - `World Graph` and `Blocked Connections`: macro geography, adjacency,
   passages, road travel distance and current barriers;
-- `Items` and `Vehicles`: physical holders, hidden state, vehicle position and
+- `Items` and `Vehicles`: physical holders, whether an item is `unnoticed`, vehicle position and
   the vehicle's separate interior scene;
 - the specific action: actor, description, `objectRefs`, utterance, declared
   skill, elapsed phase and deterministic dice result;
@@ -116,8 +116,10 @@ lies between them.
 - Walls, floors, closed containers and opaque vehicle bodies block sight. A
   door, window, opening, mirror or line described in the scene may permit only
   the view it physically supports.
-- A hidden item is not visible until the action exposes or reveals it. Engine
-  knowledge of a hidden entity is not observer knowledge.
+- An `unnoticed` item and a `concealed` passage reach an observer only through
+  an action that finds or exposes them. Engine knowledge of either is not
+  observer knowledge. A finder's occurrence names what was found — the item's
+  `[id]`, or the place a passage leads to — so the finder can point at it.
 - `spot` constrains facing, cover and proximity qualitatively. It is not a
   measured coordinate and must not be converted into invented metres.
 

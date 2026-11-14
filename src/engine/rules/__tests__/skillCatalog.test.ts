@@ -3,7 +3,7 @@
 // A drift between them is silent in production — an agent declares a skill
 // the Engine has no guidance for, or a character's trained value stops
 // resolving — so it is pinned here. There is no legacy-name mapping any
-// more: profiles and module data must use the 17 canonical names.
+// more: profiles and module data must use canonical names.
 
 import { describe, expect, it } from "vitest";
 import {
@@ -46,7 +46,13 @@ describe("catalogSkillName", () => {
   });
 
   it("answers undefined for pre-consolidation names — no legacy fallback", () => {
-    for (const legacy of ["Locksmith", "Spot Hidden", "First Aid", "Cooking"]) {
+    for (const legacy of [
+      "Locksmith",
+      "Spot Hidden",
+      "First Aid",
+      "Cooking",
+      "Social",
+    ]) {
       expect(catalogSkillName(legacy)).toBeUndefined();
     }
   });
@@ -135,8 +141,7 @@ describe("skill guidance documents", () => {
         "removeCondition",
         "setDescription",
         "connectionBlock",
-        "connectionDiscovered",
-        "connectionHidden",
+        "connectionConcealed",
         "environmentContribute",
         "environmentHazard",
       ],

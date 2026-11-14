@@ -283,13 +283,13 @@ describe("the phase tools carry the very domain lists worldDeltaSchema defines",
 describe("what the split bought", () => {
   // The measured ceiling behind this refactor: the four effect lists arrive at
   // 19 `anyOf` branches together and the compiler refuses them. Split by
-  // domain, no phase carries more than eight.
+  // domain, no phase carries more than seven.
   const UNIFIED_EFFECT_BRANCHES = 19;
 
   it.each([
     ["characterChanges", CHARACTER_OPS, 7],
     ["itemChanges", ITEM_OPS, 4],
-    ["sceneChanges", SCENE_OPS, 8],
+    ["sceneChanges", SCENE_OPS, 7],
   ] as Array<[ResolutionPhase, typeof CHARACTER_OPS, number]>)(
     "%s carries one branch per operation kind",
     (phase, ops, expected) => {
@@ -319,7 +319,7 @@ describe("what the split bought", () => {
     }
     expect(
       RESOLUTION_PHASES.map((p) => optionalsOf(schemaOf(p)).length)
-    ).toEqual([6, 0, 0, 8, 5, 4]);
+    ).toEqual([7, 0, 0, 7, 5, 4]);
   });
 
   it("stays inside the strict keyword subset", () => {

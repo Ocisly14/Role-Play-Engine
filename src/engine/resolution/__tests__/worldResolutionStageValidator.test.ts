@@ -350,13 +350,13 @@ describe("endings phase", () => {
   });
 
   it("refuses pure speech for an action that carried a check — the dice answered an attempt", () => {
-    // Action before speech: a Social probe declared with a skill got a check
-    // at start; whatever it said, what came of the probe is an outcome.
+    // Action before speech: an attempt to treat a wound while speaking got a check
+    // at start. The treatment still needs an outcome.
     const probed = talkingAction();
     probed.checkOutcome = {
       actor: {
         rollId: "r1",
-        skillId: "Social",
+        skillId: "Medicine & Psychology",
         skillValue: 50,
         roll: 72,
         successLevel: "failure",
@@ -500,6 +500,36 @@ describe("starts phase", () => {
       draft
     );
     expect(text(errors)).toContain("the actor declared no skill");
+  });
+
+  it("starts a queued interrogation from an old save without its removed skill", () => {
+    const context = makeContext({
+      newCommands: [
+        command({
+          description: "I ask him where he was last night.",
+          utterance: "Where were you last night?",
+          declaredSkillId: "Social",
+        }),
+      ],
+    });
+    expect(
+      validatePhase("starts", { starting: [goodStart] }, context, draft)
+    ).toEqual([]);
+    const errors = validatePhase(
+      "starts",
+      {
+        starting: [
+          {
+            ...goodStart,
+            check: { requiredLevel: "hard" },
+            opposedBy: [{ characterId: "npc_2", skillId: "Social" }],
+          },
+        ],
+      },
+      context,
+      draft
+    );
+    expect(text(errors)).toContain('omit "check" and "opposedBy"');
   });
 
   it("names a row that is not an entry by index", () => {

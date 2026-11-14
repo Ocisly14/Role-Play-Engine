@@ -16,7 +16,7 @@
 //   · does every connection / road endpoint / outline entry / resident id
 //     point at something that exists
 //   · is the map one connected world, or islands the pathfinder cannot cross
-//   · are the NPC skill sheets written in the 17-domain vocabulary the engine
+//   · are the NPC skill sheets written in the current skill vocabulary the engine
 //     actually looks up — a sheet in the old 57-skill CoC names resolves to
 //     NOTHING, so every roll that character makes falls back to a base value
 //     and their whole profession is silently worth zero
@@ -211,7 +211,7 @@ async function main(): Promise<void> {
       );
 
   // ---- skill vocabulary ------------------------------------------------
-  // `skillCheckTool` looks a declared skill up BY NAME in the 17-domain
+  // The skill roller looks up a declared skill by name in the current
   // catalog. A sheet still written in the old 57-skill CoC vocabulary
   // ("Medicine 85", "Spot Hidden 50") matches nothing and rolls the base
   // value instead — the character keeps the number on paper and loses it
@@ -227,7 +227,7 @@ async function main(): Promise<void> {
     const outside = names.filter((n) => !domains.has(n));
     if (outside.length === names.length)
       problem(
-        `NPC ${npc.id} 的 ${names.length} 项技能没有一项在 17 域目录里 —— 所有检定都会回退到基础值：${outside.join(", ")}`
+        `NPC ${npc.id} 的 ${names.length} 项技能没有一项在技能目录里 —— 所有检定都会回退到基础值：${outside.join(", ")}`
       );
     else if (outside.length)
       hint(

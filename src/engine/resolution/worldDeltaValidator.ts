@@ -129,7 +129,7 @@ export function exitsFromHere(
     blocked.set(`${e.to}|${e.from}`, e.reason);
   }
   return place.connections
-    .filter((c) => !c.hidden)
+    .filter((c) => !c.concealed)
     .map((c) => {
       const reason = c.blockedReason ?? blocked.get(`${here}|${c.targetId}`);
       return reason
@@ -182,6 +182,8 @@ export interface Lookup {
   locationIds: Set<string>;
   /** Every authored connection id (`connection.*`), from `state.connectionIds`. */
   connectionIds: Set<string>;
+  /** The concealed subset, from `state.concealedConnectionIds`. */
+  concealedConnectionIds: Set<string>;
   /** The actor's own exits, open or closed — the SAME list the prompt puts
    *  beside their command as `exitsFromHere`, so a grant is checked against
    *  what the model was shown. Undefined when the actor's place is not in
@@ -250,12 +252,7 @@ export interface ResolutionWorklist {
    *  measured: 26 speech rows in one run cited an id the Engine had itself
    *  just placed under `starting`. */
   startingWithUtterance: string[];
-  /** Starting actions whose actor declared NO skill. There is nothing to
-   *  check, so `check` is refused on these — and the Engine should not have to
-   *  go find `declaredSkillId` in another section to work that out. Every
-   *  remaining rejection in one measured run was this lookup going wrong, and
-   *  always on the same kind of action: a described deception with no skill
-   *  behind it, where a bar feels obviously right and is not allowed. */
+  /** Starting actions without a declared skill in the current catalog. */
   startingWithoutSkill: string[];
 }
 
@@ -292,7 +289,7 @@ export function resolutionWorklist(
   for (const id of context.trigger.actionIds) {
     if (queued.has(id)) {
       worklist.starting.push(id);
-      if (commandById.get(id)?.declaredSkillId === undefined) {
+      if (!catalogSkillName(commandById.get(id)?.declaredSkillId ?? "")) {
         worklist.startingWithoutSkill.push(id);
       }
       if (commandById.get(id)?.utterance?.trim()) {
@@ -354,6 +351,9 @@ export function buildLookup(context: EngineResolutionContext): Lookup {
   );
   const placeIds = new Set(placeKinds.map(([id]) => id));
   const connectionIds = new Set(context.state.connectionIds);
+  const concealedConnectionIds = new Set(
+    context.state.concealedConnectionIds ?? []
+  );
   const vehicleIds = new Set((context.state.vehicles ?? []).map((v) => v.id));
   const characterSceneIds = new Map(
     context.state.characters.map((c) => {
@@ -414,6 +414,7 @@ export function buildLookup(context: EngineResolutionContext): Lookup {
     placeIds,
     locationIds,
     connectionIds,
+    concealedConnectionIds,
     exitsFor,
     vehicleIds,
     characterSceneIds,
@@ -494,6 +495,10 @@ export function validateStart(entry: RawActionStart, lookup: Lookup): string[] {
       errs.push(
         `the actor declared no skill, so there is nothing to check — omit "check"`
       );
+    } else if (!catalogSkillName(known.command.declaredSkillId)) {
+      errs.push(
+        `"${known.command.declaredSkillId}" is not a skill in the catalog — omit "check" and "opposedBy"`
+      );
     }
   }
   if (entry.opposedBy !== undefined) {
@@ -530,7 +535,7 @@ export function validateStart(entry: RawActionStart, lookup: Lookup): string[] {
   // the action with a route-shaped reason the actor can learn from.
   if (entry.movement !== undefined && !isRecord(entry.movement)) {
     errs.push(
-      'movement must be an object {"route": [place ids], "vehicleId"?, "passBlockedConnectionId"?}'
+      'movement must be an object {"route": [place ids], "vehicleId"?, "passBlockedConnectionId"?, "viaConcealedConnectionId"?}'
     );
   } else if (entry.movement !== undefined) {
     const route = entry.movement.route;
@@ -574,6 +579,18 @@ export function validateStart(entry: RawActionStart, lookup: Lookup): string[] {
         );
       }
     }
+    const viaId = entry.movement.viaConcealedConnectionId;
+    if (viaId !== undefined) {
+      if (typeof viaId !== "string" || !lookup.connectionIds.has(viaId)) {
+        errs.push(
+          `movement.viaConcealedConnectionId "${String(viaId)}" names no connection in this world`
+        );
+      } else if (!lookup.concealedConnectionIds.has(viaId)) {
+        errs.push(
+          `movement.viaConcealedConnectionId "${viaId}" is not concealed — an open passage needs no grant; drop it`
+        );
+      }
+    }
   }
   // Duration is conditionally required: a non-travel action must say how
   // long it takes; a travel action must NOT be clocked by hand — code derives
@@ -601,7 +618,7 @@ export function validateStart(entry: RawActionStart, lookup: Lookup): string[] {
 }
 
 /**
- * The defense skill in an `opposedBy` entry, against the same 17-domain
+ * The defense skill in an `opposedBy` entry, against the same
  * catalog the Engine's own prompt renders.
  *
  * Unchecked, a name outside the catalog was not a loud failure but a silent
@@ -1063,28 +1080,10 @@ export function validateSceneChange(
         errs.push("connectionBlock requires a reason");
       }
       break;
-    case "connectionDiscovered": {
-      checkConnectionId("connectionDiscovered");
-      const ids = op.characterIds;
-      if (!Array.isArray(ids) || ids.length === 0) {
-        errs.push(
-          "connectionDiscovered requires characterIds — everyone who could see it happen, and at least one of them"
-        );
-        break;
-      }
-      for (const id of ids) {
-        if (typeof id !== "string" || !lookup.characterIds.has(id)) {
-          errs.push(
-            `connectionDiscovered.characterIds contains "${String(id)}", which names no character`
-          );
-        }
-      }
-      break;
-    }
-    case "connectionHidden":
-      checkConnectionId("connectionHidden");
-      if (typeof op.hidden !== "boolean") {
-        errs.push("connectionHidden requires hidden boolean");
+    case "connectionConcealed":
+      checkConnectionId("connectionConcealed");
+      if (typeof op.concealed !== "boolean") {
+        errs.push("connectionConcealed requires concealed boolean");
       }
       break;
     case "environmentContribute":
@@ -1222,13 +1221,12 @@ export function validateItemChange(
       const hasAppend =
         typeof op.appendDescription === "string" &&
         op.appendDescription.trim().length > 0;
-      const hasHidden = typeof op.hidden === "boolean";
       const hasLight =
         typeof op.isLightSource === "boolean" ||
         typeof op.lightLevel === "number";
-      if (!hasDescription && !hasAppend && !hasHidden && !hasLight) {
+      if (!hasDescription && !hasAppend && !hasLight) {
         errs.push(
-          "set needs at least one of description, appendDescription, hidden, isLightSource, lightLevel"
+          "set needs at least one of description, appendDescription, isLightSource, lightLevel"
         );
       }
       // Replacing and appending in the same breath does not say which text
@@ -1966,6 +1964,7 @@ export interface FinalizedResolution {
       route: string[];
       vehicleId?: string;
       passBlockedConnectionId?: string;
+      viaConcealedConnectionId?: string;
     }
   >;
   /** The bar set for an action as it starts, per actionId. Written onto the
@@ -2006,14 +2005,13 @@ function occurrenceActor(o: RawOccurrence, lookup: Lookup): string | undefined {
 }
 
 /** The people a row was aimed at: what the Engine wrote, or — when it wrote
- *  nothing — whoever the cited commands named as target or recipient. */
+ *  nothing — every person the cited commands referenced. */
 function occurrenceTargets(o: RawOccurrence, lookup: Lookup): string[] {
   if (Array.isArray(o.targetIds)) return [...new Set(o.targetIds)];
   const out = new Set<string>();
   for (const id of o.actionIds ?? []) {
     for (const ref of lookup.actionById.get(id)?.command.objectRefs ?? []) {
-      if (ref.kind !== "character") continue;
-      if (ref.role === "target" || ref.role === "recipient") out.add(ref.id);
+      if (ref.kind === "character") out.add(ref.id);
     }
   }
   return [...out];
@@ -2071,6 +2069,7 @@ export function finalizeResolution(
       route: string[];
       vehicleId?: string;
       passBlockedConnectionId?: string;
+      viaConcealedConnectionId?: string;
     }
   > = {};
   const checkInits: FinalizedResolution["checkInits"] = {};
@@ -2092,6 +2091,11 @@ export function finalizeResolution(
         ...(entry.movement.passBlockedConnectionId !== undefined
           ? {
               passBlockedConnectionId: entry.movement.passBlockedConnectionId,
+            }
+          : {}),
+        ...(entry.movement.viaConcealedConnectionId !== undefined
+          ? {
+              viaConcealedConnectionId: entry.movement.viaConcealedConnectionId,
             }
           : {}),
       };

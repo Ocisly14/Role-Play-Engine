@@ -17,13 +17,12 @@ judge is the attempt behind them.
 - A command that also attempts something is an action. Clock the attempt, not
   the sentence; check it where the declared skill covers it. The `utterance`
   rides along and lands when the action ends.
-- Prying, deceiving, stalling, intimidating, persuading and reading a person
-  are attempts, not plain talk. When `Social` covers the declared attempt and
-  success is uncertain, use a `check`. Add `opposedBy` only for supported
-  active resistance with the skill used to resist; a target reference alone
-  does not establish resistance. Code's dice
-  settle the delivery and effectiveness of the attempt under the skill's
-  guidance; they do not author the target's answer, belief or decision.
+- Persuasion, questioning, deception, intimidation, negotiation, stalling
+  through conversation, and reading a person's intent use neither `check` nor
+  `opposedBy`, regardless of the declared skill. A spoken line alone takes
+  one minute. When the actor also does something observable, assess its time
+  and settle that conduct. An independent task, such as treating a wound,
+  fighting, or translating a learned language, may still need its own check.
 - The same holds for every other declared skill: treating a wound, forcing a
   lock, edging into a doorway unnoticed, reading a room. If success is in any
   doubt, it is checked; if the declared skill does not cover the attempt, it is
@@ -55,10 +54,8 @@ in the same judgement.
 - For movement, provide `movement` as described in
   `movement-and-position.md`; code derives its duration from the route.
 - When the declared skill covers the attempt and success is in doubt, write a
-  `check` with `requiredLevel`: `regular`, `hard` or `extreme`. A declared
-  skill is a stake the actor chose to put down: the default is to check it,
-  and to omit the check only when the attempt cannot fail or the skill does
-  not cover it.
+  `check` with `requiredLevel`: `regular`, `hard` or `extreme`, subject to the
+  interpersonal rule above.
 - When supplied conduct or standing defenses establish active resistance
   to an attempt — including concealment, evasion or guarding — list them in `opposedBy` with the skill they
   use to defend. `opposedBy` requires a `check`. Code rolls and compares both
@@ -118,24 +115,18 @@ An action with a deterministic dice result must respect it:
 - `fumble`: apply a supported, proportionate consequence under the skill
   guidance; examples are not a requirement to invent damage or a target reaction.
 
-## Social outcomes stop at the actor
+## Interpersonal actions
 
-For a social attempt, settle the actor's delivery and the pressure or evidence
-it produced, as the skill guidance permits. A successful or failed check does
-not authorize a reply, silence, concession, belief or emotional reaction from
-the target. Do not make "failure" mean "the other person refused to answer",
-or "success" mean "the other person believed them".
-
-On a failed probe, describe the unsupported angle, awkward phrasing or other
-actor-side failure justified by the attempt. Stop there. "Nobody answered",
-"the target replied politely", "nobody took up the joke" and "the room stayed
-tense" all invent other people's conduct or feelings unless supplied facts
-already establish them. No recorded response is not evidence of chosen silence.
+Record the actor's actual words and observable conduct, including any evidence
+they show. Deliver those facts through occurrences to the people who can see
+or hear them. For a silent read of someone, route existing cues through
+ordinary perception. The observer interprets them. Use `no_change` if the
+observation produces no new objective result.
 
 Only the other actor's own settled action or an already established fact can
-support describing their response. Preserve that source and its timing; do
-not turn a queued command, an ongoing intent, or a simultaneous unrelated line
-into a reaction to this attempt. Do not predict the response to finish the scene.
+support describing their reply, silence, concession, belief or emotional
+reaction. Preserve its source and timing. The recipient decides how to
+respond based on what actually reaches them.
 
 ## Interrupted and replaced actions
 
