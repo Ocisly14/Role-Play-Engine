@@ -1,8 +1,8 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "id": "ROAD_redwood_fence",
   "name": "围栏爬径",
-  "description": "从红杉环向北的最后一段爬升,两小时十分钟。起点在红杉环的北缘 [SCN_redwood_ring],尽头撞上一道链网围栏 [SCN_fence]。开头一段路边埋着一块铁地锚,一段钢缆从锚眼里伸出来,朝北拉进林子,走出十几步就再也找不着它 [item.redwood_fence.cable_anchor]。坡陡起来之后,一棵倒木斜横在路上,树干上被踩出一道发亮的凹槽,踩着过去比绕过去快 [item.redwood_fence.deadfall]。半途一块石头底下渗出一汪泉,水凉得手发麻,再往北就没有水了 [item.redwood_fence.last_spring]。过了泉不久是一个老岔口,石堆还在,另一条岔路早被灌木封死,拨开也看不出通向哪儿 [item.redwood_fence.blocked_fork]。最后一段的路牌掉在草里,字朝下,桩子空着立在原处 [item.redwood_fence.fallen_sign]。越靠北,林子越静;鸟叫在某个说不清的位置停下之后,就再没有响起过。",
+  "setting": "从红杉环向北的最后一段爬升,两小时十分钟。起点在红杉环的北缘 [SCN_redwood_ring],尽头撞上一道链网围栏 [SCN_fence]。开头一段路边埋着一块铁地锚,一段钢缆从锚眼里伸出来,朝北拉进林子,走出十几步就再也找不着它 [item.redwood_fence.cable_anchor]。坡陡起来之后,一棵倒木斜横在路上,树干上被踩出一道发亮的凹槽,踩着过去比绕过去快 [item.redwood_fence.deadfall]。半途一块石头底下渗出一汪泉,水凉得手发麻,再往北就没有水了 [item.redwood_fence.last_spring]。过了泉不久是一个老岔口,石堆还在,另一条岔路早被灌木封死,拨开也看不出通向哪儿 [item.redwood_fence.blocked_fork]。最后一段的路牌掉在草里,字朝下,桩子空着立在原处 [item.redwood_fence.fallen_sign]。越靠北,林子越静;鸟叫在某个说不清的位置停下之后,就再没有响起过。",
   "parentLocationId": "OUTDOOR",
   "travelTimeMinutes": 130,
   "references": {

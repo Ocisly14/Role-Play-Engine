@@ -201,6 +201,12 @@ export type Effect =
        *  currently AT `location` (location-scoped — a crate someone
        *  carried away does not block the refill). */
       skipIfExists?: boolean;
+      /** Where in the place it appears ("案台边") — required. */
+      placement: string;
+      /** The item of that place it appears inside, when out of sight. */
+      container?: string;
+      /** How many identical things it stands for; default 1. */
+      quantity?: number;
     }
   | {
       kind: "item.move";
@@ -210,6 +216,9 @@ export type Effect =
        *  phantom inventory). */
       from: string;
       to: string;
+      /** Required when `to` is a place. */
+      placement?: string;
+      container?: string;
     }
   | { kind: "event.emit"; event: FeatureEvent }
   // Cross-event (D)

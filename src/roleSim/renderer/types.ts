@@ -1,12 +1,12 @@
 // src/roleSim/renderer/types.ts
 //
 // Renderer contracts (plan Phase 9). The Engine emits ONE objective
-// Occurrence row per fact, with a per-perceiver clarity grade (`full` /
-// `limited` / `trace`); the controller groups the rows per character; the
-// renderer turns one character's occurrences + their own state into a
-// first-person sensory narrative, degrading the shared facts to the
-// viewpoint's grade. The Engine never provides per-character fact subsets —
-// the grade is the only per-viewer thing it writes.
+// Occurrence row per fact, with per-perceiver sight and hearing grades; the
+// controller groups the rows per character; the renderer turns one
+// character's occurrences + their own state into a first-person sensory
+// narrative, degrading the shared facts to the viewpoint's grades. The Engine
+// never provides per-character fact subsets — the grades are the only
+// per-viewer thing it writes.
 
 import type { Occurrence } from "../../engine/actions/types.js";
 import type {
@@ -62,9 +62,30 @@ export interface PerceivedSceneItem {
   id: string;
   name: string;
   description?: string;
+  /** Where it is within the place ("收银机旁"). Absent for a fixture — the
+   *  setting already places it. */
+  placement?: string;
+  /** How many identical things it stands for (absent = one). */
+  quantity?: number;
   /** Road items with a position: minutes' walk between viewpoint and item.
    *  Absent for scene items and ambient road items. */
   distanceMinutes?: number;
+}
+
+/** A thing at this place that is not in plain view. */
+export interface PerceivedOutOfViewItem extends PerceivedSceneItem {
+  /** What it sits in, under or behind — its own description says whether
+   *  it is closed, open or see-through. */
+  container?: { id: string; name: string; description?: string };
+}
+
+/** A way through that is physically concealed, by the place it leads to. */
+export interface PerceivedConcealedWay {
+  /** The place it leads to — the tag a paragraph would write. */
+  id: string;
+  name: string;
+  /** The passage's own description (what hides it). */
+  description?: string;
 }
 
 /** Per-NPC perception input handed to the renderer. */
@@ -73,7 +94,8 @@ export interface PerceivedBundle {
   scene: {
     id: string;
     name: string;
-    description: string;
+    /** The place itself (schema v3) — never this minute's state. */
+    setting: string;
     activeConditions: SceneCondition[];
     /** Items perceivable from the viewpoint's exact position — the same set
      *  the trust boundary lets the actor cite. `distanceMinutes` is set for
@@ -88,6 +110,15 @@ export interface PerceivedBundle {
      *  because every paragraph rendered the armchair and the light and never
      *  once said the door led to the living room. */
     adjacentPlaces: PerceivedAdjacentPlace[];
+    /** What is here but out of plain view: things inside, under or behind
+     *  something, and concealed ways through. The renderer decides, this
+     *  minute and for this viewpoint, whether any of it is perceived; one it
+     *  writes into the paragraph (with its tag) is perceived from then on,
+     *  one it leaves out is not. Absent when there is nothing hidden here. */
+    outOfView?: {
+      items: PerceivedOutOfViewItem[];
+      ways: PerceivedConcealedWay[];
+    };
   };
   /** Where the viewpoint has put themselves inside that place, as prose —
    *  "at the workbench, back to the door". Proprioceptive: you always know
@@ -100,7 +131,7 @@ export interface PerceivedBundle {
   /** The tick's objective occurrences this character is listed under
    *  `perceivers` on (plus subsystem/scripted events adapted into occurrence
    *  form). Each row is shared with every other perceiver, facts at full
-   *  detail; the viewpoint's own clarity entry says how much of it the
+   *  detail; the viewpoint's own sight and hearing say how much of it the
    *  renderer lets through. May be empty. */
   occurrences: Occurrence[];
   /** Every other alive character standing in the viewpoint's scene right now,

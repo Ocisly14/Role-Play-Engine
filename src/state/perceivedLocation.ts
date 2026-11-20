@@ -15,12 +15,13 @@
 // so one uniform view serves both.
 //
 // This resolver is also the single choke point for what is IN PLAIN VIEW.
-// There is no hidden flag: an item the place's description does not cite is
-// there but not yet noticed, and a passage marked `concealed` is physically
-// obscured. Neither reaches perception — not the rendered narrative, not the
-// citable directory — unless this viewer noticed it this minute (`noticed`).
-// All branches filter here so no caller can leak an unnoticed thing by
-// reading the raw node.
+// There is no hidden flag: an item in plain view is a fixture the place's
+// setting cites, or a loose thing with a placement and no container. An item
+// sitting in a container (a drawer, a closed cabinet) and a passage marked
+// `concealed` are physically out of sight. Neither reaches perception — not
+// the rendered narrative, not the citable directory — unless this viewer
+// noticed it this minute (`noticed`). All branches filter here so no caller
+// can leak an unnoticed thing by reading the raw node.
 
 import type { SceneCondition } from "../engine/core/types.js";
 import type { DynamicGameStateManager } from "./DynamicGameState.js";
@@ -32,7 +33,8 @@ export interface PerceivedLocation {
   id: string;
   kind: "scene" | "road";
   name: string;
-  description: string;
+  /** The place itself (schema v3). */
+  setting: string;
   conditions: SceneCondition[];
   items: Item[];
   /** Place ids one hop away — the citation scope beyond the current place. */
@@ -56,7 +58,7 @@ const ROAD_PROXIMITY_MINUTES = 1;
 export const ROAD_ITEM_REACH_MINUTES = 5;
 
 /** What a viewer noticed this minute beyond what is in plain view: an item
- *  the description does not cite, a concealed passage. Decided per render
+ *  sitting in a container, a concealed passage. Decided per render
  *  (concealment design §5.3); absent, only plain view counts. */
 export interface NoticedThisMinute {
   itemIds?: ReadonlySet<string>;
@@ -70,6 +72,18 @@ export function citedIds(prose: string | undefined): Set<string> {
   const out = new Set<string>();
   for (const m of (prose ?? "").matchAll(CITATION_RE)) out.add(m[1]);
   return out;
+}
+
+/** In plain view for anyone at the place: a fixture its setting cites, or a
+ *  loose thing with a placement and no container. Pass a precomputed
+ *  `citedIds(setting)` set when testing many items of one place. */
+export function isInPlainView(
+  item: Item,
+  setting: string | undefined | ReadonlySet<string>
+): boolean {
+  const cited = typeof setting === "object" ? setting : citedIds(setting);
+  if (cited.has(item.id)) return true;
+  return Boolean(item.placement) && item.container === undefined;
 }
 
 /** True when this passage is in plain view, or this viewer noticed it. */
@@ -112,10 +126,10 @@ export function resolvePerceivedLocation(
       id: scene.id,
       kind: "scene",
       name: scene.name,
-      description: scene.description ?? "",
+      setting: scene.setting ?? "",
       conditions: dgsm.getSceneConditions(scene.id),
       items: [
-        ...visibleItems(scene.items, scene.description, noticed),
+        ...visibleItems(scene.items, scene.setting, noticed),
         ...vehiclesHere.map((v) => ({
           id: v.id,
           name: v.name,
@@ -170,10 +184,10 @@ export function resolvePerceivedLocation(
     id: road.id,
     kind: "road",
     name: road.name,
-    description: road.description ?? "",
+    setting: road.setting ?? "",
     conditions: dgsm.getSceneConditions(road.id),
     items: [
-      ...visibleItems(road.items, road.description, noticed).filter(
+      ...visibleItems(road.items, road.setting, noticed).filter(
         (item) =>
           item.position === undefined ||
           Math.abs(item.position - position.position) *
@@ -204,22 +218,23 @@ export function resolvePerceivedLocation(
   };
 }
 
-/** The items in plain view — cited by the place's description — plus the
- *  ones this viewer noticed this minute. */
+/** The items in plain view — fixtures and loose placed things — plus the
+ *  ones in containers this viewer noticed this minute. */
 function visibleItems(
   items: Item[] | undefined,
-  description: string | undefined,
+  setting: string | undefined,
   noticed: NoticedThisMinute | undefined
 ): Item[] {
-  const cited = citedIds(description);
+  const cited = citedIds(setting);
   return (items ?? []).filter(
-    (item) => cited.has(item.id) || (noticed?.itemIds?.has(item.id) ?? false)
+    (item) =>
+      isInPlainView(item, cited) || (noticed?.itemIds?.has(item.id) ?? false)
   );
 }
 
-/** The items at this position that are NOT in plain view — the candidates a
- *  viewer may or may not notice (concealment design §5.3). Road items keep
- *  the reach radius. */
+/** The items at this position that are NOT in plain view — the things in
+ *  containers a viewer may or may not notice (concealment design §5.3,
+ *  setting design §5.3). Road items keep the reach radius. */
 export function unnoticedCandidates(
   position: CharacterPosition | null | undefined,
   dgsm: DynamicGameStateManager
@@ -229,9 +244,9 @@ export function unnoticedCandidates(
   if (position.type === "scene") {
     const scene = dgsm.getScene(position.sceneId);
     if (!scene) return { items: [], connectionIds: [] };
-    const cited = citedIds(scene.description);
+    const cited = citedIds(scene.setting);
     return {
-      items: (scene.items ?? []).filter((i) => !cited.has(i.id)),
+      items: (scene.items ?? []).filter((i) => !isInPlainView(i, cited)),
       connectionIds: (scene.connections ?? [])
         .filter((c) => c.concealed)
         .map((c) => c.id),
@@ -239,11 +254,11 @@ export function unnoticedCandidates(
   }
   const road = topology.roads.get(position.roadId);
   if (!road) return { items: [], connectionIds: [] };
-  const cited = citedIds(road.description);
+  const cited = citedIds(road.setting);
   return {
     items: (road.items ?? []).filter(
       (item) =>
-        !cited.has(item.id) &&
+        !isInPlainView(item, cited) &&
         (item.position === undefined ||
           Math.abs(item.position - position.position) *
             road.travelTimeMinutes <=

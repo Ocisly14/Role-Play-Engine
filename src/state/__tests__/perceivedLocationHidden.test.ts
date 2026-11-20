@@ -40,7 +40,7 @@ function makeWorld(): World {
   const scene: DynamicScene = {
     id: "S_PARLOR",
     name: "Parlour",
-    description: "A parlour with [ITEM_CHAIR] by the hearth.",
+    setting: "A parlour with [ITEM_CHAIR] by the hearth.",
     parentLocationId: "B_HOUSE",
     items: [
       { id: "ITEM_CHAIR", name: "a chair" },
@@ -56,7 +56,7 @@ function makeWorld(): World {
     (id) => ({
       id,
       name: id,
-      description: "",
+      setting: "",
       parentLocationId: "OUTDOOR",
       items: [],
       conditions: [],
@@ -68,7 +68,7 @@ function makeWorld(): World {
   const junction: DynamicScene = {
     id: "J_X",
     name: "Crossing",
-    description: "A crossing under [ITEM_LAMP].",
+    setting: "A crossing under [ITEM_LAMP].",
     items: [
       { id: "ITEM_LAMP", name: "a lamppost" },
       { id: "ITEM_COIN", name: "a buried coin" }, // uncited: unnoticed
@@ -83,7 +83,7 @@ function makeWorld(): World {
   const road: RoadNode = {
     id: "R_MAIN",
     name: "Star Avenue",
-    description: "A long avenue; [ITEM_GLOVE] lies in the gutter.",
+    setting: "A long avenue; [ITEM_GLOVE] lies in the gutter.",
     connections: [
       { id: "connection.r_main.a", targetId: "J_X", role: "endpointA" },
       { id: "connection.r_main.b", targetId: "J_Y", role: "endpointB" },
@@ -312,7 +312,7 @@ describe("concealed connections stay out of adjacency", () => {
     for (const id of ["S_PARLOR", "J_X", "R_MAIN"]) {
       const byId = resolveLocationById(id, dgsm);
       expect(
-        byId?.items.every((i) => byId?.description.includes(`[${i.id}]`))
+        byId?.items.every((i) => byId?.setting.includes(`[${i.id}]`))
       ).toBe(true);
       expect(byId?.adjacentIds).not.toContain("S_CELLAR");
       expect(byId?.adjacentIds).not.toContain("S_HUT");
@@ -324,9 +324,9 @@ describe("exposing something changes the world for everyone", () => {
   it("an item cited into the description appears in the location and the directory", () => {
     const { dgsm, scene, junction, road, setActorPosition } = makeWorld();
 
-    scene.description += " A [ITEM_DAGGER] lies on the mantel.";
-    junction.description += " A [ITEM_COIN] glints in the dirt.";
-    road.description += " A [ITEM_KNIFE] shows in the ditch.";
+    scene.setting += " A [ITEM_DAGGER] lies on the mantel.";
+    junction.setting += " A [ITEM_COIN] glints in the dirt.";
+    road.setting += " A [ITEM_KNIFE] shows in the ditch.";
 
     expect(
       resolvePerceivedLocation(PARLOR, dgsm)?.items.map((i) => i.id)

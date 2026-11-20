@@ -24,11 +24,12 @@ export type RoleSimDecision =
       skillId?: string;
       language?: string;
       utterance?: string;
+      replyNow?: string;
       /** Player character only: this act is going to sleep. Present only
        *  when the model set it to `true`; NPCs are never offered the field. */
       sleep?: boolean;
     }
-  | { tool: "continue"; reason?: string }
+  | { tool: "continue"; reason?: string; replyNow?: string }
   | {
       /** Player character in delegated mode only: ask the off-world player
        *  for advice. Terminal — the decision ends waiting for the answer. */
@@ -47,6 +48,9 @@ export interface RoleSimContext {
   currentTime: GameTime;
   npcProfile: DynamicNPCProfile;
   currentScene: string;
+  /** Words just heard in a nearby manual exchange, eligible for a short
+   *  reply within the same minute. */
+  manualSpeech?: string;
   /** In-flight action, if any. Intent + progress + timing only — NO engine
    *  ids or runtime internals. When the agent decides `act` while
    *  currentAction is defined, the controller submits a replacement command
@@ -57,6 +61,17 @@ export interface RoleSimContext {
     progressMinutes?: number;
     /** Engine-decided total duration in ticks (1 tick = 1 minute). */
     resolvedDurationTicks?: number;
+  };
+  /** The action that ended THIS minute, told to the character directly —
+   *  not left for them to infer from the rendered paragraph. Without it a
+   *  character whose action closed while the prose still showed them at it
+   *  (a letter "read line by line, still open in her hands") took itself to
+   *  be mid-task, chose `continue`, and was idle from then on. */
+  justEnded?: {
+    description: string;
+    status: "completed" | "failed" | "interrupted" | "cancelled";
+    /** The settlement's reason, when it gave one. */
+    reason?: string;
   };
   /** Everything this character remembers, injected whole — there is no
    *  recall tool, so a memory absent from the prompt does not exist for

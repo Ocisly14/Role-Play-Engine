@@ -39,81 +39,135 @@ crossroads or yard is a top-level scene; `truth_timeline.json`,
 
 `startDate` is required for session creation.
 
-## 2. Place files: the prose-first format
+## 2. Place files: setting and props (schema v3)
 
 `SCN_*` (scenes), `ROAD_*` (roads) and `VEH_*` (vehicles) share one idea:
-**the description IS the data surface characters perceive.** It is complete
-natural-language prose, and everything a character may point at is cited
-inline with a stable `[reference-id]`.
+**a place is perceived by someone at some minute.** What the file authors is
+the place itself — its **setting** — plus where each loose thing sits. Who is
+here, what they are doing, the light, the weather and the conditions all come
+from live state and are put together by the renderer at that minute.
 
 ```json
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "id": "SCN_library",
   "name": "Town Library",
-  "description": "Dusty archives fill the reading room [item.library.archives]. A stairway rises to the stacks [SCN_library_stacks]. The unlit back row is hard to examine [cond.library.dim].",
+  "setting": "A long reading room under a low ceiling. Tall archive shelves line the back wall [item.library.archives]; a heavy oak desk stands by the door [item.library.desk]. A stairway behind the desk rises to the stacks [SCN_library_stacks]. The room smells of old paper.",
   "parentLocationId": "B_LIBRARY",
   "indoor": true,
   "references": {
     "items": [
-      {
-        "id": "item.library.archives",
-        "name": "Archive shelves",
-        "description": "Tall shelves of local newspapers and municipal records."
-      }
+      { "id": "item.library.archives", "name": "Archive shelves",
+        "description": "Tall shelves of local newspapers and municipal records." },
+      { "id": "item.library.desk", "name": "Oak desk",
+        "description": "A heavy oak desk; its one drawer is shut." },
+      { "id": "item.library.lamp", "name": "Reading lamp",
+        "description": "A brass lamp with a green shade.",
+        "placement": "on the desk", "isLightSource": true, "lightLevel": 2 },
+      { "id": "item.library.ledger", "name": "Loan ledger",
+        "description": "A cloth-bound ledger of loans.",
+        "placement": "in the desk drawer", "container": "item.library.desk" }
     ],
     "connections": [
-      {
-        "id": "connection.library.stacks",
-        "targetId": "SCN_library_stacks",
-        "name": "Stairway to stacks",
-        "description": "A narrow stairway behind the circulation desk."
-      }
+      { "id": "connection.library.stacks", "targetId": "SCN_library_stacks",
+        "name": "Stairway to stacks", "description": "A narrow stairway behind the desk." }
     ],
     "conditions": [
-      {
-        "id": "cond.library.dim",
-        "description": "The rear shelves are poorly lit.",
-        "mechanicalEffect": { "skillPenalty": { "Investigation": -10 } }
-      }
+      { "id": "cond.library.dim", "description": "The rear shelves are poorly lit.",
+        "mechanicalEffect": { "skillPenalty": { "Investigation": -10 } } }
     ]
   }
 }
 ```
 
-### Citation rules (cross-file validated, the heart of v2)
+### What the setting says
 
-- Every `[citation]` must resolve to a **local item, a local condition, or the
-  TARGET place of one of this file's connections**.
-- An item cited in the prose is **in plain sight**, and is cited **exactly
-  once**. An item that has a `references.items` row but is **not cited** is a
-  thing nobody has noticed yet (a liner under a suitcase lining, bills at the
-  bottom of a cash drawer) — that absence is the whole mechanism. Items carry
-  **no `hidden` flag**; the loader rejects one. Whether a particular character
-  notices an uncited item is decided per character at perception time; laying
-  it open for everyone is done by rewriting the prose to cite it.
-- Conditions are always cited exactly once.
+The test for every sentence: **is it still true at 3 a.m., with nobody here,
+in any weather?** Write size and shape, layout and sightlines, materials and
+wear, what walls, windows and doors let through, smells and sounds that
+belong to the place itself, its fixtures and its ways out. Be concrete,
+objective, present tense.
+
+Do **not** write:
+- the hour, the crowd or the weather ("packed with regulars", "fog still
+  hanging over the street");
+- noise that needs someone doing it ("the coffee machine hisses") — that is
+  an action, rendered from what happens;
+- loose things (they are items with a `placement`);
+- conditions (they are state, listed on their own);
+- people's names, or what only someone who knows the place would know
+  ("the owner keeps count of everyone's sugar") — that belongs in that
+  character's memories;
+- mood or judgement — that belongs to whoever is looking.
+
+### Items: fixture, placed, or in a container
+
+Every item at a place is exactly one of:
+
+| state | how | seen by |
+|---|---|---|
+| fixture | cited once in the setting; no `placement`, no `container` | everyone here |
+| placed | `placement`, no `container`, not cited | everyone here |
+| in a container | `placement` + `container`, not cited | whoever notices it this minute |
+
+- `placement` is where the thing is, as a short phrase ("on the desk", "in
+  the desk drawer"). Brackets are stripped and it is capped at 120
+  characters, like a character's spot.
+- `container` is the id of another item **of the same place** that the thing
+  sits inside, under or behind, when that item can hide it: a drawer, a
+  closed cabinet, a suitcase, a mattress, a glass case. An open shelf, a
+  knife block or an open basket hides nothing and is not a container. No
+  item names itself; no chain loops.
+- **A container's description says only what can be seen from outside it**:
+  clear or solid, open or shut, which way its opening faces. What is inside
+  is authored as items with `container`. Whether a given person sees them
+  right now is judged per viewer at render time from the container's
+  description, where they stand and what they are doing.
+- Anything small that someone would pick up or use on its own — money, a
+  knife, matches, papers, medicine, food — is its own item. Things that go
+  wherever their container goes (coins in a tip jar) stay in the container's
+  description; pure background (plates stacked on a shelf) stays in the
+  fixture's description until someone acts on it.
+- A fixture is something nobody would carry off in ordinary life (a counter,
+  a phone fixed to the wall, a till). When unsure, make it a fixture.
+
+### Citation rules (cross-file validated)
+
+- Every `[citation]` in a setting must resolve to a **local item** (a fixture)
+  or the **target place of one of this file's connections**.
+- Conditions are never cited.
 - **Connections are cited by the place they lead to** (`[SCN_library_stacks]`,
-  `[ROAD_main_street]`) — never by their own `connection.*` id. A passage is
-  topology bookkeeping, not a pointable thing. Every non-concealed
-  connection's target must be cited exactly once; a `concealed` connection's
-  target must NOT be cited on that connection's account. **A door that
-  matters as an object** (lockable, breakable, notable) **is authored as an
-  item** in addition to the connection.
+  `[ROAD_main_street]`) — never by their own `connection.*` id. Every
+  non-concealed connection's target must be cited exactly once; a `concealed`
+  connection's target must NOT be cited on that connection's account. **A
+  door that matters as an object** (lockable, breakable, notable) **is
+  authored as an item** in addition to the connection.
 - Citing a place this file has no connection to is an error. Far landmarks a
   character can see but not walk to stay uncited prose.
 - All place ids and reference ids share ONE module-wide namespace.
 
 ### Common fields
 
-- `schemaVersion: 2` — required; v1 files are rejected.
-- `id`, `name`, `description`.
+- `schemaVersion: 3` — required; any other version is rejected.
+- `id`, `name`, `setting` (a `description` key on a place is rejected).
 - `parentLocationId` (optional): any non-empty value marks the scene as
   INTERIOR; **omit it to make the scene a top-level geography node** (street
   crossroads, yard, trailhead). The value itself is only a grouping label for
   the map viewer — it is not looked up anywhere. A vehicle's cab uses the
   vehicle id here.
 - `indoor` (optional): lighting/weather exposure.
+- `coordinates` (optional, `SCN_*` only): `{ "x": 120, "y": -340, "z": 4 }`,
+  the place's center in **meters** — `x` east, `y` north, `z` the floor's
+  elevation above sea level (default 0; an upper floor sits ~3 m above the
+  one below). Pick any origin, one per module. This is the straight-line
+  distance perception reads: sound and sight cross walls, floors and open
+  ground directly, they do not walk the roads (two rooms sharing a wall
+  without a door are meters apart; the cliff top is close to the beach below
+  it). A place without coordinates falls back to the walking time by the ways
+  that join it. Not on `ROAD_*` (a road's points lie on the straight line
+  between its endpoints) and not on a vehicle's interior scene (it is
+  wherever the vehicle is) — both are rejected. Movement never reads it:
+  travel time is the roads' `travelTimeMinutes` and one minute per door.
 - `references.items`, `references.connections`, `references.conditions`.
 
 Topology attaches interior scenes transitively by itself: a kitchen reached
@@ -124,8 +178,7 @@ container registry, no entry-scene declarations.
 
 ```ts
 interface Item {
-  id: string;               // module-unique; cited once = in plain sight,
-                            // uncited = not yet noticed (no `hidden` flag)
+  id: string;               // module-unique; cited once = a fixture
   name: string;
   description?: string;     // the Engine reads prose and judges — no stat fields
   isLightSource?: boolean;  // summed by subsystem/sun.ts
@@ -134,6 +187,8 @@ interface Item {
                             // Perceivable within a 5-minute walk of it; a
                             // positionless road item is ambient (visible
                             // anywhere along). Invalid on scenes.
+  placement?: string;       // where it is; required unless cited (a fixture)
+  container?: string;       // the item of this place that can hide it
 }
 ```
 
@@ -152,8 +207,22 @@ interface Connection {
   concealed?: boolean;      // physically obscured (a door behind a bookshelf),
                             // the same for everyone; its target is not cited
                             // on its account
+  blocked?: string;         // cannot be walked when the session starts, and
+                            // why ("灯塔铁门锁着") — a locked or sealed door
 }
 ```
+
+`blocked` is the passage's **starting** block, not a field the runtime keeps.
+The loader seeds the session's block map from it, and from then on that map is
+the one record: walking stops at the passage and the actor is told the reason;
+whoever unlocks, forces or climbs it is judged by the Engine on their next
+command (a one-use `passBlockedConnectionId`, or `connectionBlock
+{blocked:false}` to open it for everyone), exactly as for a passage the weather
+closed. A block belongs to the passage between two places, so authoring it on
+either side's connection blocks both directions; when both sides author it the
+reasons must match. A lock described only in prose stops nobody — movement
+reads the block, not the setting — so a door the prose calls locked needs
+`blocked` too. A door that is merely closed is not blocked.
 
 `concealed` is a physical state of the passage, not anyone's knowledge of it.
 There is no `discoveredBy` list (the loader rejects one): a character who

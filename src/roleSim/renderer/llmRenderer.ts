@@ -8,9 +8,14 @@
 // retries are `generateText`'s `maxRetries` (2 = initial + 1, per G11). On
 // failure the wrapper in index.ts returns null (D6 — no god-eye fallback).
 
-import type {
-  Occurrence,
-  PerceptionClarity,
+import {
+  HEARING_GRADE_MEANING,
+  type HearingGrade,
+  type Occurrence,
+  SIGHT_GRADE_MEANING,
+  type SightGrade,
+  perceivesSource,
+  renderGradeScale,
 } from "../../engine/actions/types.js";
 import { ModelClass, generateText } from "../../models/index.js";
 import type { PromptSegment } from "../../models/types.js";
@@ -24,7 +29,11 @@ import {
   knownAs,
   tagsIn,
 } from "../../state/perceivableDirectory.js";
-import { resolveLocationById } from "../../state/perceivedLocation.js";
+import {
+  citedIds,
+  isInPlainView,
+  resolveLocationById,
+} from "../../state/perceivedLocation.js";
 import type { DynamicNPCProfile } from "../../state/types.js";
 import type { PerceivedBundle, ScenePresentCharacter } from "./types.js";
 
@@ -69,11 +78,10 @@ input.
   the room, so it never wears the room's tag. Nor does a lamp wear the tag of
   the street it stands on, or a wheel the tag of the cart.
 - An entity with no tag in this minute's input is written with no tag.
-- A \`cond.*\` tag is NOT a handle, wherever you see one. The place
-  Description is authored prose and cites the place's own conditions that
-  way, but a condition is not a thing anyone can point at — only people,
-  items and places can be cited. Render the damp, the smell, the failing
-  light in words, and leave the bracket out.
+- A \`cond.*\` tag is NOT a handle, wherever you see one. A condition is
+  not a thing anyone can point at — only people, items and places can be
+  cited. Render the damp, the smell, the failing light in words, and leave
+  the bracket out.
 - A tag follows the prose, it does not replace it: the words name the thing,
   the bracket comes after them.
 - A bracket holds an id and nothing else — no description, no punctuation, no
@@ -122,39 +130,43 @@ Right: The lean, taller man [stranger_abc123] stands by the door.
 - Never add facts: no entities, actions, outcomes, causes, motives, or sensory
   details unsupported by the occurrence facts or scene input. Do not discard supported facts; apply the evidence-conflict rule above
   when supplied accounts disagree. When uncertain, stay equally uncertain.
-- **A \`fact (utterance)\` is the exact words someone said. When your clarity
-  on that occurrence is \`full\`, quote them.** Reproduce the line character
+- **A \`fact (utterance)\` is the exact words someone said. When your hearing
+  on that occurrence is \`clear\`, quote them.** Reproduce the line character
   for character inside quotation marks, in the language it was spoken — never
   summarize it, never translate it, never correct it, and never smooth it.
-  Include every supplied utterance. Every other fact — including the one that
-  sits beside an utterance and describes HOW it was said — is the Engine's
-  account, and you retell it in your own words like any other fact. At
-  \`limited\` or \`trace\` the utterance is NOT quoted; the clarity rule below
-  says what becomes of it.
-- **Clarity decides how much of an occurrence this viewpoint gets.** Every
-  occurrence line carries \`your clarity: full | limited | trace\` — the
-  Engine's judgement of what crossed the distance, the dark, the wall or the
-  noise to THIS person. The facts under it are written at full objective
-  detail for everyone who perceived anything; you are the one who degrades
-  them to the grade.
-    - \`full\`: render the event and its relevant detail; an utterance is
-      quoted character for character.
-    - \`limited\`: render the KIND of event and its immediate result, without
-      fine detail — no small objects, no faces or expressions, no exact words.
-      For speech this means awareness of speaking without intelligible words.
-      Do not extract a gist or topic from the full utterance hidden behind this
-      grade. A fragment requires separate explicit evidence that it was heard.
-    - \`trace\`: render only that something happened — a sound, a movement, a
-      light, a smell — and at most the direction it came from. No source, no
-      cause, no actor, no words, no result. The people involved are withheld
-      from that line on purpose; do not supply them from another line, from
-      the people present, or from earlier paragraphs.
-  Never write that the viewpoint missed, half-heard or could not make out
-  something given at \`full\`; never explain or quote something given at
-  \`trace\`. Stay exactly as certain as the grade allows — no more, no less.
+  Include every supplied utterance you hear clearly. Every other fact —
+  including the one that sits beside an utterance and describes HOW it was
+  said — is the Engine's account, and you retell it in your own words like
+  any other fact. Below \`clear\` hearing the utterance is NOT quoted, and
+  neither its gist nor its topic is given; the grade rule below says what
+  becomes of it.
+- **Two grades decide how much of an occurrence this viewpoint gets: what
+  they SEE and what they HEAR.** Every occurrence line carries
+  \`you see: …; you hear: …\` — the Engine's judgement of what crossed the
+  distance, the dark, the wall or the noise to THIS person, sense by sense.
+  The facts under it are written at full objective detail for everyone who
+  perceived anything; you are the one who degrades them to the grades. Take
+  from the facts only what the senses that reached them could carry: the
+  look of a thing through sight, its sound through hearing. What each grade
+  gives:
+${renderGradeScale("    ")}
+  Unseen but heard, a person is a voice — from where it came, how it
+  sounded, the words if hearing is clear — never a face, a gesture or what
+  their hands did. Seen but not heard, a speaker's lips move and nothing
+  carries. When neither sense names a source (sight glimpse or none, and
+  hearing faint or none), render only that something happened — no source,
+  cause, actor, words or result; the people involved are withheld from that
+  line on purpose, and you do not supply them from another line, from the
+  people present, or from earlier paragraphs. Never write that the viewpoint
+  missed or could not make out something a grade gives them; never explain
+  something a grade withholds. Stay exactly as certain as the grades allow —
+  no more, no less.
 - Render only what the viewpoint can perceive RIGHT NOW: external sights, sounds,
   smells, touches, plus your own body/mind state. Do NOT mention memory,
   relationships, prior knowledge, or future plans.
+- The place's Setting is how the place itself always is: its size, layout, materials, fixtures and ways out. It says nothing about this minute. Who is here and what they are doing, what can be heard, the light and the weather all come from the other inputs; where they seem to disagree with the Setting, the other inputs win.
+- **Things out of plain view.** The list "Out of plain view here" holds what is in this place but hidden: inside, under or behind something, or a way through that is concealed. For each, decide from where the viewpoint is, which way they face, what they are doing this minute, the light, and the container's own description, whether they actually perceive it — see it, hear it, smell it. A closed, solid container shows nothing of what is inside it; a clear or open one shows what is in it to someone placed to look; a thing under or behind something shows only if something of it gives itself away (a corner sticking out, a draught from behind a shelf), and usually it does not. What the viewpoint knows, remembers or guesses about where something is kept is NOT perceiving it. Write a thing into the paragraph, with its tag, only when it is perceived; otherwise leave it out entirely — no tag, no hint, no "probably in the drawer". Writing it is what makes it something they have perceived from now on.
+- Render only what your input contains. An object, person or feature that is in neither the Setting nor the item lists does not exist; never add one for colour. An item's placement says where it is — use it to put the thing in the room; ×N after an item is how many of them there are.
 - Render the viewpoint's OWN conditions only as their awareness allows. Let them colour the whole
   paragraph — what draws the eye, how the hands behave, what the body will not
   do — never state them as a label, a diagnosis or a status line.
@@ -206,7 +218,7 @@ Right: The lean, taller man [stranger_abc123] stands by the door.
 - **Where a person is decides how they can be rendered.** "People present in
   your scene" are in the room with the viewpoint. Anyone listed under "Other
   entities involved in events" is NOT — their \`Where they are\` line says
-  where, and the place's description below it says what lies between. A
+  where, and the place's Setting below it says what lies between. A
   person in the next place along reaches the viewpoint only as what crosses
   the way between them: a voice through a door, a shape in a doorway, a
   light under it. Never put them at the viewpoint's side, never invent a threshold handoff to make an unreachable transfer work;
@@ -270,28 +282,32 @@ The utterance came through character for character, inside quotes, in the
 language it was spoken. The fact beside it — how he said it — was retold in
 the viewpoint's own perception. Never the other way round.
 
-# Example — one moment, three grades
+# Example — one moment, four viewpoints
 
-The same occurrence reaches three viewpoints. Its facts are identical for
-all of them; only the grade differs:
+The same occurrence reaches four viewpoints. Its facts are identical for
+all of them; only the grades differ:
   fact (utterance): Give me the key.
   fact (speech): She leans close to the man beside her and speaks under the room's noise.
 
-your clarity: full — write:
+you see: clear; you hear: clear — write:
   The woman in grey [stranger_b] leans in to the man at the bar and says,
   low, "Give me the key."
 
-your clarity: limited — write:
+you see: clear; you hear: faint — write:
   The woman in grey [stranger_b] leans in to the man at the bar and says
   something too low for me to make out the words.
 
-your clarity: trace — write:
+you see: none; you hear: clear — write:
+  Somewhere near the bar a woman's voice says, low, "Give me the key."
+
+you see: none; you hear: faint — write:
   Under the talk at the bar someone murmurs something I cannot place.
 
-At \`full\` the line is quoted whole. At \`limited\` the exchange is seen
-but neither its words nor its topic are known from this occurrence. At \`trace\`
-there is a murmur and a direction, and no one is named — not even from the
-people present in the room.`;
+Seen and heard, the line is quoted whole. Seen but not heard, the exchange
+is there but neither its words nor its topic. Heard but not seen, there is a
+voice and its words, and no face, no leaning close. With neither, there is a
+murmur and a direction, and no one is named — not even from the people
+present in the room.`;
 
 /** What the actor can see right now, in the shape the renderer needs: real
  *  entity id → the tag to print. Characters go through `characterHandles`, so
@@ -386,13 +402,20 @@ export function scrubStrangerCanonicalLabels(
  * items its facts name, and any `[tag]` in their content — skipping a trace,
  * which has no source to name. What a finder found arrives this way.
  */
+/** Ids of the things out of plain view the renderer may decide to tag. */
+export function outOfViewIds(bundle: PerceivedBundle): string[] {
+  const hidden = bundle.scene.outOfView;
+  if (!hidden) return [];
+  return [...hidden.items.map((i) => i.id), ...hidden.ways.map((w) => w.id)];
+}
+
 export function idsCarriedBy(
   bundle: PerceivedBundle,
   viewpointId: string
 ): Set<string> {
   const out = new Set<string>();
   for (const occ of bundle.occurrences ?? []) {
-    if (clarityFor(occ, viewpointId) === "trace") continue;
+    if (!perceivesSource(gradesFor(occ, viewpointId))) continue;
     if (occ.locationId) out.add(occ.locationId);
     for (const fact of occ.facts) {
       for (const ref of fact.entityRefs) {
@@ -444,17 +467,32 @@ function buildStrangerIdentities(
   return identities;
 }
 
-/** The grade the Engine gave THIS viewpoint on one occurrence. Defaults to
- *  `full`: the controller routes a row to a character only because that
- *  character is listed in `perceivers`, so a missing entry cannot happen on
- *  the production path — and if a caller hands the renderer a row directly
- *  (tests, a future subsystem adapter), reading it whole is the behaviour
- *  every row had before grades existed. */
-function clarityFor(occ: Occurrence, viewpointId: string): PerceptionClarity {
-  return (
-    occ.perceivers.find((p) => p.characterId === viewpointId)?.clarity ?? "full"
-  );
+/** The grades the Engine gave THIS viewpoint on one occurrence. Default
+ *  clear on both: the controller routes a row to a character only because
+ *  that character is listed in `perceivers`, so a missing entry cannot happen
+ *  on the production path — and a row handed to the renderer directly
+ *  (tests, a future subsystem adapter) reads whole. */
+function gradesFor(
+  occ: Occurrence,
+  viewpointId: string
+): { sight: SightGrade; hearing: HearingGrade } {
+  const own = occ.perceivers.find((p) => p.characterId === viewpointId);
+  return own
+    ? { sight: own.sight, hearing: own.hearing }
+    : { sight: "clear", hearing: "clear" };
 }
+
+/** Whether this viewer's grades put a person to the event: seen at least in
+ *  part, or heard clearly enough to be a voice with words. A muffled sound
+ *  from an unseen room is "someone shouting", nobody in particular. */
+function namesSource(g: { sight: SightGrade; hearing: HearingGrade }): boolean {
+  return g.sight === "clear" || g.sight === "partial" || g.hearing === "clear";
+}
+
+/** The grade's meaning beside it on the occurrence line — the same words
+ *  the grader was given (`SIGHT_GRADE_MEANING`), never a second wording. */
+const reminder = (meaning: string, isClear: boolean): string =>
+  isClear ? "" : ` (${meaning})`;
 
 /** `  [tag]` when the entity is citable, nothing when it is not — an
  *  untagged entity is one the actor can perceive but not act on. */
@@ -637,6 +675,9 @@ export async function renderViaLLM(
       shownIds: new Set([
         ...(params.citationScope.shownIds ?? []),
         ...idsCarriedBy(params.bundle, params.npcId),
+        // What is out of view may be tagged IF the paragraph perceives it;
+        // the boundary only learns of it from the paragraph itself.
+        ...outOfViewIds(params.bundle),
       ]),
     }
   );
@@ -906,7 +947,7 @@ function formatScene(bundle: PerceivedBundle, tags: CitationTags): string {
   const lines: string[] = [];
   const { scene } = bundle;
   lines.push(`Name: ${scene.name}${tag(scene.id, tags, "other")}`);
-  if (scene.description) lines.push(`Description: ${scene.description}`);
+  if (scene.setting) lines.push(`Setting: ${scene.setting}`);
   if (scene.activeConditions.length > 0) {
     lines.push("Scene conditions (render as inline prose):");
     for (const c of scene.activeConditions) {
@@ -921,13 +962,40 @@ function formatScene(bundle: PerceivedBundle, tags: CitationTags): string {
       "Items perceivable here (a distance in parentheses = minutes' walk away along this stretch; judge from conditions and distance whether the viewpoint notices a far one — an unnoticed thing is simply not mentioned):"
     );
     for (const item of bundle.scene.items) {
+      const count =
+        item.quantity && item.quantity > 1 ? ` ×${item.quantity}` : "";
+      const where = item.placement ? ` — ${item.placement}` : "";
       const desc = item.description ? `: ${item.description}` : "";
       const dist =
         item.distanceMinutes !== undefined && item.distanceMinutes > 0
           ? ` (~${item.distanceMinutes} min away)`
           : "";
       lines.push(
-        `  - ${item.name}${tag(item.id, tags, "other")}${dist}${desc}`
+        `  - ${item.name}${tag(item.id, tags, "other")}${count}${where}${dist}${desc}`
+      );
+    }
+  }
+  const hidden = bundle.scene.outOfView;
+  if (hidden && (hidden.items.length > 0 || hidden.ways.length > 0)) {
+    lines.push(
+      "Out of plain view here (decide, for this viewpoint this minute, whether each is perceived — see the rule on things out of plain view):"
+    );
+    for (const item of hidden.items) {
+      const count =
+        item.quantity && item.quantity > 1 ? ` ×${item.quantity}` : "";
+      const where = item.placement ? ` — ${item.placement}` : "";
+      const box = item.container
+        ? ` (in/under/behind ${item.container.name}: ${item.container.description ?? "no description"})`
+        : "";
+      const desc = item.description ? `: ${item.description}` : "";
+      lines.push(
+        `  - ${item.name}${tag(item.id, tags, "other")}${count}${where}${box}${desc}`
+      );
+    }
+    for (const way of hidden.ways) {
+      const desc = way.description ? `: ${way.description}` : "";
+      lines.push(
+        `  - a concealed way through to ${way.name}${tag(way.id, tags, "other")}${desc}`
       );
     }
   }
@@ -962,12 +1030,13 @@ function collectOtherEntities(
     if (occ.locationId && occ.locationId !== bundle.scene.id) {
       sceneIds.add(occ.locationId);
     }
-    // A trace has no source. The places are legitimate — "roughly where
-    // from" is the one thing a trace may carry, so scene ids are still
+    // Grades that put no person to the event (a glimpse, a muffled shout
+    // from an unseen room). The places are legitimate — "roughly where from"
+    // is the one thing such a line may carry, so scene ids are still
     // collected — but the people are not: a participant printed here would
     // arrive with a name, an appearance and a `Where they are` line, and the
     // renderer would have the actor it was told to withhold.
-    const trace = clarityFor(occ, viewpointId) === "trace";
+    const trace = !namesSource(gradesFor(occ, viewpointId));
     if (!trace) {
       for (const p of occ.participants) {
         if (p.characterId !== viewpointId && !scenePresent.has(p.characterId)) {
@@ -1035,10 +1104,21 @@ function collectOtherEntities(
     lines.push(
       `${adjacent ? "Neighbouring place" : "Distant place"} (NOT where you are): ${scene.name}${tag(scene.id, tags, "other")}`
     );
-    // The description is what lets the renderer reason about the geometry —
+    // The setting is what lets the renderer reason about the geometry —
     // a door with a towel under it, a porch open to the road — and so about
     // what carries through and what does not.
-    if (scene.description) lines.push(`  Description: ${scene.description}`);
+    if (scene.setting) lines.push(`  Setting: ${scene.setting}`);
+    // A neighbour's loose things in plain view: what an open door shows of
+    // the next room. Things in its drawers and cabinets stay out.
+    if (adjacent) {
+      const cited = citedIds(scene.setting);
+      for (const item of scene.items ?? []) {
+        if (cited.has(item.id) || !isInPlainView(item, cited)) continue;
+        lines.push(
+          `  - ${item.name}${tag(item.id, tags, "other")} — ${item.placement}`
+        );
+      }
+    }
   }
 
   return lines.length > 0 ? lines.join("\n") : null;
@@ -1069,7 +1149,11 @@ function formatOwnAction(bundle: PerceivedBundle): string {
         );
       } else {
         lines.push(
-          "Lifecycle ended; no additional result supplied. Do not reconstruct the command or recap the interval; render only current state and routed occurrences."
+          // Told only "render current state", a renderer froze a finished
+          // action at its last picture — a letter "read line by line, still
+          // open in her hands" — and the character took itself to be
+          // mid-task. The end itself has to be felt.
+          OWN_ACTION_ENDED_NO_RESULT
         );
       }
       return lines.join("\n");
@@ -1078,6 +1162,11 @@ function formatOwnAction(bundle: PerceivedBundle): string {
       return "Idle.";
   }
 }
+
+/** What the renderer is told when the viewpoint's own action ended with no
+ *  separate result. Exported for the test that pins it. */
+export const OWN_ACTION_ENDED_NO_RESULT =
+  'Lifecycle ended; no additional result supplied. The paragraph must still let the viewpoint feel that this is over — one short beat that marks the end of the activity itself ("you reach the last line", "the last tablet is down"), taken from the action and the routed occurrences. Do not recap the interval, do not invent what it achieved beyond those, and do not change any object\'s state beyond what the occurrences say: if the letter is still open in their hand, it stays open — they have simply finished reading it.';
 
 function formatOccurrences(
   bundle: PerceivedBundle,
@@ -1139,28 +1228,26 @@ function formatOccurrence(
               : "somewhere else"
           } (${occ.locationId})`
         : "location unspecified";
-  const clarity = clarityFor(occ, viewpointId);
+  const grades = gradesFor(occ, viewpointId);
+  const named = namesSource(grades);
   // By tag, never by real id: a participant the viewpoint does not know must
-  // reach the narrative as `stranger_a`, not as the name behind it. At
-  // `trace` only the viewpoint's own involvement survives — a trace has no
-  // actor, and a handle on this line would be one the renderer was told not
+  // reach the narrative as `stranger_a`, not as the name behind it. When the
+  // grades put no person to it only the viewpoint's own involvement
+  // survives — a handle on this line would be one the renderer was told not
   // to have.
   const involved = occ.participants
-    .filter((p) => clarity !== "trace" || p.characterId === viewpointId)
+    .filter((p) => named || p.characterId === viewpointId)
     .map((p) => {
       if (p.characterId === viewpointId) return `you (${p.role})`;
       const handle = tags.characters.get(p.characterId);
       return `${handle ?? "someone"} (${p.role})`;
     })
     .join(", ");
-  const reminder =
-    clarity === "limited"
-      ? " (kind of event and immediate result only — no small objects or faces; for speech, no words or inferred topic)"
-      : clarity === "trace"
-        ? " (render only that something happened and roughly where from — no source, actor, cause or words)"
-        : "";
+  const sourceless = named
+    ? ""
+    : " — render only that something happened and roughly where from: no source, actor, cause or words";
   lines.push(
-    `- Occurrence ${where}; your clarity: ${clarity}${reminder}${involved ? `; involved: ${involved}` : ""}`
+    `- Occurrence ${where}; you see: ${grades.sight}${reminder(SIGHT_GRADE_MEANING[grades.sight], grades.sight === "clear")}; you hear: ${grades.hearing}${reminder(HEARING_GRADE_MEANING[grades.hearing], grades.hearing === "clear")}${sourceless}${involved ? `; involved: ${involved}` : ""}`
   );
   const selfInvolved = occ.participants.some(
     (p) => p.characterId === viewpointId
@@ -1172,11 +1259,10 @@ function formatOccurrence(
     lines.push(`  fact (${fact.type}): ${fact.content}`);
   }
   // The facts print unchanged for every grade: the row is one objective
-  // record shared by everyone who perceived it, and the per-perceiver grade
-  // on the first line is the ONE perception knob the Engine writes. No
-  // signal lines — the Engine no longer writes channels: where a thing
-  // happened (`here` / `NOT here`), the grade, and what the fact says are what
-  // the renderer reads to decide heard versus seen and how much of it.
+  // record shared by everyone who perceived it, and the per-perceiver sight
+  // and hearing grades on the first line are the perception knobs the Engine
+  // writes. No signal lines: where a thing happened (`here` / `NOT here`),
+  // the two grades, and what the fact says are what the renderer reads.
   // Subsystem events still carry a channel internally; nothing here prints it.
   return lines.join("\n");
 }

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { DynamicGameStateManager } from "../DynamicGameState.js";
 import {
   charactersAtSameLocation,
+  isInPlainView,
   resolveLocationById,
   resolvePerceivedLocation,
 } from "../perceivedLocation.js";
@@ -21,7 +22,7 @@ const scenes = new Map<string, DynamicScene>([
     {
       id: "J_A",
       name: "Crossing",
-      description: "A windswept crossing under a lamppost [ITEM_J].",
+      setting: "A windswept crossing under a lamppost [ITEM_J].",
       items: [{ id: "ITEM_J", name: "a lamppost" }],
       conditions: [{ featureId: "weather", description: "sleet" }],
       connections: [{ id: "connection.junc_a.home", targetId: "S_HOME" }],
@@ -32,7 +33,7 @@ const scenes = new Map<string, DynamicScene>([
     {
       id: "S_HOME",
       name: "Home",
-      description: "A parlour with a chair [ITEM_S].",
+      setting: "A parlour with a chair [ITEM_S].",
       parentLocationId: "B_HOUSE",
       conditions: [],
       items: [{ id: "ITEM_S", name: "a chair" }],
@@ -57,7 +58,7 @@ const roads = new Map<string, RoadNode>([
     {
       id: "R_MAIN",
       name: "Star Avenue",
-      description: "A long avenue: a dropped glove [ITEM_R], a fallen sign [ITEM_NEAR], a mile marker [ITEM_FAR].",
+      setting: "A long avenue: a dropped glove [ITEM_R], a fallen sign [ITEM_NEAR], a mile marker [ITEM_FAR].",
       connections: [],
       endpointA: "J_A",
       endpointB: "J_B",
@@ -200,5 +201,28 @@ describe("charactersAtSameLocation", () => {
     positions.B = { type: "scene", sceneId: "S_HOME" };
     positions.C = { type: "scene", sceneId: "S_SHOP" };
     expect(charactersAtSameLocation("A", dgsm)).toEqual(["B"]);
+  });
+});
+
+describe("isInPlainView (schema v3)", () => {
+  const setting = "A shop. A till on the counter [item.till].";
+  it("a fixture the setting cites is in plain view", () => {
+    expect(isInPlainView({ id: "item.till", name: "till" }, setting)).toBe(true);
+  });
+  it("a loose thing with a placement and no container is in plain view", () => {
+    expect(
+      isInPlainView({ id: "item.jar", name: "jar", placement: "by the till" }, setting)
+    ).toBe(true);
+  });
+  it("a thing in a container is not", () => {
+    expect(
+      isInPlainView(
+        { id: "item.cash", name: "cash", placement: "in the drawer", container: "item.till" },
+        setting
+      )
+    ).toBe(false);
+  });
+  it("an uncited thing with no placement is not", () => {
+    expect(isInPlainView({ id: "item.x", name: "x" }, setting)).toBe(false);
   });
 });

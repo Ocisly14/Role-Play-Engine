@@ -394,10 +394,10 @@ export const SKILL_SCENARIOS: SimScenario[] = [
 
   // -----------------------------------------------------------------------
   {
-    id: "skill-medicine-psychology",
+    id: "skill-medicine",
     group: "skill",
-    title: "Medicine & Psychology — 急救、诊治、精神与心理",
-    targetDefs: ["Medicine & Psychology"],
+    title: "Medicine — 急救与诊治",
+    targetDefs: ["Medicine"],
     cases: [
       {
         label: "侦探：病房里的人在失血",

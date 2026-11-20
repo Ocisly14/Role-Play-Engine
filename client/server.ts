@@ -95,7 +95,7 @@ server.keepAliveTimeout = 610000; // Slightly longer than timeout
 const wsManager = new WebSocketManager(server);
 
 // Start server
-server.listen(PORT, async () => {
+server.listen({ port: PORT, host: process.env.SERVER_BIND_HOST }, async () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
   console.log(`🔌 WebSocket server ready on ws://localhost:${PORT}/ws`);
   console.log("✅ Frontend server ready (lazy initialization)");

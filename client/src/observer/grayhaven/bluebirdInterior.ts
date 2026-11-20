@@ -138,7 +138,7 @@ export function createBluebirdInterior(light:ReturnType<typeof createInteriorLig
   for(const py of [.35,.9,1.45]){if(py<1.4)box(d,1.4,.12,1.1,mat.trim,3.85,y+py,-10.25);for(let j=0;j<3;j++)cyl(d,.16,.34,mat.paper,3.45+j*.4,y+py+.23,-10.05);}
   cyl(d,.45,.07,mat.steel,.2,y+1.9,-2.55);anchor(0,ks,'order_wheel',.2,y+1.9,-2.55);
   prop(d,0,ks,'kitchen_radio',.65,.4,.3,mat.trim,-.8,y+1.3,-2.55);
-  prop(d,0,ks,'dolores_apron',.05,.9,.6,mat.paper,6.8,y+1.55,-8.4);
+  prop(d,0,ks,'apron',.05,.9,.6,mat.paper,6.8,y+1.55,-8.4);
   // A steep single flight in the rear corner: fifteen risers over 6.3 m, landing in the upstairs opening.
   for(let i=0;i<15;i++){const h=(B.upper-y)*(i+1)/15,z=-8.9+i*.45;box(d,1.65,.15,.46,mat.wood,5.6,y+h-.075,z);if(i%2===0)box(d,.07,.9,.07,mat.trim,4.8,y+h+.45,z);}
   pick(0,ks,null,[5.6,3.1,-5.75],[1.9,6.2,6.7],us);pick(1,us,null,[5.6,uy+.05,-.3],[1.8,.3,3.5],ks);

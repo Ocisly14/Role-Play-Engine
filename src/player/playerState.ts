@@ -1,16 +1,9 @@
-import { randomBytes } from "node:crypto";
+import type { BoardLink } from "./playerBoard.js";
 import { emptyVisited, type VisitedMap } from "./visitedMap.js";
 
 export const PLAYER_STATE_KEY = "_player";
 
 export type PlayerMode = "manual" | "delegated";
-
-export interface QueueStep {
-  id: string;
-  text: string;
-  status: "pending" | "running" | "done";
-  actionId?: string;
-}
 
 export type PlayerPending =
   | {
@@ -32,71 +25,49 @@ export interface FriendNote {
   answer: string;
 }
 
+export interface PlayerDialogueReply {
+  handle: string;
+  label: string;
+  words: string;
+}
+
+export interface PlayerDialogue {
+  /** Engine action id of the line that opens this exchange. */
+  id: string;
+  gameDateTime: string;
+  location: string;
+  words: string;
+  spokenAt?: string;
+  status: "waiting" | "complete" | "unspoken";
+  replies: PlayerDialogueReply[];
+}
+
 export interface PlayerState {
   characterId: string;
   mode: PlayerMode;
-  queue: QueueStep[];
   pending: PlayerPending | null;
   visited: VisitedMap;
   friendLog: FriendNote[];
+  dialogue: PlayerDialogue[];
   forceWake: boolean;
+  /** Real character id -> first rendered encounter. Kept in the save only. */
+  met: Record<string, string>;
+  /** Private notes indexed by real ids. Exposed as handles through the board. */
+  boardLinks: BoardLink[];
 }
 
 export function createPlayerState(characterId: string): PlayerState {
   return {
     characterId,
     mode: "manual",
-    queue: [],
     pending: null,
     visited: emptyVisited(),
     friendLog: [],
+    dialogue: [],
     forceWake: false,
+    met: {},
+    boardLinks: [],
   };
-}
-
-export function nextPendingStep(s: PlayerState): QueueStep | undefined {
-  return s.queue.find((q) => q.status === "pending");
-}
-
-export function runningStep(s: PlayerState): QueueStep | undefined {
-  return s.queue.find((q) => q.status === "running");
-}
-
-export function setQueue(s: PlayerState, texts: string[]): PlayerState {
-  const kept = s.queue.filter((q) => q.status === "done");
-  const fresh: QueueStep[] = texts.map((text) => ({
-    id: randomBytes(4).toString("hex"),
-    text,
-    status: "pending",
-  }));
-  return { ...s, queue: [...kept, ...fresh] };
-}
-
-export function markRunning(
-  s: PlayerState,
-  stepId: string,
-  actionId: string
-): PlayerState {
-  return {
-    ...s,
-    queue: s.queue.map((q) =>
-      q.id === stepId ? { ...q, status: "running", actionId } : q
-    ),
-  };
-}
-
-export function markDone(s: PlayerState, actionId: string): PlayerState {
-  if (!s.queue.some((q) => q.actionId === actionId)) return s;
-  return {
-    ...s,
-    queue: s.queue.map((q) =>
-      q.actionId === actionId ? { ...q, status: "done" } : q
-    ),
-  };
-}
-
-export function dropRunning(s: PlayerState): PlayerState {
-  return { ...s, queue: s.queue.filter((q) => q.status !== "running") };
 }
 
 /** Manual: a question the character asked becomes a decision the player
@@ -105,7 +76,6 @@ export function dropRunning(s: PlayerState): PlayerState {
  *  next tick (delegated pauses only on `askFriend`). A death stays. */
 export function switchMode(s: PlayerState, mode: PlayerMode): PlayerState {
   if (mode === s.mode) return s;
-  const queue = s.queue.filter((q) => q.status === "done");
   let pending = s.pending;
   let forceWake = s.forceWake;
   if (mode === "manual" && pending?.kind === "consult") {
@@ -118,20 +88,43 @@ export function switchMode(s: PlayerState, mode: PlayerMode): PlayerState {
     pending = null;
     forceWake = true;
   }
-  return { ...s, mode, queue, pending, forceWake };
+  return { ...s, mode, pending, forceWake };
 }
 
-export function isPlayerState(v: unknown): v is PlayerState {
+/** A saved state carrying a field this version no longer has (the manual
+ *  step `queue` of earlier saves) still passes; `hydratePlayerState` drops
+ *  the field. */
+type AddedFields = Pick<PlayerState, "met" | "boardLinks" | "dialogue">;
+type SavedPlayerState = Omit<PlayerState, keyof AddedFields> &
+  Partial<AddedFields>;
+
+export function isPlayerState(v: unknown): v is SavedPlayerState {
   if (typeof v !== "object" || v === null) return false;
   const o = v as Record<string, unknown>;
   const visited = o.visited as Record<string, unknown> | null | undefined;
   return (
     typeof o.characterId === "string" &&
     (o.mode === "manual" || o.mode === "delegated") &&
-    Array.isArray(o.queue) &&
     Array.isArray(o.friendLog) &&
+    (o.dialogue === undefined || Array.isArray(o.dialogue)) &&
     typeof o.forceWake === "boolean" &&
-    (o.pending === null || (typeof o.pending === "object" && o.pending !== null)) &&
+    (o.met === undefined ||
+      (o.met !== null &&
+        typeof o.met === "object" &&
+        !Array.isArray(o.met) &&
+        Object.values(o.met).every((date) => typeof date === "string"))) &&
+    (o.boardLinks === undefined ||
+      (Array.isArray(o.boardLinks) &&
+        o.boardLinks.every(
+          (link) =>
+            link &&
+            typeof link.id === "string" &&
+            typeof link.a === "string" &&
+            typeof link.b === "string" &&
+            typeof link.label === "string"
+        ))) &&
+    (o.pending === null ||
+      (typeof o.pending === "object" && o.pending !== null)) &&
     typeof visited === "object" &&
     visited !== null &&
     typeof visited.scenes === "object" &&
@@ -139,4 +132,18 @@ export function isPlayerState(v: unknown): v is PlayerState {
     typeof visited.roads === "object" &&
     visited.roads !== null
   );
+}
+
+/** A saved state as this version keeps it: fields earlier versions wrote
+ *  and this one no longer has are dropped. */
+export function hydratePlayerState(saved: SavedPlayerState): PlayerState {
+  const { queue: _legacyQueue, ...rest } = saved as SavedPlayerState & {
+    queue?: unknown;
+  };
+  return {
+    ...rest,
+    met: rest.met ?? {},
+    boardLinks: rest.boardLinks ?? [],
+    dialogue: rest.dialogue ?? [],
+  };
 }

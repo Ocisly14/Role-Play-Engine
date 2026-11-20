@@ -1,8 +1,13 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "id": "SCN_sheriff_cell",
   "name": "警长办公室·拘留室",
-  "description": "拘留室里一张铁架铺位[item.sheriff_cell.bunk],上头卷着一条军绿的旧毛毯[item.sheriff_cell.wool_blanket],折角硬成了死褶;墙角一只水槽[item.sheriff_cell.sink]、一只搪瓷坐便[item.sheriff_cell.toilet],铁栅栏[item.sheriff_cell.cell_bars]的漆有些年头了,栅栏门上那把挂锁常年虚扣着。这间屋子闲置已久[cond.sheriff_cell.disused]——灰港上一回真正关过人,还是多年前一个醉酒闹事的外地渔工;栅栏里侧的墙皮上还留着那辈人刻的名字和正字[item.sheriff_cell.wall_scratches]。高处一扇带铁条的小窗[item.sheriff_cell.barred_window]漏进一块朝北的天光,顶上一盏铁丝罩的顶灯[item.sheriff_cell.caged_light]的拉绳就在门内侧。墙角堆着几只纸箱[item.sheriff_cell.storage_boxes],装着圣诞游行的彩灯和用不上的路障牌:牢房成了镇公所的储藏间。铁框门通回前厅走廊[SCN_sheriff_front],钥匙挂在前厅的钥匙板上,从来没人惦记。",
+  "coordinates": {
+    "x": -21,
+    "y": 297,
+    "z": 17
+  },
+  "setting": "拘留室里一张铁架铺位[item.sheriff_cell.bunk],上头卷着一条军绿的旧毛毯[item.sheriff_cell.wool_blanket],折角硬成了死褶;墙角一只水槽[item.sheriff_cell.sink]、一只搪瓷坐便[item.sheriff_cell.toilet],铁栅栏[item.sheriff_cell.cell_bars]的漆有些年头了,栅栏门上那把挂锁常年虚扣着。这间屋子闲置已久——灰港上一回真正关过人,还是多年前一个醉酒闹事的外地渔工;栅栏里侧的墙皮上还留着那辈人刻的名字和正字[item.sheriff_cell.wall_scratches]。高处一扇带铁条的小窗[item.sheriff_cell.barred_window]漏进一块朝北的天光,顶上一盏铁丝罩的顶灯[item.sheriff_cell.caged_light]的拉绳就在门内侧。墙角堆着几只纸箱[item.sheriff_cell.storage_boxes],装着圣诞游行的彩灯和用不上的路障牌:牢房成了镇公所的储藏间。铁框门通回前厅走廊[SCN_sheriff_front],钥匙挂在前厅的钥匙板上,从来没人惦记。",
   "parentLocationId": "sheriff_office",
   "indoor": true,
   "references": {

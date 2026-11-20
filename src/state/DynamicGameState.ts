@@ -37,6 +37,7 @@ import type {
   DynamicNPCProfile,
   DynamicScene,
   Item,
+  ItemWhere,
   SceneConnection,
   TransportEdge,
 } from "./types.js";
@@ -430,9 +431,15 @@ export class DynamicGameStateManager {
       appendDescription?: string;
       isLightSource?: boolean;
       lightLevel?: number;
+      /** Where it now is within its place. */
+      placement?: string;
+      /** The item it now sits in; "" takes it out. */
+      container?: string;
+      /** How many it now stands for; 1 clears the field. */
+      quantity?: number;
     }
   ): boolean {
-    const target = this.findItemById(itemId);
+    const target = this.getItem(itemId);
     if (!target) {
       console.warn(`[DGSM] setItem: item id="${itemId}" not found`);
       return false;
@@ -449,7 +456,43 @@ export class DynamicGameStateManager {
       target.isLightSource = patch.isLightSource;
     }
     if (patch.lightLevel !== undefined) target.lightLevel = patch.lightLevel;
+    if (patch.placement !== undefined) {
+      const placement = normalizeSpot(patch.placement);
+      if (placement) target.placement = placement;
+      else delete target.placement;
+    }
+    if (patch.container !== undefined) {
+      if (patch.container.trim()) target.container = patch.container.trim();
+      else delete target.container;
+    }
+    if (patch.quantity !== undefined) {
+      if (Number.isInteger(patch.quantity) && patch.quantity > 1) {
+        target.quantity = patch.quantity;
+      } else {
+        delete target.quantity;
+      }
+    }
     return true;
+  }
+
+  /** Write where an item now is. At a place it takes `where`; on a person it
+   *  carries neither a placement nor a container. */
+  private applyWhere(item: Item, holder: string, where?: ItemWhere): void {
+    delete item.placement;
+    delete item.container;
+    if (!holder.startsWith("scene:")) return;
+    const placement =
+      where?.placement === undefined ? "" : normalizeSpot(where.placement);
+    if (placement) item.placement = placement;
+    if (where?.container?.trim()) item.container = where.container.trim();
+  }
+
+  /** The items sitting directly in this one, wherever it is held. */
+  getItemContents(itemId: string): Item[] {
+    const holder = this.getItemHolder(itemId);
+    if (holder === undefined) return [];
+    const items = this.resolveItemContainer(holder) ?? [];
+    return items.filter((i) => i.container === itemId);
   }
 
   /** Internal: resolve an item-holding container.
@@ -519,7 +562,9 @@ export class DynamicGameStateManager {
     name: string,
     location: string,
     description?: string,
-    id?: string
+    id?: string,
+    where?: ItemWhere,
+    quantity?: number
   ): Item | undefined {
     const container = this.resolveItemContainer(location, true);
     if (!container) {
@@ -537,6 +582,10 @@ export class DynamicGameStateManager {
     }
     const item: Item = { id: itemId, name };
     if (description?.trim()) item.description = description;
+    this.applyWhere(item, location, where);
+    if (quantity !== undefined && Number.isInteger(quantity) && quantity > 1) {
+      item.quantity = quantity;
+    }
     container.push(item);
     return item;
   }
@@ -544,7 +593,12 @@ export class DynamicGameStateManager {
   /** Move an item between locations. `from` and `to` accept the same
    *  `"scene:<id>"` / `"<npcId>"` syntax as createItem. The moved Item keeps
    *  its object identity. Returns true on success. */
-  moveItem(itemId: string, from: string, to: string): boolean {
+  moveItem(
+    itemId: string,
+    from: string,
+    to: string,
+    where?: ItemWhere
+  ): boolean {
     // Resolve the destination BEFORE pulling the item out, so a bad `to`
     // cannot vanish the item.
     const destination = this.resolveItemContainer(to, true);
@@ -552,12 +606,48 @@ export class DynamicGameStateManager {
       console.warn(`[DGSM] moveItem: destination "${to}" not found`);
       return false;
     }
+    // What sits in it (and in those, all the way down) goes with it,
+    // links kept — taking the till takes the cash in its drawer.
+    const source = this.resolveItemContainer(from) ?? [];
+    const carried: string[] = [];
+    const queue = [itemId];
+    while (queue.length > 0) {
+      const outer = queue.shift() as string;
+      for (const inner of source) {
+        if (inner.container === outer && !carried.includes(inner.id)) {
+          carried.push(inner.id);
+          queue.push(inner.id);
+        }
+      }
+    }
     const removed = this.removeItemFrom(itemId, from);
     if (!removed) {
       console.warn(`[DGSM] moveItem: item id="${itemId}" not found at ${from}`);
       return false;
     }
+    this.applyWhere(removed, to, where);
     destination.push(removed);
+    for (const innerId of carried) {
+      const inner = this.removeItemFrom(innerId, from);
+      if (!inner) continue;
+      if (!to.startsWith("scene:")) {
+        // On a person nothing has a placement, but what was inside the till
+        // is still inside it.
+        delete inner.placement;
+      }
+      destination.push(inner);
+    }
+    if (to.startsWith("scene:")) {
+      // Set down again: anything that lost its placement on the way says
+      // where it is — inside what holds it — so taking it out later still
+      // leaves it somewhere.
+      for (const innerId of carried) {
+        const inner = destination.find((i) => i.id === innerId);
+        if (!inner || inner.placement) continue;
+        const box = destination.find((i) => i.id === inner.container);
+        inner.placement = normalizeSpot(`${box?.name ?? "容器"}里`);
+      }
+    }
     return true;
   }
 
@@ -567,7 +657,15 @@ export class DynamicGameStateManager {
     for (const { items } of this.allItemContainers()) {
       const idx = items.findIndex((i) => i.id === itemId);
       if (idx !== -1) {
-        items.splice(idx, 1);
+        const [gone] = items.splice(idx, 1);
+        // What was inside it is left where it was, loose.
+        for (const inner of items) {
+          if (inner.container !== itemId) continue;
+          delete inner.container;
+          if (!inner.placement && gone?.placement) {
+            inner.placement = gone.placement;
+          }
+        }
         return true;
       }
     }
@@ -613,8 +711,8 @@ export class DynamicGameStateManager {
     return undefined;
   }
 
-  /** Internal: find first Item matching id across every container. */
-  private findItemById(itemId: string): Item | undefined {
+  /** Find an item by id across scenes, roads and inventories. */
+  getItem(itemId: string): Item | undefined {
     for (const { items } of this.allItemContainers()) {
       const found = items.find((i) => i.id === itemId);
       if (found) return found;
@@ -743,19 +841,19 @@ export class DynamicGameStateManager {
   }
 
   /**
-   * Rewrite a place's prose wholesale (scene or road — the same
-   * fallthrough `getScene` uses). Returns false + warn when the id names no
-   * place.
+   * Rewrite a place's setting wholesale (scene or road — the same
+   * fallthrough `getScene` uses): the place itself physically changed.
+   * Returns false + warn when the id names no place.
    */
-  setPlaceDescription(placeId: string, description: string): boolean {
+  setPlaceSetting(placeId: string, setting: string): boolean {
     const place = this.getScene(placeId);
     if (!place) {
       console.warn(
-        `[DynamicGameState] setPlaceDescription: no scene/road "${placeId}" — ignored`
+        `[DynamicGameState] setPlaceSetting: no scene/road "${placeId}" — ignored`
       );
       return false;
     }
-    place.description = description;
+    place.setting = setting;
     return true;
   }
 

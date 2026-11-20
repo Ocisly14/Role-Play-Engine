@@ -1,8 +1,8 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "id": "ROAD_holt_lane",
   "name": "霍尔特巷",
-  "description": "从主街北口通往镇边的一条小巷,步行二十分钟。路面是压实的碎石,中间让同一辆车轧出了两道浅辙 [item.holt_lane.gravel_ruts],雨后一路积水;两侧是荒了一半的老果园,歪斜的木栅栏 [item.holt_lane.orchard_fence] 断断续续地跟着路走,断了的地方就用铁丝随便拉一道。一头接在主街北口 [SCN_main_north],离开路口没走几分钟,左手边是果园那座塌了半边的包装棚 [item.holt_lane.packing_shed],当年装苹果的木箱还烂在里头。再往前,草里歪着一块褪色的『出售』木牌 [item.holt_lane.for_sale_sign],上面的电话号码是外县的,插在那儿好几年没人问过;巷子中段,路基底下横穿一截水泥涵洞 [item.holt_lane.culvert],雨季里水声大得整条巷子都听得见。快到头的荒草里陷着一辆锈穿了的旧皮卡 [item.holt_lane.dead_pickup],轮子早被人拆走了;最后一段路肩被一大片黑莓丛 [item.holt_lane.blackberry_thicket] 挤窄了一半,八月里结满黑果子,也挂人的衣裳。巷尾止于霍尔特家的院门 [SCN_holt_gate]。巷子里常年只有这一家人的脚印和车辙,清晨有时能听见一辆货车低沉地驶出去。",
+  "setting": "从主街北口通往镇边的一条小巷,步行二十分钟。路面是压实的碎石,中间让同一辆车轧出了两道浅辙 [item.holt_lane.gravel_ruts],雨后一路积水;两侧是荒了一半的老果园,歪斜的木栅栏 [item.holt_lane.orchard_fence] 断断续续地跟着路走,断了的地方就用铁丝随便拉一道。一头接在主街北口 [SCN_main_north],离开路口没走几分钟,左手边是果园那座塌了半边的包装棚 [item.holt_lane.packing_shed],当年装苹果的木箱还烂在里头。再往前,草里歪着一块褪色的『出售』木牌 [item.holt_lane.for_sale_sign],上面的电话号码是外县的,插在那儿好几年没人问过;巷子中段,路基底下横穿一截水泥涵洞 [item.holt_lane.culvert],雨季里水声大得整条巷子都听得见。快到头的荒草里陷着一辆锈穿了的旧皮卡 [item.holt_lane.dead_pickup],轮子早被人拆走了;最后一段路肩被一大片黑莓丛 [item.holt_lane.blackberry_thicket] 挤窄了一半,八月里结满黑果子,也挂人的衣裳。巷尾止于霍尔特家的院门 [SCN_holt_gate]。巷子里常年只有这一家人的脚印和车辙,清晨有时能听见一辆货车低沉地驶出去。",
   "parentLocationId": "OUTDOOR",
   "travelTimeMinutes": 20,
   "references": {

@@ -24,7 +24,7 @@ function makeDgsm(): DynamicGameStateManager {
     id: "S_HOME",
     name: "Home",
     // The chair is in plain view (cited); the bills are not — unnoticed.
-    description: "A parlour with a daisy display and [item_chair].",
+    setting: "A parlour with a daisy display and [item_chair].",
     parentLocationId: "LOC_TOWN",
     items: [
       { id: "item_chair", name: "a chair" },
@@ -43,7 +43,7 @@ function makeDgsm(): DynamicGameStateManager {
   const far: DynamicScene = {
     id: "S_FAR",
     name: "Far house",
-    description: "Nobody's business today. A [item_vase] by the door.",
+    setting: "Nobody's business today. A [item_vase] by the door.",
     parentLocationId: "LOC_TOWN",
     items: [{ id: "item_vase", name: "a vase" }],
     conditions: [],
@@ -54,7 +54,7 @@ function makeDgsm(): DynamicGameStateManager {
   const junction: DynamicScene = {
     id: "J_A",
     name: "Crossing",
-    description: "A windswept crossing under [item_lamppost].",
+    setting: "A windswept crossing under [item_lamppost].",
     items: [{ id: "item_lamppost", name: "a lamppost" }],
     conditions: [],
     connections: [
@@ -66,7 +66,7 @@ function makeDgsm(): DynamicGameStateManager {
   const junctionB: DynamicScene = {
     id: "J_B",
     name: "Far Corner",
-    description: "The far corner.",
+    setting: "The far corner.",
     items: [],
     conditions: [],
     connections: [],
@@ -75,7 +75,7 @@ function makeDgsm(): DynamicGameStateManager {
   const road: RoadNode = {
     id: "R_MAIN",
     name: "Star Avenue",
-    description: "A long avenue; [item_glove] lies in the gutter.",
+    setting: "A long avenue; [item_glove] lies in the gutter.",
     connections: [
       { id: "connection.road.a", targetId: "J_A", role: "endpointA" },
       { id: "connection.road.b", targetId: "J_B", role: "endpointB" },
@@ -188,16 +188,16 @@ describe("Tier 1 — the skeleton: macro locations + geography", () => {
   const state = build().state;
   const { graph } = state;
 
-  it("lists only top-level scenes and roads beside the macro locations, with their prose", () => {
+  it("lists only top-level scenes and roads beside the macro locations, without their prose", () => {
     expect(graph.places.map((p) => `${p.kind}:${p.id}`).sort()).toEqual([
       "road:R_MAIN",
       "scene:J_A",
       "scene:J_B",
     ]);
-    // Each node carries its authored description: the skeleton renders in the
-    // same description-plus-references shape as the v2 place files.
-    expect(graph.places.find((p) => p.id === "J_A")?.description).toBe(
-      "A windswept crossing under [item_lamppost]."
+    // Topology only: the involved places carry their text under Detailed
+    // Places, and the town's outdoor prose was read by nothing.
+    expect(graph.places.find((p) => p.id === "J_A")).not.toHaveProperty(
+      "description"
     );
   });
 

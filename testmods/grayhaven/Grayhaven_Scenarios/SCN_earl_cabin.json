@@ -1,8 +1,13 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "id": "SCN_earl_cabin",
   "name": "Earl 的小屋",
-  "description": "一间屋就是他的一生:行军床 [item.earl_cabin.cot] 叠得像船铺,床底下塞着一只旧海员木箱 [item.earl_cabin.sea_chest];铸铁炉子 [item.earl_cabin.iron_stove] 烧的是海滩上捡回来的浮木,劈好的柴在炉边码得整整齐齐,炉上永远坐着那只珐琅咖啡壶 [item.earl_cabin.coffee_pot]。灶台边一排腌货架 [item.earl_cabin.pantry_shelf] 码着自家腌的鱼和腌菜罐头,标签是他一笔一划写的日期;门后一排铁钩 [item.earl_cabin.coat_hooks],只有他在屋里的时候上头才挂得住那件油布雨衣,钩子底下立着海竿、木饵箱和几卷线 [item.earl_cabin.fishing_tackle],钩子全是他自己绑的。靠窗的桌子 [item.earl_cabin.window_table] 擦得最干净,正对着海,窗框上挂着一副磨掉了漆的双筒望远镜 [item.earl_cabin.binoculars];桌角按年份码着一摞写满的旧练习本 [item.earl_cabin.log_notebooks],1982 年退休至今一天一页,一本不缺——今年在用的那本不在桌上,跟着人走。桌上还有一台旧收音机 [item.earl_cabin.radio],白天调着 KGRV,夜里常自己串进别的声音;窗台上一盏煤油灯 [item.earl_cabin.oil_lamp] 留着停电的时候用,灯罩擦得发亮。搁板上立着一张镶银边的相片 [item.earl_cabin.nora_photo],Nora 在灯塔平台上迎风按着帽子。屋里常年带着一股海雾渗进木头的潮气 [cond.earl_cabin.sea_damp],纸页都有点发软。唯一的门 [ROAD_cliff_path] 开出去就是崖径,往上走是灯塔崖,往下几分钟就到码头。",
+  "coordinates": {
+    "x": -427,
+    "y": -1358,
+    "z": 8
+  },
+  "setting": "一间屋就是他的一生:行军床 [item.earl_cabin.cot] 叠得像船铺,床底下塞着一只旧海员木箱 [item.earl_cabin.sea_chest];铸铁炉子 [item.earl_cabin.iron_stove] 烧的是海滩上捡回来的浮木,劈好的柴在炉边码得整整齐齐,炉上永远坐着那只珐琅咖啡壶 [item.earl_cabin.coffee_pot]。灶台边一排腌货架 [item.earl_cabin.pantry_shelf] 码着自家腌的鱼和腌菜罐头,标签是他一笔一划写的日期;门后一排铁钩 [item.earl_cabin.coat_hooks],只有他在屋里的时候上头才挂得住那件油布雨衣,钩子底下立着海竿、木饵箱和几卷线 [item.earl_cabin.fishing_tackle],钩子全是他自己绑的。靠窗的桌子 [item.earl_cabin.window_table] 擦得最干净,正对着海,窗框上挂着一副磨掉了漆的双筒望远镜 [item.earl_cabin.binoculars];桌角按年份码着一摞写满的旧练习本 [item.earl_cabin.log_notebooks],1982 年退休至今一天一页,一本不缺——今年在用的那本不在桌上,跟着人走。桌上还有一台旧收音机 [item.earl_cabin.radio],白天调着 KGRV,夜里常自己串进别的声音;窗台上一盏煤油灯 [item.earl_cabin.oil_lamp] 留着停电的时候用,灯罩擦得发亮。搁板上立着一张镶银边的相片 [item.earl_cabin.nora_photo],Nora 在灯塔平台上迎风按着帽子。屋里常年带着一股海雾渗进木头的潮气,纸页都有点发软。唯一的门 [ROAD_cliff_path] 开出去就是崖径,往上走是灯塔崖,往下几分钟就到码头。",
   "parentLocationId": "earl_cabin",
   "indoor": true,
   "references": {

@@ -1,7 +1,8 @@
-import type {
-  ActionTransition,
-  EngineActionStatus,
-  Occurrence,
+import {
+  type ActionTransition,
+  type EngineActionStatus,
+  type Occurrence,
+  perceivesSource,
 } from "../engine/actions/types.js";
 
 export interface ManualWakeInput {
@@ -14,12 +15,10 @@ export interface ManualWakeInput {
   ownActionIds: ReadonlySet<string>;
   /** After this tick's transitions. */
   hasLiveAction: boolean;
-  hasPendingStep: boolean;
 }
 
 export type ManualWakeVerdict =
   | { kind: "none" }
-  | { kind: "advanceQueue" }
   | { kind: "pause"; reason: "woken" | "failed" | "idle" };
 
 /** The ends of an action that did not go as meant. */
@@ -47,20 +46,17 @@ export function classifyManualWake(input: ManualWakeInput): ManualWakeVerdict {
   }
 
   for (const occ of input.occurrences) {
-    const clarity = occ.perceivers.find(
+    const grades = occ.perceivers.find(
       (p) => p.characterId === input.playerId,
-    )?.clarity;
-    if (!clarity || clarity === "trace") continue;
+    );
+    if (!grades || !perceivesSource(grades)) continue;
     if (isCausedByOthers(occ, input.ownActionIds)) {
       return { kind: "pause", reason: "woken" };
     }
   }
 
-  if (!input.hasLiveAction) {
-    return input.hasPendingStep
-      ? { kind: "advanceQueue" }
-      : { kind: "pause", reason: "idle" };
-  }
+  // Nothing running: the player decides what comes next.
+  if (!input.hasLiveAction) return { kind: "pause", reason: "idle" };
 
   return { kind: "none" };
 }

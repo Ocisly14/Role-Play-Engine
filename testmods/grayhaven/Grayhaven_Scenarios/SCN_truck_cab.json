@@ -1,8 +1,8 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "id": "SCN_truck_cab",
   "name": "货车驾驶室",
-  "description": "Frank 那辆雪佛兰平板货车的驾驶室:长条座椅 [item.truck_cab.bench_seat] 的弹簧从八年前就开始抱怨,裂口用银胶带补过一道;仪表盘 [item.truck_cab.dashboard] 擦得和他的账一样干净,中间那台收音机坏了三年——他修得了整辆车,偏偏没修它。方向盘上缠着一段磨旧的皮条 [item.truck_cab.wheel_wrap],仪表台下面另挂着一台 CB 电台 [item.truck_cab.cb_radio],上了山没信号,大半时候只有一片底噪。遮阳板背后夹着一沓复写纸 [item.truck_cab.carbon_copies],边角整整齐齐;手套箱 [item.truck_cab.glovebox] 里是行车证、备用保险丝、一把螺丝刀和一小盒薄荷糖。座椅之间立着一只军绿色保温杯 [item.truck_cab.thermos],杯身的漆磕掉了一圈;座位底下摸得到一卷电工胶带、一双旧手套和一根撬棍 [item.truck_cab.under_seat_junk],还有一支橡胶壳的手电 [item.truck_cab.flashlight],电池是新换的。仪表台上用胶带贴着一张全家福 [item.truck_cab.family_photo],照片里最高的那个孩子去年参了海军。开车的时候他哼歌,总是同一首走调的《Blue Bayou》。",
+  "setting": "Frank 那辆雪佛兰平板货车的驾驶室:长条座椅 [item.truck_cab.bench_seat] 的弹簧从八年前就开始抱怨,裂口用银胶带补过一道;仪表盘 [item.truck_cab.dashboard] 擦得和他的账一样干净,中间那台收音机坏了三年——他修得了整辆车,偏偏没修它。方向盘上缠着一段磨旧的皮条 [item.truck_cab.wheel_wrap],仪表台下面另挂着一台 CB 电台 [item.truck_cab.cb_radio],上了山没信号,大半时候只有一片底噪。遮阳板背后夹着一沓复写纸 [item.truck_cab.carbon_copies],边角整整齐齐;手套箱 [item.truck_cab.glovebox] 里是行车证、备用保险丝、一把螺丝刀和一小盒薄荷糖。座椅之间立着一只军绿色保温杯 [item.truck_cab.thermos],杯身的漆磕掉了一圈;座位底下摸得到一卷电工胶带、一双旧手套和一根撬棍 [item.truck_cab.under_seat_junk],还有一支橡胶壳的手电 [item.truck_cab.flashlight],电池是新换的。仪表台上用胶带贴着一张全家福 [item.truck_cab.family_photo],照片里最高的那个孩子去年参了海军。开车的时候他哼歌,总是同一首走调的《Blue Bayou》。",
   "parentLocationId": "VEH_frank_truck",
   "indoor": true,
   "references": {

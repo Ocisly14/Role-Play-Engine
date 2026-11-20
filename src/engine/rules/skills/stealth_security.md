@@ -20,8 +20,7 @@ is exposed, bypassed, or left behind on failure.
   taking or planting something by hand, passing as someone else, and producing
   a false document.
 - Rejected for defeating an electrical alarm or a mechanism that must be
-  repaired rather than bypassed (Repair & Engineering), and for talking a way
-  past someone who has already noticed the actor. That exchange uses no check.
+  repaired rather than bypassed (Repair & Engineering).
 - Tools matter and their absence is stated: picks, materials, a costume. A
   lock attempted bare-handed is at a higher required level or rejected
   outright.
@@ -40,7 +39,7 @@ is exposed, bypassed, or left behind on failure.
 ## Failure
 
 - The attempted access or concealment fails: the lock holds or the
-  actor leaves perceptible evidence. Assign actual observers and clarity from
+  actor leaves perceptible evidence. Assign actual observers and their sight and hearing from
   the supplied conditions; no automatic second look, recognition or retry penalty.
 - **Fumble** — A supported tool breaks, a mechanism jams, or a concrete flaw
   exposes the attempt. Damage is proportional and is not automatically permanent.

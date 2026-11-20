@@ -84,7 +84,7 @@ export default function GrayhavenSandboxPage() {
 
   const building=interiorBuilding(interior);
   const room = allInteriorScenes.find(scene => scene.id === selected);
-  const place = room ? {id:room.id,name:room.name,english:buildingForRoom(room.id)==='sheriff'?'SHERIFF / '+(room.id.endsWith('front')?'FRONT DESK':room.id.endsWith('office')?'OFFICE':'HOLDING CELL'):'BLUEBIRD DINER / '+(room.id.endsWith('upstairs')?'UPSTAIRS':room.id.endsWith('kitchen')?'KITCHEN':'DINING ROOM'),description:cleanSceneText(room.description)} : locations.find(location => location.id === selected);
+  const place = room ? {id:room.id,name:room.name,english:buildingForRoom(room.id)==='sheriff'?'SHERIFF / '+(room.id.endsWith('front')?'FRONT DESK':room.id.endsWith('office')?'OFFICE':'HOLDING CELL'):'BLUEBIRD DINER / '+(room.id.endsWith('upstairs')?'UPSTAIRS':room.id.endsWith('kitchen')?'KITCHEN':'DINING ROOM'),description:cleanSceneText(room.setting)} : locations.find(location => location.id === selected);
   useEffect(() => {
     if(interior.status!=='open' && selected!=='SCN_redwood_ring')return;
     const panel=host.current?.parentElement?.querySelector('.gh-place');

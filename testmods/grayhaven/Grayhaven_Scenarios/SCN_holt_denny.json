@@ -1,8 +1,13 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "id": "SCN_holt_denny",
   "name": "Denny 的房间",
-  "description": "小房间被书占领了:窄床 [item.holt_denny.bed] 上、窗台上、椅子上全是卷了角的科幻平装书 [item.holt_denny.scifi_paperbacks],书脊按他自己的一套体系排序——入侵类、地底类、政府隐瞒类各归各摞。墙上用图钉别着他手画的星图和一张从杂志上剪下的雷达站照片 [item.holt_denny.star_chart]。书桌 [item.holt_denny.desk] 上一盏歪脖子台灯 [item.holt_denny.desk_lamp] 亮着,灯罩上贴着几张卡通贴纸;桌面摊着一叠写满小字的活页纸 [item.holt_denny.notes_sheaf],抽屉半开着,里面放着一支备用的哮喘吸入器 [item.holt_denny.spare_inhaler]。枕头底下压着一支小手电 [item.holt_denny.pocket_flashlight]——熄灯之后照的还是书。朝后院的那扇窗 [item.holt_denny.window] 关不严,窗闩早松了,夜里躺着能听见柴堆那边的动静。哥哥 Glen 的旧夹克没在——他穿着呢。房门 [SCN_holt_common] 通向起居的大开间,门缝底下塞了条毛巾,挡光,也挡听。",
+  "coordinates": {
+    "x": 624,
+    "y": 889,
+    "z": 28
+  },
+  "setting": "小房间被书占领了:窄床 [item.holt_denny.bed] 上、窗台上、椅子上全是卷了角的科幻平装书 [item.holt_denny.scifi_paperbacks],书脊按他自己的一套体系排序——入侵类、地底类、政府隐瞒类各归各摞。墙上用图钉别着他手画的星图和一张从杂志上剪下的雷达站照片 [item.holt_denny.star_chart]。书桌 [item.holt_denny.desk] 上一盏歪脖子台灯 [item.holt_denny.desk_lamp] 亮着,灯罩上贴着几张卡通贴纸;桌面摊着一叠写满小字的活页纸 [item.holt_denny.notes_sheaf],抽屉半开着,里面放着一支备用的哮喘吸入器 [item.holt_denny.spare_inhaler]。枕头底下压着一支小手电 [item.holt_denny.pocket_flashlight]——熄灯之后照的还是书。朝后院的那扇窗 [item.holt_denny.window] 关不严,窗闩早松了,夜里躺着能听见柴堆那边的动静。哥哥 Glen 的旧夹克没在——他穿着呢。房门 [SCN_holt_common] 通向起居的大开间,门缝底下塞了条毛巾,挡光,也挡听。",
   "parentLocationId": "holt_house",
   "indoor": true,
   "references": {

@@ -13,12 +13,23 @@ Base every perception decision on the request already provided:
 - `Characters`: each character's `locationId`, exact `position`, optional
   `spot` and current conditions, together with their entries under `New
   Commands` or `Active Actions`;
-- `Detailed Places`: whether a place is indoors, its description, conditions,
+- `Detailed Places`: whether a place is indoors, its setting (the place
+  itself — layout, materials, fixtures, walls, windows and doors), conditions,
   connections, present characters and current environment reading;
-- `World Graph` and `Blocked Connections`: macro geography, adjacency,
-  passages, road travel distance and current barriers;
-- `Items` and `Vehicles`: physical holders, whether an item is `unnoticed`, vehicle position and
-  the vehicle's separate interior scene;
+- `Surroundings`: From each place where an action being settled took place:
+  where every living character stands and how far — `meters` is the straight
+  line between the two places' points, through walls, floors and ground alike
+  (0 is the same place); where a place has no point, `walkMinutes` is the
+  walking time by the ways that join them instead (null is not joined). The
+  places they stand in follow; doors, windows and walls are in the
+  descriptions, on either side. A window onto the lane is often described
+  from the room it belongs to;
+- `Blocked Connections`: passages that cannot be walked right now. A blocked
+  passage still joins two places for sight and sound as its description
+  allows;
+- `Items` and `Vehicles`: physical holders, an item's `placement` within its
+  place and the `container` it sits in (such an item is flagged `unnoticed`),
+  vehicle position and the vehicle's separate interior scene;
 - the specific action: actor, description, `objectRefs`, utterance, declared
   skill, elapsed phase and deterministic dice result;
 - objective events and the world changes being settled in this resolution.
@@ -116,8 +127,10 @@ lies between them.
 - Walls, floors, closed containers and opaque vehicle bodies block sight. A
   door, window, opening, mirror or line described in the scene may permit only
   the view it physically supports.
-- An `unnoticed` item and a `concealed` passage reach an observer only through
-  an action that finds or exposes them. Engine knowledge of either is not
+- An `unnoticed` item (one in a container) and a `concealed` passage reach an
+  observer only through an action that finds or exposes them, or by being
+  noticed through the container — its own description says whether it is
+  clear, open or shut. Engine knowledge of either is not
   observer knowledge. A finder's occurrence names what was found — the item's
   `[id]`, or the place a passage leads to — so the finder can point at it.
 - `spot` constrains facing, cover and proximity qualitatively. It is not a
@@ -161,27 +174,28 @@ lies between them.
   Those fields may support the objective result of a resolved investigation or
   knowledge action only after sensory evidence actually reaches the actor.
 
-### 5. Assign an information grade
+### 5. Assign a grade per sense
 
-Classify each candidate separately. The grade IS output: it is the `clarity`
-on that character's entry in the occurrence's `perceivers` list.
+Classify each candidate separately, sight and hearing each on its own — they
+travel differently: a closed door stops a look but not a shout, fog swallows
+a gesture but not a word, a window passes the one and not the other. The
+grades ARE output: `sight` and `hearing` on that character's entry in the
+occurrence's `perceivers` list. Touch belongs to the people directly involved
+and reaches them through `participants`; smell, where it carries, is folded
+into whichever grade the description supports.
 
-- **`full`** (direct): the character receives the event and its relevant
-  detail. Examples: bodily contact; a clear nearby view; intelligible words;
-  the searcher reading the clue they uncovered.
-- **`limited`** (clear but partial): the character knows the kind of event and
-  its immediate result but lacks fine detail. Examples: a struggle seen through
-  a dirty window without the small object exchanged; a machine heard starting
-  through a wall without seeing who touched it; a speaker seen or recognised
-  whose words do not carry.
-- **`trace`**: the character receives only that something happened, with no
-  source, cause, actor or fine result. Examples: a muffled impact upstairs, a
-  flash beyond the fog, an indistinct voice whose source cannot be placed.
-- **None:** no supported sensory evidence reaches the character. They are not
-  listed on the occurrence at all.
+What each grade gives the perceiver — the same scale the Renderer reads:
 
-Never upgrade a grade by filling gaps with omniscient world knowledge. A trace
-of a gunshot is not knowledge of the shooter, target, weapon or result. A clear
+- **Sight `clear`:** the event and its detail — faces, expressions, small objects. For example a clear nearby view; the searcher looking at the clue they uncovered.
+- **Sight `partial`:** shapes, the kind of movement and its immediate result — no faces, expressions or small objects. For example a struggle through a dirty window, a figure at the far end of a dim room.
+- **Sight `glimpse`:** only that something moved or flashed, and roughly where. For example a flash beyond the fog, a shape crossing a doorway at the edge of view.
+- **Hearing `clear`:** every audible detail — spoken words made out.
+- **Hearing `muffled`:** the kind of sound and its tone — a voice and how it sounds, glass breaking — no words. For example a raised voice through a door, a machine starting behind a wall.
+- **Hearing `faint`:** only that there was a sound, and roughly where from. For example a dull impact upstairs, an indistinct murmur.
+- **`none`** on a sense: nothing — nothing reaches it, or the event made nothing for it (a silent gesture has no sound). Someone with `none` on both is not listed.
+
+Never upgrade a grade by filling gaps with omniscient world knowledge. A faint
+gunshot is not knowledge of the shooter, target, weapon or result. A clear
 view of a face is physical detail, not automatic knowledge of the person's
 canonical identity; downstream identity rules decide how that person is named.
 
@@ -191,12 +205,12 @@ One occurrence row per objective fact. The row carries the fact once and lists
 everyone who received any evidence of it:
 
 - `perceivers` lists every character with any supported evidence of this
-  fact, one entry per character, each as `{ characterId, clarity }` with
-  `clarity` set to that character's grade from step 5. Not every nearby
-  character and not every action participant — only those the evidence reached.
+  fact, one entry per character, each as `{ characterId, sight, hearing }`
+  with the grades from step 5. Not every nearby character and not every
+  action participant — only those the evidence reached.
 - Write `content` at FULL objective detail regardless of who is listed. Never
   write it down to the lowest shared grade; the Renderer degrades what each
-  perceiver receives according to their `clarity`.
+  perceiver receives according to their grades.
 - Split rows ONLY when audiences receive different FACTS (the shove in one
   room, the landing in the courtyard), citing the same `actionIds`. Never split
   a single fact by degree — different degrees of one fact are one row, graded
@@ -204,7 +218,7 @@ everyone who received any evidence of it:
 - Keep `content` objective and third-person. Describe the available evidence,
   not what a character thinks, infers, remembers, recognizes or feels.
 - Do not output sensory channels, locations, actors, signals or fact arrays.
-  `clarity` is the only perception field; code derives the structural fields
+  `sight` and `hearing` are the only perception fields; code derives the structural fields
   from the cited actions.
 
 ### Speech encoding
@@ -214,10 +228,14 @@ everyone who received any evidence of it:
   said: it takes no occurrence. Code copies the command's utterance verbatim
   onto the row; never restate the words in `content`.
 - Everyone who heard or saw the speaking at all is listed on that one row:
-  - made out the words → `full`;
-  - knows who spoke but not the words (the watched whisper, the recognised
-    voice through a door) → `limited`;
-  - an indistinct voice through a wall, source unplaceable → `trace`.
+  - made out the words → hearing `clear` (sight as their view allows — in the
+    dark room it is `none`);
+  - saw who spoke but caught no words (the watched whisper) → sight `clear`
+    or `partial`, hearing `faint` or `none`;
+  - a voice through a door, its tone but not its words → sight `none`,
+    hearing `muffled`;
+  - an indistinct voice through a wall, source unplaceable → sight `none`,
+    hearing `faint`.
 - There is no separate `speech:false` onlooker row for a speech act.
 - Addressed characters (`targetIds`) and receivers (`perceivers`) remain
   separate sets.
@@ -228,7 +246,7 @@ everyone who received any evidence of it:
 
 - **Stealth and concealment:** respect the declared skill result and its skill
   guidance. A successful unnoticed act does not place the avoided observer in
-  the audience. A failed or fumbled act exposes only the trace the observer was
+  the audience. A failed or fumbled act exposes only what the observer was
   physically able to receive.
 - **Search and investigation:** the searcher directly receives a discovered
   detail. A nearby watcher may see the search being performed without learning
@@ -239,7 +257,8 @@ everyone who received any evidence of it:
   view and hearing support. Injury does not reveal an unseen cause by itself.
 - **Ranged attacks:** separate muzzle event, flight where genuinely visible or
   audible, and impact. Someone who hears a shot but cannot see either endpoint
-  is listed on the shot row at `trace`.
+  is listed on the shot row with sight `none` and the hearing the distance
+  allows.
 - **Forced movement and falls:** source observers may see departure, destination
   observers may see or hear landing, and the displaced character receives
   direct motion and impact unless awareness is explicitly absent. These are
@@ -265,8 +284,9 @@ the noisy room see the speaker lean close but cannot hear them; someone in the
 next room catches a voice through the wall without placing it.
 
 - ONE `speech:true` row, `perceivers`: speaker and intended listener at
-  `full`; the two watching onlookers at `limited` (they saw who leaned in to
-  whom); the character through the wall at `trace`;
+  sight `clear`, hearing `clear`; the two watching onlookers at sight
+  `clear`, hearing `faint` (they saw who leaned in to whom, and nothing
+  carried); the character through the wall at sight `none`, hearing `faint`;
 - no second row for the onlookers, and no paraphrase of the words in `content`.
 
 ### Gunshot behind a closed door
@@ -277,7 +297,8 @@ buildings away receives nothing unless the geography, environment or action
 explicitly supports that reach.
 
 - ONE row, `content` at full detail (who fired, at what, what it struck);
-  `perceivers`: the room at `full`, the adjacent listener at `trace`;
+  `perceivers`: the room at sight `clear`, hearing `clear`; the adjacent
+  listener at sight `none`, hearing `muffled` (a shot, through the door);
 - the unsupported distant character is not listed.
 
 ### Person pushed through a window
@@ -288,9 +309,9 @@ receives the force, fall and impact directly. These are still separate rows,
 because the FACTS differ — not because the degrees do:
 
 - one row for the shove and the breaking window, `perceivers`: the source room
-  graded by their view, the falling person at `full`;
+  graded by their view and hearing, the falling person at `clear` on both;
 - one row for the body emerging and landing, `perceivers`: the courtyard graded
-  by their view, the falling person at `full`;
+  by their view and hearing, the falling person at `clear` on both;
 - each row's `content` at full objective detail; each perceiver at the highest
   grade their evidence supports.
 
@@ -304,8 +325,9 @@ Before submitting each occurrence, verify:
 4. How did illumination, noise, weather, hazards, barriers, `spot`, vehicles
    and character conditions alter that route?
 5. Is every character with any supported evidence listed, and nobody without?
-6. Does every perceiver carry the highest `clarity` the evidence supports, and
-   nobody a higher one?
+6. Does every perceiver carry, on each sense, the highest grade the evidence
+   supports, and nobody a higher one? Is sight judged by line of sight and
+   light, and hearing by what the sound passes through?
 7. Are rows split only where the facts differ, and is each `content` complete
    and objective at full detail?
 8. Are target, participant and perceiver sets being kept distinct?
@@ -313,4 +335,4 @@ Before submitting each occurrence, verify:
    private interpretation, emotion or unissued reaction?
 10. On a speech row, is the cited action under `endingWithUtterance` — does it
     end this tick? A starting action's words are not said yet.
-11. On a speech row, is `full` given only to those who made out the words?
+11. On a speech row, is hearing `clear` given only to those who made out the words?

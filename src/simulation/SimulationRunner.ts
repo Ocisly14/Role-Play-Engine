@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import * as path from "node:path";
 import type { NpcMemoryType, PrismaClient } from "@prisma/client";
 import type { EngineAction } from "../engine/actions/types.js";
+import { resolveSkillValue } from "../engine/actions/skillRollService.js";
 import {
   type TickEngine,
   createTickEngine,
@@ -12,16 +13,30 @@ import type {
   TickReport,
 } from "../engine/core/types.js";
 import { createDefaultSubsystemRegistry } from "../engine/registerDefaults.js";
+import { SKILL_CATALOG } from "../engine/rules/skillCatalog.js";
 import type { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
-import type { PlayerPort, PlayerStepTranslator } from "../player/playerPort.js";
+import { writeRelationship } from "../memory/relationshipWrite.js";
+import {
+  PlayerBoardError,
+  addLink,
+  findLink,
+  removeLink,
+} from "../player/playerBoard.js";
+import {
+  type MentionLabel,
+  type PlayerInput,
+  buildPlayerActArgs,
+  strangerLabel,
+} from "../player/playerCommands.js";
+import type { PlayerPort } from "../player/playerPort.js";
 import {
   PLAYER_STATE_KEY,
   type PlayerMode,
   type PlayerPending,
   type PlayerState,
   createPlayerState,
+  hydratePlayerState,
   isPlayerState,
-  setQueue,
   switchMode,
 } from "../player/playerState.js";
 import {
@@ -39,6 +54,15 @@ import {
   timePart,
 } from "../state/gameClock.js";
 import { loadScriptedEventsForModule } from "../state/moduleLoader.js";
+import {
+  type CitationScope,
+  aliasFor,
+  buildPerceivableDirectory,
+  isKnownTo,
+  knownAs,
+  tagsIn,
+} from "../state/perceivableDirectory.js";
+import { resolvePerceivedLocation } from "../state/perceivedLocation.js";
 import type { DynamicNPCProfile } from "../state/types.js";
 import { SimulationEventEmitter } from "./SimulationEventEmitter.js";
 import {
@@ -56,6 +80,8 @@ import {
   DEFAULT_TICK_INTERVAL_MS,
   type PauseReason,
   type PlaybackStatus,
+  type PlayerBoardView,
+  type PlayerOptions,
   type PlayerView,
   type SimulationConfig,
   type SimulationEvent,
@@ -67,6 +93,10 @@ import {
 
 const ONE_MINUTE_MS = 60_000;
 const TICK_ENGINE_PERSISTED_KEY = "_tickEngine";
+
+type PlayerCommandResult =
+  | { ok: true; unknownHandles: string[] }
+  | { ok: false; reason: string };
 /** The wake gate's held occurrences (design §6.1): saved so a restart never
  *  drops what a sleeping character has yet to perceive. */
 export const PENDING_DELIVERY_KEY = "_pendingDelivery";
@@ -156,8 +186,6 @@ export class SimulationRunner {
   /** The player operation currently holding the world still. */
   private activePlayerOp: Promise<void> | null = null;
 
-  private readonly playerTranslator?: PlayerStepTranslator;
-  private readonly playerSplitter: (text: string) => Promise<string[]>;
   private readonly onAutosaveRequested: (info: {
     characterId: string;
     gameDateTime: string;
@@ -185,15 +213,9 @@ export class SimulationRunner {
     language: string;
     memoryManager?: NpcMemoryManager;
     prisma: PrismaClient;
-    /** Manual mode: turns a queued step into a decision. Absent, a step that
-     *  comes up pauses for the player instead. */
-    playerTranslator?: PlayerStepTranslator;
-    /** Manual mode: splits what the player typed into queue steps. Defaults
-     *  to one step holding the whole text. */
-    playerSplitter?: (text: string) => Promise<string[]>;
     /** Called once at the end of a tick in which the player's sleep began,
      *  after the runtime was saved. Defaults to doing nothing. Runs INSIDE the
-     *  tick cycle: it must not call a player operation (submitPlayerInput,
+     *  tick cycle: it must not call a player operation (sendAdvice,
      *  setPlayerMode, …) and await it — the operation waits for the tick to
      *  end, and the tick waits for the hook: a deadlock. */
     onAutosaveRequested?: (info: {
@@ -208,14 +230,6 @@ export class SimulationRunner {
     this.language = params.language;
     this.memoryManager = params.memoryManager;
     this.prisma = params.prisma;
-    this.playerTranslator = params.playerTranslator;
-    this.playerSplitter =
-      params.playerSplitter ??
-      (async (text) => {
-        const step = text.trim();
-        if (step === "") throw new Error("empty instruction");
-        return [step];
-      });
     this.onAutosaveRequested =
       params.onAutosaveRequested ?? (async () => undefined);
 
@@ -366,7 +380,7 @@ export class SimulationRunner {
 
     if (params.persistedPlayerState !== undefined) {
       if (isPlayerState(params.persistedPlayerState)) {
-        this.playerState = params.persistedPlayerState;
+        this.playerState = hydratePlayerState(params.persistedPlayerState);
       } else {
         console.warn(
           `[SimulationRunner] ${this.sessionId}: saved player state is malformed; the session continues without a player`
@@ -617,13 +631,17 @@ export class SimulationRunner {
 
   // ==================== The player: public surface ====================
 
+  hasPlayer(): boolean {
+    return this.playerState !== null;
+  }
+
   getPlayerView(): PlayerView | null {
     const player = this.playerState;
     if (!player) return null;
     const live = this.livePlayerAction(player.characterId);
+    const profile = this.dgsm.getNpcProfile(player.characterId);
     return {
-      // A copy: the caller must not be able to edit the live state.
-      state: structuredClone(player),
+      state: this.publicPlayerState(player),
       alive: this.dgsm.isNpcAlive(player.characterId),
       currentAction: live
         ? {
@@ -636,26 +654,215 @@ export class SimulationRunner {
         : null,
       perceptions: this.playerPerceptions.slice(),
       paused: this.state === "paused",
+      options: this.getPlayerOptions() ?? { exits: [], mentions: [] },
+      learnedLanguages: Object.keys(profile?.languages?.learned ?? {}),
+      skillValues: Object.fromEntries(
+        SKILL_CATALOG.flatMap(({ name }) => {
+          const skill = resolveSkillValue(name, profile?.skills ?? {});
+          return skill ? [[name, skill.value] as const] : [];
+        })
+      ),
     };
   }
 
-  /** Manual: what the player typed becomes the queue, and its first step
-   *  goes in now. Delegated: the friend speaks — an answer when a question
-   *  is waiting, otherwise words the character reads next tick (the world
-   *  is neither paused nor resumed for them). */
-  async submitPlayerInput(text: string): Promise<void> {
-    if (text.trim() === "") throw new Error("empty instruction");
+  getPlayerOptions(scope = this.playerCitationScope()): PlayerOptions | null {
+    const player = this.playerState;
+    if (!player) return null;
+    const actorId = player.characterId;
+    const here = resolvePerceivedLocation(
+      this.dgsm.getCharacterPosition(actorId),
+      this.dgsm,
+      actorId,
+      scope.noticed
+    );
+    const exits = [...new Set(here?.adjacentIds)].map(
+      (id): MentionLabel => ({
+        handle: id,
+        label:
+          this.dgsm.getScene(id)?.name ?? this.dgsm.getRoad(id)?.name ?? id,
+        kind: "scene",
+      })
+    );
+    const directory = buildPerceivableDirectory(actorId, this.dgsm, scope);
+    const mentions: MentionLabel[] = [];
+    for (const [handle, id] of directory.characterHandles) {
+      const label = this.playerCharacterLabel(actorId, id, handle);
+      if (label) mentions.push(label);
+    }
+    for (const id of directory.items) {
+      const item = this.dgsm.getItem(id) ?? this.dgsm.getVehicle(id);
+      if (item) mentions.push({ handle: id, label: item.name, kind: "item" });
+    }
+    return { exits, mentions };
+  }
+
+  async submitPlayerCommand(input: PlayerInput): Promise<PlayerCommandResult> {
+    return this.playerOp<PlayerCommandResult>(async () => {
+      const player = this.requireLivePlayer();
+      if (player.mode !== "manual")
+        throw new Error("commands are for manual mode");
+      if (player.dialogue.at(-1)?.status === "waiting") {
+        return {
+          ok: false,
+          reason: "the current exchange is still waiting for a reply",
+        };
+      }
+      const { controller } = await this.ensureTickEngine();
+      const scope = this.playerCitationScope();
+      const options = this.getPlayerOptions(scope);
+      if (!options) throw new Error("this session has no player");
+      const labels = new Map<string, MentionLabel>();
+      if (input.kind === "move" || input.kind === "act") {
+        for (const exit of options.exits) labels.set(exit.handle, exit);
+      }
+      if (input.kind === "say" || input.kind === "act") {
+        for (const mention of options.mentions) {
+          if (input.kind === "act" || mention.kind === "character") {
+            labels.set(mention.handle, mention);
+          }
+        }
+        // A person can walk out between composition and submission. Keep the
+        // handles the player has already seen, including a pre-rename alias.
+        for (const id of this.playerBoardPeople(player)) {
+          const label = this.playerCharacterLabel(player.characterId, id);
+          if (!label) continue;
+          labels.set(label.handle, label);
+          const alias = aliasFor(player.characterId, id);
+          labels.set(alias, { ...label, handle: alias });
+        }
+      }
+      const built = buildPlayerActArgs(input, {
+        labels,
+        nativeLanguages:
+          this.dgsm.getNpcProfile(player.characterId)?.languages?.native ?? [],
+        language: this.playerLanguage(),
+      });
+      if (!built.ok) return built;
+      if (built.unknownHandles.length > 0) {
+        // The builder preserves unknown tokens for the caller. An explicit
+        // reference in the play UI must still resolve before dispatch.
+        return {
+          ok: false,
+          reason: `unknown handle: ${built.unknownHandles[0]}`,
+        };
+      }
+      const receipt = await controller.submitPlayerCommand(
+        built.rawArgs,
+        scope
+      );
+      if (!receipt.ok) return receipt;
+      const dialogue =
+        input.kind === "say" && !built.rawArgs.skillId
+          ? [
+              ...player.dialogue,
+              {
+                id: receipt.actionId,
+                gameDateTime: this.dgsm.getGameDateTime(),
+                location: this.playerLocation(player.characterId),
+                words: input.words.trim(),
+                status: "waiting" as const,
+                replies: [],
+              },
+            ]
+          : player.dialogue;
+      this.playerState = { ...player, pending: null, dialogue };
+      return { ok: true, unknownHandles: built.unknownHandles };
+    });
+  }
+
+  async getPlayerBoard(): Promise<PlayerBoardView | null> {
+    await this.playerStreamLoad;
+    const initial = this.playerState;
+    if (!initial) return null;
+    const npcId = initial.characterId;
+    const rows =
+      this.playerBoardPeople(initial).size > 0
+        ? await this.prisma.npcMemory.findMany({
+            where: { sessionId: this.sessionId, npcId, type: "relationship" },
+            orderBy: [{ gameDateTime: "asc" }, { id: "asc" }],
+            select: { content: true, metadata: true },
+          })
+        : [];
+    const player = this.playerState;
+    if (player?.characterId !== npcId) return null;
+
+    const notes = new Map<string, string[]>();
+    for (const { metadata, content } of rows) {
+      if (!metadata || typeof metadata !== "object" || Array.isArray(metadata))
+        continue;
+      const id = metadata.targetId;
+      if (typeof id !== "string") continue;
+      const list = notes.get(id) ?? [];
+      list.push(content);
+      notes.set(id, list);
+    }
+    const handles = new Map<string, string>();
+    const people: PlayerBoardView["people"] = [];
+    for (const id of this.playerBoardPeople(player)) {
+      const person = this.playerCharacterLabel(npcId, id);
+      if (!person) continue;
+      const name = knownAs(this.dgsm, npcId, id);
+      handles.set(id, person.handle);
+      people.push({
+        handle: person.handle,
+        label: person.label,
+        ...(name !== undefined ? { knownAs: name } : {}),
+        notes: notes.get(id) ?? [],
+        firstMet: Object.hasOwn(player.met, id) ? player.met[id] : null,
+      });
+    }
+    const links = player.boardLinks.flatMap((link) => {
+      const a = handles.get(link.a);
+      const b = handles.get(link.b);
+      return a && b ? [{ id: link.id, a, b, label: link.label }] : [];
+    });
+    return { people, links };
+  }
+
+  namePerson(handle: string, name: string): Promise<void> {
+    return this.writePlayerRelationship(handle, "knownAs", name);
+  }
+
+  notePerson(handle: string, note: string): Promise<void> {
+    return this.writePlayerRelationship(handle, "content", note);
+  }
+
+  async linkPeople(
+    aHandle: string,
+    bHandle: string,
+    label: string
+  ): Promise<{ id: string }> {
+    return this.playerOp(async () => {
+      const player = this.requireLivePlayer();
+      const a = this.requireBoardPerson(player, aHandle);
+      const b = this.requireBoardPerson(player, bHandle);
+      const links = addLink(player.boardLinks, a, b, label);
+      const link = findLink(links, a, b, label.trim());
+      if (!link) throw new Error("relationship link was not created");
+      if (links !== player.boardLinks)
+        this.playerState = { ...player, boardLinks: links };
+      return { id: link.id };
+    });
+  }
+
+  async unlinkPeople(linkId: string): Promise<void> {
     await this.playerOp(async () => {
       const player = this.requireLivePlayer();
-      if (player.mode === "manual") {
-        const steps = (await this.playerSplitter(text))
-          .map((s) => s.trim())
-          .filter((s) => s !== "");
-        if (steps.length === 0) throw new Error("empty instruction");
-        const pending = this.requireLivePlayer().pending;
-        this.playerState = setQueue(this.requireLivePlayer(), steps);
-        await this.resolvePlayer({ kind: "steps" }, pending);
-        return;
+      const links = removeLink(player.boardLinks, linkId);
+      if (links !== player.boardLinks)
+        this.playerState = { ...player, boardLinks: links };
+    });
+  }
+
+  /** Delegated: the friend speaks — an answer when a question is waiting,
+   *  otherwise words the character reads next tick (the world is neither
+   *  paused nor resumed for them). Manual mode has no one to advise. */
+  async sendAdvice(text: string): Promise<void> {
+    if (text.trim() === "") throw new Error("empty advice");
+    await this.playerOp(async () => {
+      const player = this.requireLivePlayer();
+      if (player.mode !== "delegated") {
+        throw new Error("advice is for delegated mode");
       }
       if (player.pending?.kind === "consult") {
         await this.answerConsult(text);
@@ -672,7 +879,7 @@ export class SimulationRunner {
     });
   }
 
-  /** "Go on": the current action runs on, or the queue's next step goes in. */
+  /** "Go on": the current action, if any, runs on; nothing is submitted. */
   async continuePlayer(): Promise<void> {
     await this.playerOp(async () => {
       const pending = this.requireLivePlayer().pending;
@@ -716,24 +923,6 @@ export class SimulationRunner {
         next = { ...next, forceWake: false };
       }
       this.playerState = next;
-    });
-  }
-
-  /** Replace the steps not yet done. Nothing is submitted: the next step
-   *  goes in when the current one ends or the player says "go on". */
-  async replacePlayerQueue(steps: string[]): Promise<void> {
-    await this.playerOp(async () => {
-      const player = this.requireLivePlayer();
-      if (player.mode !== "manual") {
-        throw new Error("the step queue belongs to manual mode");
-      }
-      const texts = steps.map((s) => s.trim()).filter((s) => s !== "");
-      // Only the steps still waiting are replaced: the running one keeps
-      // its action id (so its end settles it) and the done ones stay as
-      // history.
-      const kept = player.queue.filter((q) => q.status !== "pending");
-      const fresh = setQueue({ ...player, queue: [] }, texts).queue;
-      this.playerState = { ...player, queue: [...kept, ...fresh] };
     });
   }
 
@@ -809,7 +998,7 @@ export class SimulationRunner {
    *  and whatever the controller did with it must survive a restart. Resumes
    *  the world afterwards only when it was paused for the player and nothing
    *  new is waiting on them; a world someone paused by hand stays paused. */
-  private async playerOp(fn: () => Promise<void>): Promise<void> {
+  private async playerOp<T>(fn: () => Promise<T>): Promise<T> {
     const prev = this.playerOpChain;
     let release: () => void = () => undefined;
     const mine = new Promise<void>((resolve) => {
@@ -819,6 +1008,7 @@ export class SimulationRunner {
     await prev;
 
     let resume = false;
+    let result: T;
     try {
       while (this.tickCycle) {
         await this.tickCycle.catch(() => undefined);
@@ -826,6 +1016,7 @@ export class SimulationRunner {
       // Claimed in the same synchronous step as the last check above, so no
       // tick can start in between.
       this.activePlayerOp = mine;
+      if (this.playerStreamLoad) await this.playerStreamLoad;
       if (this.state === "stopped" || this.state === "completed") {
         throw new Error("simulation has ended");
       }
@@ -837,7 +1028,7 @@ export class SimulationRunner {
       this.events.on("simulation_event", collect);
       const before = this.playerState;
       try {
-        await fn();
+        result = await fn();
         // The controller paused again while the world was running: stop now,
         // not a tick later.
         if (
@@ -878,6 +1069,134 @@ export class SimulationRunner {
         );
       });
     }
+    return result;
+  }
+
+  private publicPlayerState(player: PlayerState): PlayerView["state"] {
+    const { met: _met, boardLinks: _links, ...state } = player;
+    return structuredClone(state);
+  }
+
+  private playerCitationScope(): CitationScope {
+    return (
+      this.npcController?.playerCitationScope() ?? {
+        knownIds: tagsIn(
+          this.playerPerceptions.map((entry) => entry.narrative)
+        ),
+      }
+    );
+  }
+
+  private playerLanguage(): "zh" | "en" {
+    return this.language.startsWith("zh") ? "zh" : "en";
+  }
+
+  private playerCharacterLabel(
+    actorId: string,
+    id: string,
+    handle?: string
+  ): MentionLabel | undefined {
+    const profile = this.dgsm.getNpcProfile(id);
+    if (!profile) return undefined;
+    return {
+      handle:
+        handle ??
+        (isKnownTo(this.dgsm, actorId, id) ? id : aliasFor(actorId, id)),
+      label:
+        knownAs(this.dgsm, actorId, id) ??
+        strangerLabel(profile, this.playerLanguage()),
+      kind: "character",
+    };
+  }
+
+  private playerBoardPeople(player: PlayerState): Set<string> {
+    const ids = new Set([
+      ...Object.keys(player.met),
+      ...Object.keys(
+        this.dgsm.getState().npcRelationshipGraph[player.characterId] ?? {}
+      ),
+    ]);
+    ids.delete(player.characterId);
+    return ids;
+  }
+
+  private requireBoardPerson(player: PlayerState, handle: string): string {
+    for (const id of this.playerBoardPeople(player)) {
+      const label = this.playerCharacterLabel(player.characterId, id);
+      if (
+        label &&
+        (label.handle === handle || aliasFor(player.characterId, id) === handle)
+      ) {
+        return id;
+      }
+    }
+    throw new PlayerBoardError(
+      "person not found on the relationship board",
+      404
+    );
+  }
+
+  private async writePlayerRelationship(
+    handle: string,
+    field: "knownAs" | "content",
+    text: string
+  ): Promise<void> {
+    const value = text.trim();
+    if (!value)
+      throw new PlayerBoardError(
+        field === "knownAs" ? "empty name" : "empty note"
+      );
+    await this.playerOp(async () => {
+      const player = this.requireLivePlayer();
+      const memory = this.memoryManager;
+      if (!memory) throw new Error("this session has no memory store");
+      const npcId = player.characterId;
+      const targetRealId = this.requireBoardPerson(player, handle);
+      const position = this.dgsm.getCharacterPosition(npcId);
+      await writeRelationship(
+        {
+          dgsm: this.dgsm,
+          memory,
+          npcId,
+          sessionId: this.sessionId,
+          moduleId: this.config.moduleId,
+          gameDateTime: this.dgsm.getGameDateTime(),
+          ...(position
+            ? { location: this.dgsm.resolveLocationId(position) }
+            : {}),
+        },
+        {
+          targetRealId,
+          targetLabel: this.playerCharacterLabel(npcId, targetRealId)?.label,
+          [field]: value,
+        }
+      );
+      // Board edits refresh the public view through the existing player event.
+      this.playerState = { ...player };
+    });
+  }
+
+  private recordPlayerMeetings(
+    entries: PlayerView["perceptions"],
+    handles: ReadonlyMap<string, string>
+  ): void {
+    const player = this.playerState;
+    if (!player) return;
+    const newMeetings = new Map<string, string>();
+    for (const entry of entries) {
+      for (const handle of tagsIn([entry.narrative])) {
+        const id = handles.get(handle);
+        if (!id || id === player.characterId || Object.hasOwn(player.met, id))
+          continue;
+        if (!newMeetings.has(id)) newMeetings.set(id, entry.gameDateTime);
+      }
+    }
+    if (newMeetings.size > 0) {
+      this.playerState = {
+        ...player,
+        met: { ...player.met, ...Object.fromEntries(newMeetings) },
+      };
+    }
   }
 
   /** The player, alive. Every operation but the view starts here. */
@@ -897,7 +1216,7 @@ export class SimulationRunner {
    *  after it returns and only if it is still the same pause. If the controller
    *  paused again, its new question stays. */
   private async resolvePlayer(
-    input: { kind: "continue" } | { kind: "steps" } | { kind: "advice" },
+    input: { kind: "continue" } | { kind: "advice" },
     answered: PlayerPending | null
   ): Promise<void> {
     const { controller } = await this.ensureTickEngine();
@@ -953,7 +1272,6 @@ export class SimulationRunner {
   private withDeath(player: PlayerState): PlayerState {
     return {
       ...player,
-      queue: [],
       forceWake: false,
       pending: { kind: "dead", since: this.dgsm.getGameDateTime() },
     };
@@ -983,7 +1301,7 @@ export class SimulationRunner {
       player.characterId,
       location,
       gameDateTime,
-      { state: player }
+      { state: this.publicPlayerState(player) }
     );
   }
 
@@ -1137,7 +1455,12 @@ export class SimulationRunner {
       });
       const stream: PlayerView["perceptions"] = [];
       for (const r of rows) {
-        const narrative = (r.data as { narrative?: unknown } | null)?.narrative;
+        const data = r.data as {
+          narrative?: unknown;
+          dialogueOnly?: boolean;
+        } | null;
+        if (data?.dialogueOnly) continue;
+        const narrative = data?.narrative;
         if (typeof narrative !== "string" || narrative === "") continue;
         stream.push({
           gameDateTime: r.gameDateTime,
@@ -1147,6 +1470,13 @@ export class SimulationRunner {
       }
       if (this.playerState?.characterId === characterId) {
         this.playerPerceptions = stream;
+        const handles = new Map<string, string>();
+        for (const npc of this.dgsm.getState().npcCharacters) {
+          handles.set(aliasFor(characterId, npc.id), npc.id);
+          if (isKnownTo(this.dgsm, characterId, npc.id))
+            handles.set(npc.id, npc.id);
+        }
+        this.recordPlayerMeetings(stream, handles);
       }
     } catch (err) {
       console.warn(
@@ -1332,15 +1662,20 @@ export class SimulationRunner {
       onPerception: (entry) => {
         this.pendingPerceptions.push(entry);
         if (entry.npcId === this.playerState?.characterId) {
-          this.broadcastPlayerPerceived(entry);
+          const { characterHandles } = buildPerceivableDirectory(
+            entry.npcId,
+            this.dgsm,
+            {
+              knownIds: new Set(),
+            }
+          );
+          this.recordPlayerMeetings([entry], characterHandles);
+          if (!entry.dialogueOnly) this.broadcastPlayerPerceived(entry);
         }
       },
       onPerceptionCompacted: (entry) =>
         this.pendingPerceptionSummaries.push(entry),
       player: this.playerPort,
-      ...(this.playerTranslator
-        ? { playerTranslator: this.playerTranslator }
-        : {}),
     });
 
     this.wireEngineEvents(engine);
@@ -1554,8 +1889,8 @@ export class SimulationRunner {
         }
       );
 
-      // (4) The player: nothing they queued will happen, and the world stops
-      // — `decide()` skips the dead, so without this it would run on.
+      // (4) The player: the world stops — `decide()` skips the dead, so
+      // without this it would run on.
       const player = this.playerState;
       if (player && player.characterId === npc.id) {
         this.playerState = this.withDeath(player);
@@ -1649,6 +1984,7 @@ export class SimulationRunner {
     gameDateTime: string;
     location: string;
     narrative: string;
+    dialogueOnly?: boolean;
   }> = [];
 
   /** Condensed accounts written since the last flush. Same treatment. */
@@ -1700,7 +2036,10 @@ export class SimulationRunner {
           type: "npc_perceived" as const,
           actorNpcId: p.npcId,
           location: p.location,
-          data: { narrative: p.narrative },
+          data: {
+            narrative: p.narrative,
+            ...(p.dialogueOnly ? { dialogueOnly: true } : {}),
+          },
           timestamp: new Date(),
         }))
       );

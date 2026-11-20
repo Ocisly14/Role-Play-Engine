@@ -12,7 +12,11 @@
 
 import { describe, expect, it } from "vitest";
 import type { RoleSimDecision } from "../agent.js";
-import { actTool, playerActTool } from "../tools/schemas.js";
+import {
+  MANUAL_DIALOGUE_TOOLS,
+  actTool,
+  playerActTool,
+} from "../tools/schemas.js";
 
 type ActDecision = Extract<RoleSimDecision, { tool: "act" }>;
 
@@ -44,12 +48,14 @@ const ACT = fields<ActDecision>()(
   "skillId",
   "language",
   "utterance",
+  "replyNow",
   "sleep"
 );
 
 /** Decision fields only the player's `act` carries. NPCs' schema stops short
  *  of them so NPC requests stay byte-identical. */
 const PLAYER_ONLY = new Set<string>(["sleep"]);
+const DIALOGUE_ONLY = new Set<string>(["replyNow"]);
 
 const _covers: Covers<ActDecision, (typeof ACT)[number]> = true;
 void _covers;
@@ -60,7 +66,7 @@ describe("the act tool schema and RoleSimDecision describe the same thing", () =
       properties: Record<string, unknown>;
     };
     const wireFields = ACT.filter(
-      (k) => k !== "tool" && !PLAYER_ONLY.has(k)
+      (k) => k !== "tool" && !PLAYER_ONLY.has(k) && !DIALOGUE_ONLY.has(k)
     ).sort();
     expect(Object.keys(schema.properties).sort()).toEqual(wireFields);
   });
@@ -69,7 +75,20 @@ describe("the act tool schema and RoleSimDecision describe the same thing", () =
     const schema = playerActTool.inputSchema as {
       properties: Record<string, unknown>;
     };
-    const wireFields = ACT.filter((k) => k !== "tool").sort();
+    const wireFields = ACT.filter(
+      (k) => k !== "tool" && !DIALOGUE_ONLY.has(k)
+    ).sort();
+    expect(Object.keys(schema.properties).sort()).toEqual(wireFields);
+  });
+
+  it("offers the immediate reply only in a dialogue decision", () => {
+    const schema = MANUAL_DIALOGUE_TOOLS.find((tool) => tool.name === "act")
+      ?.inputSchema as {
+      properties: Record<string, unknown>;
+    };
+    const wireFields = ACT.filter(
+      (k) => k !== "tool" && !PLAYER_ONLY.has(k)
+    ).sort();
     expect(Object.keys(schema.properties).sort()).toEqual(wireFields);
   });
 

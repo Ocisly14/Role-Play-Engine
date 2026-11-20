@@ -99,7 +99,7 @@ export const WORLD_SCENARIOS: SimScenario[] = [
     id: "world-harm-react",
     group: "world",
     title: "场景真的伤到人：openingEvent 带 harm，看伤者怎么处置",
-    targetDefs: ["Medicine & Psychology", "Athletics"],
+    targetDefs: ["Medicine", "Athletics"],
     cases: [
       {
         label: "花店少女被花盆砸中",

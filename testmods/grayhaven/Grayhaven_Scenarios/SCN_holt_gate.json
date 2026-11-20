@@ -1,8 +1,13 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "id": "SCN_holt_gate",
   "name": "霍尔特家院门",
-  "description": "霍尔特家老宅前的院门和一小片院子。木栅栏刷过太多遍漆,院里的草地上压着两道深深的货车车辙 [item.holt_gate.truck_ruts],一直通到栅栏根下码着的旧机油桶和废轮胎 [item.holt_gate.oil_drums]——货车的保养全在这块空地上做。晾衣绳 [item.holt_gate.clothesline] 从门廊拉到苹果树 [item.holt_gate.apple_tree],这一根向阳,晒的是被褥和地毯,天好的日子上午就挂出来。院门柱上钉着一只铁皮信箱 [item.holt_gate.mailbox],箱侧的小红旗歪着没人扳正过。门廊上一条老木长椅 [item.holt_gate.porch_bench] 正对巷口,傍晚常有人坐在那儿装一斗烟看巷子;长椅边一双沾着干泥的工作靴 [item.holt_gate.mud_boots] 倒扣着靠墙——这家的规矩是泥不进屋。门廊顶上那盏灯 [item.holt_gate.porch_light] 天一黑就亮着,谁最后回家谁关。纱门后面就是这家人的起居空间 [SCN_holt_common]。一条安静的小巷从院门口通回主街北口,巷子里多半只有这家人自己的脚印。",
+  "coordinates": {
+    "x": 618,
+    "y": 886,
+    "z": 28
+  },
+  "setting": "霍尔特家老宅前的院门和一小片院子。木栅栏刷过太多遍漆,院里的草地上压着两道深深的货车车辙 [item.holt_gate.truck_ruts],一直通到栅栏根下码着的旧机油桶和废轮胎 [item.holt_gate.oil_drums]——货车的保养全在这块空地上做。晾衣绳 [item.holt_gate.clothesline] 从门廊拉到苹果树 [item.holt_gate.apple_tree],这一根向阳,晒的是被褥和地毯,天好的日子上午就挂出来。院门柱上钉着一只铁皮信箱 [item.holt_gate.mailbox],箱侧的小红旗歪着没人扳正过。门廊上一条老木长椅 [item.holt_gate.porch_bench] 正对巷口,傍晚常有人坐在那儿装一斗烟看巷子;长椅边一双沾着干泥的工作靴 [item.holt_gate.mud_boots] 倒扣着靠墙——这家的规矩是泥不进屋。门廊顶上那盏灯 [item.holt_gate.porch_light] 天一黑就亮着,谁最后回家谁关。纱门后面就是这家人的起居空间 [SCN_holt_common]。一条安静的小巷从院门口通回主街北口,巷子里多半只有这家人自己的脚印。",
   "references": {
     "items": [
       {

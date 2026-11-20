@@ -1,8 +1,8 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "id": "ROAD_railbed_sawmill",
   "name": "路基北段",
-  "description": "沿旧路基向北的两小时,是林区里最远、也最稳妥的一条路:笔直,不分岔,迷不了路。南端从路基的接入点算起 [SCN_railbed],北端在锯木厂废墟的装料场收尾 [SCN_sawmill]。当年运原木的铁轨就铺在这条线上,如今只剩碎道砟硌脚,和两旁一动不动的红杉;枕木抽走后留下的凹痕等距地排在脚下 [item.railbed_sawmill.tie_impressions],踩着走能一直踩到头。前段有一截劈开山肩的开挖段 [item.railbed_sawmill.rock_cut],两侧的岩壁上还看得见当年打的炮眼,渗水顺着石缝淌下来,人在里面说话有回声。中途路基断在一道沟上——木栈桥早烧塌了,只剩几根焦黑的桥桩杵在沟里 [item.railbed_sawmill.trestle_gully],得下到沟底再爬上来,这是全程唯一要费点力气的地方。再往北,路侧躺着第二块水泥里程碑 [item.railbed_sawmill.mile_post],凿的「16」还认得出。快到废墟时,一副运材车的锈铁转向架翻在路基下的坡上 [item.railbed_sawmill.log_car_wreck],车轮锈死在轴上,谁也没想过把它弄上来。",
+  "setting": "沿旧路基向北的两小时,是林区里最远、也最稳妥的一条路:笔直,不分岔,迷不了路。南端从路基的接入点算起 [SCN_railbed],北端在锯木厂废墟的装料场收尾 [SCN_sawmill]。当年运原木的铁轨就铺在这条线上,如今只剩碎道砟硌脚,和两旁一动不动的红杉;枕木抽走后留下的凹痕等距地排在脚下 [item.railbed_sawmill.tie_impressions],踩着走能一直踩到头。前段有一截劈开山肩的开挖段 [item.railbed_sawmill.rock_cut],两侧的岩壁上还看得见当年打的炮眼,渗水顺着石缝淌下来,人在里面说话有回声。中途路基断在一道沟上——木栈桥早烧塌了,只剩几根焦黑的桥桩杵在沟里 [item.railbed_sawmill.trestle_gully],得下到沟底再爬上来,这是全程唯一要费点力气的地方。再往北,路侧躺着第二块水泥里程碑 [item.railbed_sawmill.mile_post],凿的「16」还认得出。快到废墟时,一副运材车的锈铁转向架翻在路基下的坡上 [item.railbed_sawmill.log_car_wreck],车轮锈死在轴上,谁也没想过把它弄上来。",
   "parentLocationId": "OUTDOOR",
   "travelTimeMinutes": 120,
   "references": {

@@ -258,11 +258,11 @@ export type SceneStateOperation =
   | { kind: "addCondition"; condition: SceneCondition }
   | { kind: "removeCondition"; predicate: ConditionPredicate }
   | {
-      /** Rewrite the place's whole prose. Descriptions and references are
-       *  deliberately decoupled: rewriting the prose neither adds nor removes
-       *  any entity — it changes what a visitor is told about the place. */
-      kind: "setDescription";
-      description: string;
+      /** Rewrite the place's whole setting — only when the place itself
+       *  physically changed (a window smashed, a fixture torn out or put in).
+       *  Loose things carry their own placement and never need it. */
+      kind: "setSetting";
+      setting: string;
     }
   | {
       kind: "connectionBlock";
@@ -302,8 +302,20 @@ export type ItemStateOperation =
       /** Stable id, used verbatim when unused. Non-Latin names collapse to
        *  nothing under the generated-id slug, so those must pass one. */
       id?: string;
+      /** Where it is within the place; "" when `location` is a character. */
+      placement?: string;
+      /** The item of that place it sits in when that can hide it; "" none. */
+      container?: string;
+      /** How many identical things it stands for; default 1. */
+      quantity?: number;
     }
-  | { kind: "move"; from: string; to: string }
+  | {
+      kind: "move";
+      from: string;
+      to: string;
+      placement?: string;
+      container?: string;
+    }
   | { kind: "destroy" }
   | {
       kind: "set";
@@ -313,6 +325,15 @@ export type ItemStateOperation =
       appendDescription?: string;
       isLightSource?: boolean;
       lightLevel?: number;
+      /** How many identical things it now stands for (>= 1). */
+      quantity?: number;
+    }
+  | {
+      /** Somewhere else within the same place: along the counter, into the
+       *  drawer (container = its id), out of it (container ""). */
+      kind: "place";
+      placement: string;
+      container: string;
     };
 
 export type CharacterChange = {
@@ -354,22 +375,87 @@ export interface SourcedWorldDelta<T extends WorldDelta = WorldDelta> {
 
 export type SignalChannel = "visual" | "sound" | "smell" | "touch" | "direct";
 
-/** How much of an occurrence reaches one perceiver. The Engine grades each
- *  listed character separately; the row's facts are written once, at full
- *  objective detail, and the renderer lets through only what the grade
- *  allows. `full`: the event and its relevant detail — bodily contact, a
- *  clear nearby view, intelligible words. `limited`: the kind of event and
- *  its immediate result, no fine detail — a struggle through a dirty window,
- *  a speaker seen whose words do not carry. `trace`: only that something
- *  happened — a muffled impact, a flash beyond the fog, an indistinct voice
- *  whose source cannot be placed — with no source, cause, actor or words.
- *  Someone who receives nothing is not listed at all. */
-export const PERCEPTION_CLARITIES = ["full", "limited", "trace"] as const;
-export type PerceptionClarity = (typeof PERCEPTION_CLARITIES)[number];
+/**
+ * How much of an occurrence reaches one perceiver, per sense. Sight and
+ * hearing travel differently — a closed door stops a look but not a shout,
+ * fog swallows a gesture but not a word — so each is graded on its own. The
+ * row's facts are written once, at full objective detail, and the renderer
+ * lets through only what the grades allow.
+ *
+ * What each grade MEANS lives in `SIGHT_GRADE_MEANING` /
+ * `HEARING_GRADE_MEANING` below, and only there: the LLM schema, the
+ * Decisions request and the renderer's rules are all generated from them, so
+ * the one who grades and the one who renders read the same scale. A meaning
+ * says what the perceiver GETS at that grade, never when to pick it — that
+ * judgement is the grader's.
+ *
+ * Someone who receives nothing on either sense is not listed at all.
+ */
+export const SIGHT_GRADES = ["clear", "partial", "glimpse", "none"] as const;
+export type SightGrade = (typeof SIGHT_GRADES)[number];
+export const HEARING_GRADES = ["clear", "muffled", "faint", "none"] as const;
+export type HearingGrade = (typeof HEARING_GRADES)[number];
+
+/** What a perceiver gets by sight at each grade. The one definition. */
+export const SIGHT_GRADE_MEANING: Readonly<Record<SightGrade, string>> = {
+  clear: "the event and its detail — faces, expressions, small objects",
+  partial:
+    "shapes, the kind of movement and its immediate result — no faces, expressions or small objects",
+  glimpse: "only that something moved or flashed, and roughly where",
+  none: "nothing",
+};
+
+/** What a perceiver gets by hearing at each grade. The one definition. */
+export const HEARING_GRADE_MEANING: Readonly<Record<HearingGrade, string>> = {
+  clear: "every audible detail — spoken words made out",
+  muffled:
+    "the kind of sound and its tone — a voice and how it sounds, glass breaking — no words",
+  faint: "only that there was a sound, and roughly where from",
+  none: "nothing",
+};
+
+/** The two scales as one block of text, one grade per line, for any prompt
+ *  that asks for or reads the grades. */
+export function renderGradeScale(indent = ""): string {
+  return [
+    `${indent}Sight — what the person gets by seeing:`,
+    ...SIGHT_GRADES.map(
+      (g) => `${indent}  \`${g}\`: ${SIGHT_GRADE_MEANING[g]}.`
+    ),
+    `${indent}Hearing — what the person gets by hearing:`,
+    ...HEARING_GRADES.map(
+      (g) => `${indent}  \`${g}\`: ${HEARING_GRADE_MEANING[g]}.`
+    ),
+  ].join("\n");
+}
 
 export interface OccurrencePerceiver {
   characterId: string;
-  clarity: PerceptionClarity;
+  sight: SightGrade;
+  hearing: HearingGrade;
+}
+
+/** The evidence carries its source: the thing seen at least in part, or
+ *  heard well enough to know what it was. Below this a perceiver has only
+ *  "something happened" — no actor, no cause, nothing to be shocked by. */
+export function perceivesSource(p: {
+  sight: SightGrade;
+  hearing: HearingGrade;
+}): boolean {
+  return (
+    p.sight === "clear" ||
+    p.sight === "partial" ||
+    p.hearing === "clear" ||
+    p.hearing === "muffled"
+  );
+}
+
+/** Perceives anything at all. */
+export function perceivesAnything(p: {
+  sight: SightGrade;
+  hearing: HearingGrade;
+}): boolean {
+  return p.sight !== "none" || p.hearing !== "none";
 }
 
 /** Objective thing that happened this tick — not necessarily persisted as
@@ -393,10 +479,10 @@ export interface Occurrence {
     characterId: string;
     role: "actor" | "target" | "directly_affected";
   }>;
-  /** Everyone who receives any evidence of this occurrence, each at the
-   *  clarity the Engine judged the evidence supports. One entry per
+  /** Everyone who receives any evidence of this occurrence, each with the
+   *  sight and hearing grades the evidence supports. One entry per
    *  character. The facts above are the same for all of them; the renderer
-   *  degrades them to each viewer's grade. */
+   *  degrades them to each viewer's grades. */
   perceivers: OccurrencePerceiver[];
   signals: Array<{
     factIds: string[];

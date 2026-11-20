@@ -104,26 +104,37 @@ describe("grayhaven module data", () => {
     expect(fenceRoads).toEqual(["ROAD_redwood_fence"]);
   });
 
-  it("seeds the clue items uncited — there, but not yet noticed", () => {
-    // No hidden flag: being absent from the prose is what unnoticed means.
+  it("seeds the clue items inside containers — there, out of plain view", () => {
+    // No hidden flag: a thing out of sight sits in a container, and whether
+    // anyone sees it is judged per viewer.
     const room4 = module.scenes.get("SCN_motel_room4");
     const liner = room4?.items.find(
       (i: { id: string }) => i.id === "item.motel_room4.suitcase_liner"
     );
-    expect(liner).toBeTruthy();
     expect(liner && "hidden" in liner).toBe(false);
-    expect(room4?.description.includes("item.motel_room4.suitcase_liner")).toBe(
+    expect(liner?.container).toBe("item.motel_room4.suitcase");
+    expect(room4?.setting.includes("item.motel_room4.suitcase_liner")).toBe(
       false
     );
     const store = module.scenes.get("SCN_grocery_store");
     const bills = store?.items.find(
       (i: { id: string }) => i.id === "item.grocery_store.duplicate_bills"
     );
-    expect(bills).toBeTruthy();
-    expect(bills && "hidden" in bills).toBe(false);
-    expect(
-      store?.description.includes("item.grocery_store.duplicate_bills")
-    ).toBe(false);
+    expect(bills?.container).toBe("item.grocery_store.cash_register");
+    expect(bills?.placement).toBeTruthy();
+  });
+
+  it("the Bluebird dining room is authored as setting + props (v3 demo)", () => {
+    const dining = module.scenes.get("SCN_bluebird_dining");
+    const cash = dining?.items.find(
+      (i: { id: string }) => i.id === "item.bluebird_dining.register_cash"
+    );
+    expect(cash?.container).toBe("item.bluebird_dining.cash_register");
+    const jar = dining?.items.find(
+      (i: { id: string }) => i.id === "item.bluebird_dining.tip_jar"
+    );
+    expect(jar?.placement).toBe("收银机旁");
+    expect(dining?.setting).not.toContain("[item.bluebird_dining.tip_jar]");
   });
 
   it("scripted events load through the real loader and point at real places", () => {
@@ -207,8 +218,8 @@ describe("grayhaven module data", () => {
     expect(
       dock?.items.some((i) => i.id === "item.station_dock.inner_door")
     ).toBe(true);
-    expect(dock?.description).toContain("[item.station_dock.inner_door]");
-    expect(dock?.description).not.toContain("[SCN_station_hall]");
+    expect(dock?.setting).toContain("[item.station_dock.inner_door]");
+    expect(dock?.setting).not.toContain("[SCN_station_hall]");
     // The three base rooms are real scenes, closed at start.
     for (const id of [
       "SCN_station_hall",

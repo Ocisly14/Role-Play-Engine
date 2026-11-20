@@ -32,11 +32,11 @@ const positions: Record<string, unknown> = {
   npc_2: { type: "scene", sceneId: "SCN_denny" },
 };
 const scenes: Record<string, unknown> = {
-  SCN_common: { id: "SCN_common", name: "Common room", description: "" },
+  SCN_common: { id: "SCN_common", name: "Common room", setting: "" },
   SCN_denny: {
     id: "SCN_denny",
     name: "Denny's room",
-    description: "A small room; a towel is wedged under the door.",
+    setting: "A small room; a towel is wedged under the door.",
   },
 };
 
@@ -96,8 +96,8 @@ function bundleWith(adjacent: boolean) {
         ],
         participants: [{ characterId: "npc_2", role: "actor" }],
         perceivers: [
-          { characterId: "npc_1", clarity: "full" },
-          { characterId: "npc_2", clarity: "full" },
+          { characterId: "npc_1", sight: "clear", hearing: "clear" },
+          { characterId: "npc_2", sight: "clear", hearing: "clear" },
         ],
         signals: [{ factIds: ["occ_1#f0"], channel: "sound" }],
       },

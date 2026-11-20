@@ -7,10 +7,9 @@
 // existence, reachability and unique-substring scene matching; every acted-on
 // object is a real item of the staged scene (or injected via sceneItems).
 //
-//   Medicine & Psychology — Weaver treats Denny's asthma in the exam room
+//   Medicine — Weaver treats Denny's asthma in the exam room
 //     (老手); Earl patches his own cliff-path gash alone in his cabin with an
-//     injected first-aid kit (无训练硬上); Ray sits with a nightmare-shaken
-//     Denny at the family table, his instinct is deflection (情境召唤).
+//     injected first-aid kit (无训练硬上).
 //   Knowledge & Craft — Anita diagnoses a failing pastry batch before the
 //     fisherman's-festival order (老手); Marisol has to account for an
 //     unordered crate in the storeroom against her own ledger (无训练硬上,
@@ -33,10 +32,10 @@ import type { SimScenario } from "./types.js";
 export const GRAYHAVEN_SKILL_PRO: SimScenario[] = [
   // -----------------------------------------------------------------------
   {
-    id: "gh-skill-medicine-psychology",
+    id: "gh-skill-medicine",
     group: "skill",
-    title: "Medicine & Psychology：诊室里的哮喘、崖屋里的伤、饭桌前的噩梦",
-    targetDefs: ["Medicine & Psychology"],
+    title: "Medicine：诊室里的哮喘、崖屋里的伤",
+    targetDefs: ["Medicine"],
     cases: [
       {
         label: "Doc Weaver｜诊室里的哮喘发作（老手）",
@@ -74,26 +73,6 @@ export const GRAYHAVEN_SKILL_PRO: SimScenario[] = [
         sceneConditions: [
           "屋里潮气很重，纸页都有点发软，油布雨衣挂在门后还滴着水汽",
           "灶台上的咖啡壶凉了，没人顾得上生火",
-        ],
-      },
-      {
-        label: "Ray Holt｜Denny 从噩梦里惊醒（情境召唤）",
-        ticks: 7,
-        scene: "Holt 家起居餐厨",
-        actors: [
-          {
-            npc: "npc_ray_holt",
-            goal: "Denny 半夜从噩梦里惊醒，缩在餐桌边，手心全是汗，话说到一半又咽回去。Frank 和 Susan 都不在家，只有你在。",
-          },
-          {
-            npc: "npc_denny_holt",
-            goal: "你做了个说不清楚的噩梦，心跳还没平复，手一直在抖，可你不想让爷爷追问下去。",
-            conditions: ["从噩梦中惊醒，手心冒汗，说话断断续续"],
-          },
-        ],
-        sceneConditions: [
-          "橡木长桌上还摆着没收走的晚饭碗碟，壁炉台上 Glen 的新兵照被灯光照得发亮",
-          "木壳电视机屏幕关着，没人开它",
         ],
       },
     ],

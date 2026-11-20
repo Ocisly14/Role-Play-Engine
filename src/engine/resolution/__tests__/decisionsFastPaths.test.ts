@@ -10,9 +10,10 @@ import type { DynamicScene } from "../../../state/types.js";
 import { placesAdjacent } from "../../actions/movementRuntime.js";
 import {
   DURATION_BINS,
-  biasedClarity,
   decideStarts,
+  leanedCheckLevel,
   routeCandidates,
+  topGrade,
 } from "../decisionsFastPaths.js";
 import type { EngineResolutionContext } from "../types.js";
 
@@ -144,36 +145,64 @@ it("asks for timing but skips difficulty and opposition for a retired social ski
   }
 });
 
-describe("biasedClarity", () => {
+describe("topGrade", () => {
+  const ans = (p: Record<string, number>) => ({
+    name: "x",
+    type: "choice" as const,
+    probabilities: p,
+  });
+  const SIGHT = ["none", "glimpse", "partial", "clear"] as const;
+  const HEARING = ["none", "faint", "muffled", "clear"] as const;
+
+  it("takes the most probable grade, however close the next", () => {
+    expect(topGrade(ans({ clear: 0.7, partial: 0.2 }), SIGHT)).toBe("clear");
+    expect(topGrade(ans({ partial: 0.45, clear: 0.4 }), SIGHT)).toBe("partial");
+    expect(topGrade(ans({ none: 0.45, faint: 0.4 }), HEARING)).toBe("none");
+  });
+
+  it("a most probable 'none' is taken as it is", () => {
+    expect(topGrade(ans({ none: 0.63, faint: 0.33 }), HEARING)).toBe("none");
+  });
+
+  it("no answer → none", () => {
+    expect(topGrade(undefined, SIGHT)).toBe("none");
+  });
+});
+
+describe("leanedCheckLevel", () => {
   const ans = (p: Record<string, number>) => ({
     name: "x",
     type: "choice" as const,
     probabilities: p,
   });
 
-  it("takes the most probable grade", () => {
-    expect(biasedClarity(ans({ full: 0.7, limited: 0.2 }), 0.15, 0.7)).toBe(
-      "full"
+  it("takes the most probable level when the top two are apart", () => {
+    expect(leanedCheckLevel(ans({ regular: 0.43, none: 0.27 }), 0.1)).toBe(
+      "regular"
     );
-  });
-
-  it("leans to the clearer of two adjacent grades that are close", () => {
-    expect(biasedClarity(ans({ limited: 0.45, full: 0.4 }), 0.15, 0.7)).toBe(
-      "full"
-    );
-    // Not adjacent: no lean.
-    expect(biasedClarity(ans({ trace: 0.45, full: 0.4 }), 0.15, 0.7)).toBe(
-      "trace"
-    );
-  });
-
-  it("an unsure 'none' becomes trace", () => {
-    expect(biasedClarity(ans({ none: 0.6, trace: 0.3 }), 0.15, 0.7)).toBe(
-      "trace"
-    );
-    expect(biasedClarity(ans({ none: 0.8, trace: 0.1 }), 0.15, 0.7)).toBe(
+    expect(leanedCheckLevel(ans({ none: 0.63, regular: 0.31 }), 0.1)).toBe(
       "none"
     );
+  });
+
+  it("a close call between no check and a bar takes the bar", () => {
+    expect(leanedCheckLevel(ans({ none: 0.39, regular: 0.31 }), 0.1)).toBe(
+      "regular"
+    );
+    expect(leanedCheckLevel(ans({ hard: 0.4, none: 0.35 }), 0.1)).toBe("hard");
+  });
+
+  it("a close call between two bars takes the lower", () => {
+    expect(leanedCheckLevel(ans({ hard: 0.45, regular: 0.4 }), 0.1)).toBe(
+      "regular"
+    );
+    expect(leanedCheckLevel(ans({ regular: 0.45, extreme: 0.4 }), 0.1)).toBe(
+      "regular"
+    );
+  });
+
+  it("no answer → null", () => {
+    expect(leanedCheckLevel(undefined, 0.1)).toBeNull();
   });
 });
 
@@ -205,5 +234,123 @@ describe("concealed passages and stated routes", () => {
     const dgsm = makeDgsm();
     const routes = routeCandidates(dgsm, "SCN_yard", ["SCN_kitchen"]);
     expect(routes).toContainEqual(["SCN_hall", "SCN_kitchen"]);
+  });
+});
+
+describe("decideStarts reads the top answer, except for the check level", () => {
+  /** A one-command start context in SCN_hall; the command declares `skill`
+   *  when given. */
+  function startContext(skill?: string): EngineResolutionContext {
+    return {
+      trigger: {
+        triggers: [{ reason: "new_action", actionIds: ["action_c1"] }],
+        actionIds: ["action_c1"],
+      },
+      tick: {
+        tickId: "t",
+        tickStartTime: "1923-04-02T09:00:00",
+        durationMinutes: 1,
+      },
+      rules: {
+        resolutionGuide: "x",
+        outputSchemaVersion: 1,
+        worldInvariants: [],
+      },
+      state: {
+        graph: { places: [], edges: [] },
+        blockedEdges: [],
+        places: [],
+        placeKinds: {},
+        connectionIds: [],
+        items: [],
+        itemHolders: {},
+        characters: [],
+      },
+      actions: {
+        newCommands: [
+          {
+            commandId: "c1",
+            actorId: "npc_1",
+            issuedAt: "1923-04-02T09:00:00",
+            issuedSceneId: "SCN_hall",
+            description: "I count the till against the ledger.",
+            objectRefs: [],
+            proposedDurationTicks: 10,
+            ...(skill ? { declaredSkillId: skill } : {}),
+          },
+        ],
+        activeActions: [],
+      },
+      events: { objectiveWorldEvents: [], deterministicResults: [] },
+    } as unknown as EngineResolutionContext;
+  }
+
+  function answering(answers: unknown[]): DecisionsTransport {
+    return async () => ({ status: 200, json: async () => ({ answers }) });
+  }
+
+  it("a spread duration still gives a row, at its most probable bin", async () => {
+    vi.stubEnv("OPENAI_API_KEY", "test-key");
+    setDecisionsTransport(
+      answering([
+        {
+          type: "choice",
+          name: "duration:action_c1",
+          probabilities: [
+            { value: "10", probability: 0.35 },
+            { value: "5", probability: 0.17 },
+            { value: "15", probability: 0.3 },
+          ],
+        },
+      ])
+    );
+    try {
+      const { rows } = await decideStarts(startContext(), makeDgsm());
+      expect(rows).toEqual([
+        { actionId: "action_c1", resolvedDurationTicks: 10 },
+      ]);
+    } finally {
+      setDecisionsTransport(null);
+      vi.unstubAllEnvs();
+    }
+  });
+
+  it("a close call between no check and a bar rolls the dice", async () => {
+    vi.stubEnv("OPENAI_API_KEY", "test-key");
+    setDecisionsTransport(
+      answering([
+        {
+          type: "choice",
+          name: "duration:action_c1",
+          probabilities: [{ value: "10", probability: 0.9 }],
+        },
+        {
+          type: "choice",
+          name: "check:action_c1",
+          probabilities: [
+            { value: "none", probability: 0.39 },
+            { value: "regular", probability: 0.31 },
+            { value: "hard", probability: 0.23 },
+          ],
+        },
+      ])
+    );
+    try {
+      const { rows, decided } = await decideStarts(
+        startContext("Knowledge & Craft"),
+        makeDgsm()
+      );
+      expect(rows).toEqual([
+        {
+          actionId: "action_c1",
+          resolvedDurationTicks: 10,
+          check: { requiredLevel: "regular" },
+        },
+      ]);
+      expect(decided.has("action_c1")).toBe(true);
+    } finally {
+      setDecisionsTransport(null);
+      vi.unstubAllEnvs();
+    }
   });
 });

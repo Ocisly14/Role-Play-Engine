@@ -1,8 +1,13 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "id": "SCN_grocery_backroom",
   "name": "杂货店兼邮局·后仓",
-  "description": "后仓只有一扇小高窗透光,顶上那只落满灰的拉线灯泡[item.grocery_backroom.ceiling_bulb]开着也照不到墙角,白天也昏暗[cond.grocery_backroom.dim],空气里是纸箱、陈年木架和墙钉上那卷粗麻绳[item.grocery_backroom.twine_spool]混着的味道。靠墙一排铁货架[item.grocery_backroom.steel_shelving]从地面顶到房梁,备货按店堂的顺序摆着;成箱的存货码到齐肩高,每摞箱子侧面都用粉笔标着到货日期——Tommy 暑假在这里帮工,搬箱和偷懒各占一半,墙角那两只翻过来的木箱[item.grocery_backroom.tommy_corner]是他的地盘,箱面上压着卷了边的漫画。屋子正中是打包台[item.grocery_backroom.packing_table],台面被裁纸刀划出一道道浅痕,拆箱、捆邮包都在这儿;台边一台铸铁台秤[item.grocery_backroom.platform_scale]的指针停在零位偏左一点,称包裹之前得先敲它一下。墙边靠着一辆两轮手推车[item.grocery_backroom.handcart],轮胎瘪了一半,整箱的罐头全靠它挪。门边挂着盘点夹板[item.grocery_backroom.inventory_clipboard],纸页翻卷,是母子俩交接的凭据;夹板下那只桶[item.grocery_backroom.waste_bin]里全是拆下来的纸板和碎木条,每周清一次。通向屋后小巷的卸货门[item.grocery_backroom.alley_door]插着两道插销,门后还堆着空箱,好些年没开过——货一向是从店堂一趟趟搬进来的。最里面单独搁着一箱罐头[item.grocery_backroom.unordered_crate]:Marisol 翻遍了订货单也对不上它的来路,便让它一直单独搁在那儿,谁也没动。仓门通回店堂[SCN_grocery_store]。",
+  "coordinates": {
+    "x": 23,
+    "y": 371,
+    "z": 17
+  },
+  "setting": "后仓只有一扇小高窗透光,顶上那只落满灰的拉线灯泡[item.grocery_backroom.ceiling_bulb]开着也照不到墙角,白天也昏暗,空气里是纸箱、陈年木架和墙钉上那卷粗麻绳[item.grocery_backroom.twine_spool]混着的味道。靠墙一排铁货架[item.grocery_backroom.steel_shelving]从地面顶到房梁,备货按店堂的顺序摆着;成箱的存货码到齐肩高,每摞箱子侧面都用粉笔标着到货日期——Tommy 暑假在这里帮工,搬箱和偷懒各占一半,墙角那两只翻过来的木箱[item.grocery_backroom.tommy_corner]是他的地盘,箱面上压着卷了边的漫画。屋子正中是打包台[item.grocery_backroom.packing_table],台面被裁纸刀划出一道道浅痕,拆箱、捆邮包都在这儿;台边一台铸铁台秤[item.grocery_backroom.platform_scale]的指针停在零位偏左一点,称包裹之前得先敲它一下。墙边靠着一辆两轮手推车[item.grocery_backroom.handcart],轮胎瘪了一半,整箱的罐头全靠它挪。门边挂着盘点夹板[item.grocery_backroom.inventory_clipboard],纸页翻卷,是母子俩交接的凭据;夹板下那只桶[item.grocery_backroom.waste_bin]里全是拆下来的纸板和碎木条,每周清一次。通向屋后小巷的卸货门[item.grocery_backroom.alley_door]插着两道插销,门后还堆着空箱,好些年没开过——货一向是从店堂一趟趟搬进来的。最里面单独搁着一箱罐头[item.grocery_backroom.unordered_crate]:Marisol 翻遍了订货单也对不上它的来路,便让它一直单独搁在那儿,谁也没动。仓门通回店堂[SCN_grocery_store]。",
   "parentLocationId": "grocery_store",
   "indoor": true,
   "references": {

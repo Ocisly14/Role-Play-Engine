@@ -22,12 +22,29 @@ import {
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import { actionIdForCommand } from "../actions/actionStore.js";
 import { placesAdjacent } from "../actions/movementRuntime.js";
-import type { ActionCommand, EngineAction } from "../actions/types.js";
+import {
+  type ActionCommand,
+  type EngineAction,
+  HEARING_GRADES,
+  SIGHT_GRADES,
+  perceivesAnything,
+  perceivesSource,
+} from "../actions/types.js";
+import {
+  CHECK_NEED_RULE,
+  STATED_ROUTE_RULE,
+  TALK_DURATION_RULE,
+  renderEndingModes,
+} from "../rules/ruleTerms.js";
 import { SKILL_CATALOG, catalogSkillName } from "../rules/skillCatalog.js";
+import {
+  perceiversInput,
+  settlementInput,
+  startsInput,
+} from "./decisionsInputs.js";
 import type { EngineResolutionContext } from "./types.js";
 import type { RawActionStart, RawOccurrence } from "./worldDeltaSchema.js";
 import { resolutionWorklist } from "./worldDeltaValidator.js";
-import { renderContextSegments } from "./worldResolutionStagePrompts.js";
 import type {
   AcceptedResolutionDraft,
   EndingDecision,
@@ -55,12 +72,9 @@ export const DURATION_BINS: readonly number[] = [
 ];
 
 const CHECK_LEVELS = ["none", "regular", "hard", "extreme"] as const;
-const CLARITY_CHOICES = ["none", "trace", "limited", "full"] as const;
-
-function contextText(context: EngineResolutionContext): string[] {
-  const { stable, volatile } = renderContextSegments(context);
-  return [stable, volatile];
-}
+/** Each sense's grades from least to most — the order the lean reads. */
+const SIGHT_ORDER = [...SIGHT_GRADES].reverse();
+const HEARING_ORDER = [...HEARING_GRADES].reverse();
 
 function durationLabel(minutes: number): string {
   if (minutes < 60) return `${minutes} min`;
@@ -81,13 +95,48 @@ function prob(
   return answers.get(name)?.probability;
 }
 
-/** A confident pick, or null when below threshold / missing. */
-function confident(
+/**
+ * The most probable answer, however spread the probabilities are. Used for
+ * the start fields where a near miss costs little — a duration one bin off,
+ * the obvious route, nobody resisting. Measured on a grayhaven run: the top
+ * choice matched the model's own answer or fell one bin short, never wide of
+ * it, while a 0.8 bar sent most starts back to the model (2026-11-14).
+ */
+function topPick(
   answers: Map<string, DecisionAnswer>,
   name: string
 ): string | null {
-  const top = topChoice(answers.get(name));
-  return top && top.probability >= minConfidence() ? top.value : null;
+  return topChoice(answers.get(name))?.value ?? null;
+}
+
+type CheckLevel = (typeof CHECK_LEVELS)[number];
+
+/**
+ * The check level: the most probable one, leaning toward the dice when the
+ * top two are within `nearGap`. Between "none" and a bar → that bar: doubt
+ * about whether success is in doubt is itself doubt, and a roll carries it
+ * (a wrong roll still mostly succeeds at a high skill; a wrong "none" removes
+ * failure altogether). Between two bars → the lower one. Never goes back to
+ * the model: measured on grayhaven (2026-11-17/18), the model's answer to an
+ * unsure level was the top choice whenever the top two were apart, and the
+ * check when they were close. Null only when there is no answer.
+ */
+export function leanedCheckLevel(
+  answer: DecisionAnswer | undefined,
+  nearGap: number
+): CheckLevel | null {
+  const probs = answer?.probabilities ?? {};
+  const ranked = CHECK_LEVELS.map((level, idx) => ({
+    level,
+    idx,
+    p: probs[level] ?? 0,
+  })).sort((x, y) => y.p - x.p);
+  const [best, second] = ranked;
+  if (!best || best.p <= 0) return null;
+  if (!second || best.p - second.p >= nearGap) return best.level;
+  if (best.idx === 0) return second.level;
+  if (second.idx === 0) return best.level;
+  return best.idx < second.idx ? best.level : second.level;
 }
 
 // ==================== Starts (§6.2) ====================
@@ -245,7 +294,7 @@ export async function decideStarts(
       questions.push({
         type: "choice",
         name: `duration:${id}`,
-        instructions: `Command ${id} (not travel): how long should this attempt take? Judge the ATTEMPT, not the sentence: words alone take 1 minute; an attempt made while speaking takes the attempt's time. The actor's own estimate is ${p.command.proposedDurationTicks} min (advisory).`,
+        instructions: `Command ${id} (not travel): how long does it take? ${TALK_DURATION_RULE} The actor's own estimate is ${p.command.proposedDurationTicks} min (advisory).`,
         choices: DURATION_BINS.map((m) => ({
           value: String(m),
           description: durationLabel(m),
@@ -256,7 +305,7 @@ export async function decideStarts(
       questions.push({
         type: "choice",
         name: `route:${id}`,
-        instructions: `Command ${id}: which of these routes is the way the actor's OWN words describe? Never more than they said; "none" if none matches.`,
+        instructions: `Command ${id}: which of these is the route? ${STATED_ROUTE_RULE} "none" if none of them is.`,
         choices: [
           ...p.routes.map((r, i) => ({
             value: `r${i}`,
@@ -281,14 +330,14 @@ export async function decideStarts(
       questions.push({
         type: "choice",
         name: `check:${id}`,
-        instructions: `Command ${id} declares the skill ${p.checkSkill}. Pick "none" for an interpersonal attempt such as persuading, questioning, deceiving, intimidating, negotiating or reading a person's intent, and when the skill does not fit or no check is needed. An independently uncertain task such as treating a wound, translating a learned language or attacking can be checked even when another person is involved.`,
+        instructions: `Command ${id} declares the skill ${p.checkSkill}: what bar does the attempt need? ${CHECK_NEED_RULE} "none" is no check.`,
         choices: CHECK_LEVELS.map((l) => ({ value: l, description: l })),
       });
       if (p.opposedChoices.length > 1) {
         questions.push({
           type: "choice",
           name: `opposed:${id}`,
-          instructions: `Command ${id}: does anyone present actively resist the checked task, and with which defense skill? Pick "none" for a person's choice about how to respond in conversation.`,
+          instructions: `Command ${id}: who present actively resists the checked task, and with which skill?`,
           choices: p.opposedChoices,
         });
       }
@@ -300,7 +349,7 @@ export async function decideStarts(
   }
   const result = await decide({
     operation: "decisions:starts",
-    input: { text: contextText(context) },
+    input: { text: startsInput(context) },
     questions,
     cacheKey: "engine:starts",
   });
@@ -315,13 +364,11 @@ export async function decideStarts(
     if (p.travel === "ask") {
       const pt = prob(a, `travel:${id}`);
       if (pt === undefined) continue;
-      if (pt >= minConfidence()) travel = true;
-      else if (pt <= 1 - minConfidence()) travel = false;
-      else continue;
+      travel = pt >= 0.5;
     }
     const row: RawActionStart = { actionId: id };
     if (travel) {
-      const pick = confident(a, `route:${id}`);
+      const pick = topPick(a, `route:${id}`);
       if (!pick || pick === "none") continue;
       const route = p.routes[Number(pick.slice(1))];
       if (!route) continue;
@@ -336,23 +383,26 @@ export async function decideStarts(
       }
       let vehicleId: string | undefined;
       if (p.vehicleId) {
-        const v = confident(a, `vehicle:${id}`);
+        const v = topPick(a, `vehicle:${id}`);
         if (!v) continue;
         if (v !== "on_foot") vehicleId = v;
       }
       row.movement = { route, ...(vehicleId ? { vehicleId } : {}) };
     } else {
-      const d = confident(a, `duration:${id}`);
+      const d = topPick(a, `duration:${id}`);
       if (!d) continue;
       row.resolvedDurationTicks = Number(d);
     }
     if (p.checkSkill) {
-      const level = confident(a, `check:${id}`);
+      const level = leanedCheckLevel(
+        a.get(`check:${id}`),
+        thresholdEnv("DECISIONS_CHECK_NEAR_GAP", 0.1)
+      );
       if (!level) continue;
       if (level !== "none") {
         row.check = { requiredLevel: level as "regular" | "hard" | "extreme" };
         if (p.opposedChoices.length > 1) {
-          const opp = confident(a, `opposed:${id}`);
+          const opp = topPick(a, `opposed:${id}`);
           if (!opp) continue;
           if (opp !== "none") {
             const [characterId, skillId] = opp.split("|");
@@ -394,14 +444,12 @@ export async function decideEndingModes(
     questions.push({
       type: "predicate",
       name: `result:${id}`,
-      instructions: words
-        ? `Action ${id} ("${action.command.description}") ends now; its words are delivered verbatim by code. Besides speaking, did it do anything with a new observable result, such as laying out evidence or visibly making a threat? Do not count anyone else's unissued reply or reaction as a result.`
-        : `Action ${id} ("${action.command.description}") ends now, unchecked and silent. Did it produce a new observable result, such as something changing, moving, being found or being shown? Time spent watching, waiting or trying to read someone's intent is not a new result.`,
+      instructions: `Action ${id} ("${action.command.description}") ends now${words ? "; its words are delivered verbatim by code" : ""}. The ending modes: ${renderEndingModes()}. Is it an \`outcome\`?`,
     });
   }
   const result = await decide({
     operation: "decisions:endings",
-    input: { text: contextText(context) },
+    input: { text: settlementInput(context) },
     questions,
     cacheKey: "engine:settlement",
   });
@@ -452,7 +500,7 @@ export async function decideUnchangedPhases(
   }
   const result = await decide({
     operation: "decisions:phase-plan",
-    input: { text: contextText(context) },
+    input: { text: settlementInput(context) },
     questions,
     cacheKey: "engine:settlement",
   });
@@ -500,32 +548,51 @@ export function speechRows(
 }
 
 /**
- * Who perceives each row and how clearly. The actor of a row's action always
- * perceives it fully; every other living character is a candidate, and the
- * answer leans to the clearer grade when it is close (missing a perceiver is
- * the error nobody sees). Null when the request fails or would not fit —
- * the caller then asks the LLM.
+ * Who perceives each row, by sight and by hearing (design §6.7.3). The
+ * actors of the row's own actions are not asked about: someone who acted is
+ * awake, and knows what they said and did — code lists them clear on both.
+ * Every other living character is a candidate, asked two questions, one per
+ * sense, against the one grade scale in the input. The answer leans to the
+ * clearer grade when it is close (missing a perceiver is the error nobody
+ * sees). Null when the request fails or would not fit — the caller then
+ * asks the LLM.
  */
 export async function decidePerceivers(
   context: EngineResolutionContext,
   rows: readonly RawOccurrence[]
 ): Promise<RawOccurrence[] | null> {
-  const actorOf = (row: RawOccurrence): string | undefined => {
-    const first = Array.isArray(row.actionIds) ? row.actionIds[0] : undefined;
-    return first ? endingAction(context, first)?.command.actorId : undefined;
+  const living = context.state.characters.filter((c) => c.alive);
+  const actorsOf = (row: RawOccurrence): Set<string> =>
+    new Set(
+      (Array.isArray(row.actionIds) ? row.actionIds : [])
+        .map((id) => endingAction(context, id)?.command.actorId)
+        .filter((id): id is string => id !== undefined)
+    );
+  const others = (row: RawOccurrence) => {
+    const actors = actorsOf(row);
+    return living.filter((c) => !actors.has(c.id));
   };
-  const candidates = context.state.characters.filter((c) => c.alive);
   const questions: DecisionQuestion[] = [];
+  // One line per question: which row, whom, which sense. The scale is
+  // defined once in the input (`perceiversInput`), and nothing here tells
+  // Decisions how sight or sound travels — that judgement is what it is
+  // asked for.
   rows.forEach((row, i) => {
-    const actor = actorOf(row);
-    for (const c of candidates) {
-      if (c.id === actor) continue;
-      questions.push({
-        type: "choice",
-        name: `p:${i}:${c.id}`,
-        instructions: `Row ${i} (${row.speech ? "a spoken line" : "an event"} by ${actor ?? "someone"} — ${row.content ?? "see the action"}): how much of it reaches ${c.id}, where they are now? full = the event and its detail, words made out; limited = the kind of event and its immediate result, a speaker seen whose words do not carry; trace = only that something happened; none = nothing reaches them.`,
-        choices: CLARITY_CHOICES.map((v) => ({ value: v, description: v })),
-      });
+    for (const c of others(row)) {
+      questions.push(
+        {
+          type: "choice",
+          name: `sight:${i}:${c.id}`,
+          instructions: `Row ${i}: what does ${c.id} get by seeing it?`,
+          choices: SIGHT_ORDER.map((v) => ({ value: v, description: v })),
+        },
+        {
+          type: "choice",
+          name: `hearing:${i}:${c.id}`,
+          instructions: `Row ${i}: what does ${c.id} get by hearing it?`,
+          choices: HEARING_ORDER.map((v) => ({ value: v, description: v })),
+        }
+      );
     }
   });
   if (questions.length > MAX_QUESTIONS_PER_REQUEST) return null;
@@ -535,7 +602,7 @@ export async function decidePerceivers(
       : await decide({
           operation: "decisions:perceivers",
           input: {
-            text: contextText(context),
+            text: perceiversInput(context),
             json: rows.map((r, i) => ({
               row: i,
               actionIds: r.actionIds,
@@ -547,22 +614,21 @@ export async function decidePerceivers(
           cacheKey: "engine:settlement",
         });
   if (!result.ok) return null;
-  const nearGap = thresholdEnv("PERCEIVER_NEAR_GAP", 0.15);
-  const noneMin = thresholdEnv("PERCEIVER_NONE_MIN", 0.7);
   return rows.map((row, i) => {
-    const actor = actorOf(row);
-    const perceivers: RawOccurrence["perceivers"] = actor
-      ? [{ characterId: actor, clarity: "full" }]
-      : [];
-    for (const c of candidates) {
-      if (c.id === actor) continue;
-      const grade = biasedClarity(
-        result.answers.get(`p:${i}:${c.id}`),
-        nearGap,
-        noneMin
-      );
-      if (grade !== "none")
-        perceivers.push({ characterId: c.id, clarity: grade });
+    const perceivers: RawOccurrence["perceivers"] = [...actorsOf(row)].map(
+      (characterId) => ({ characterId, sight: "clear", hearing: "clear" })
+    );
+    for (const c of others(row)) {
+      const grades = {
+        sight: topGrade(result.answers.get(`sight:${i}:${c.id}`), SIGHT_ORDER),
+        hearing: topGrade(
+          result.answers.get(`hearing:${i}:${c.id}`),
+          HEARING_ORDER
+        ),
+      };
+      if (perceivesAnything(grades)) {
+        perceivers.push({ characterId: c.id, ...grades });
+      }
     }
     return { ...row, perceivers };
   });
@@ -571,8 +637,8 @@ export async function decidePerceivers(
 /**
  * The model wrote the rows (DECISIONS_PERCEIVERS=on): give every row still
  * without perceivers its audience from Decisions, then drop any sanity check
- * on someone who does not perceive that row clearly (full or limited) —
- * exposure is perception. Null when Decisions could not answer.
+ * on someone who does not perceive that row's source — exposure is
+ * perception. Null when Decisions could not answer.
  */
 export async function withDecidedPerceivers(
   context: EngineResolutionContext,
@@ -594,49 +660,38 @@ export async function withDecidedPerceivers(
       filled[index] = decided[k];
     });
   }
-  return filled.map(keepClearSanityChecks);
+  return filled.map(keepSourcedSanityChecks);
 }
 
-function keepClearSanityChecks(row: RawOccurrence): RawOccurrence {
+function keepSourcedSanityChecks(row: RawOccurrence): RawOccurrence {
   const checks = (row as { sanityChecks?: Array<{ characterId?: string }> })
     .sanityChecks;
   if (!Array.isArray(checks) || checks.length === 0) return row;
-  const clear = new Set(
-    (row.perceivers ?? [])
-      .filter((p) => p.clarity === "full" || p.clarity === "limited")
-      .map((p) => p.characterId)
+  const sourced = new Set(
+    (row.perceivers ?? []).filter(perceivesSource).map((p) => p.characterId)
   );
   return {
     ...row,
     sanityChecks: checks.filter(
-      (c) => typeof c.characterId === "string" && clear.has(c.characterId)
+      (c) => typeof c.characterId === "string" && sourced.has(c.characterId)
     ),
   } as RawOccurrence;
 }
 
-/** Most probable grade, leaning clearer (design §6.5): two adjacent grades
- *  within `nearGap` → the clearer; "none" needs `noneMin`, else trace. */
-export function biasedClarity(
+/** The most probable grade, as it is (design §6.5); "none" when there is no
+ *  answer. `order` runs from "none" to the clearest grade. There used to be
+ *  two leans toward perceiving — "none" needed 0.7, and two close adjacent
+ *  grades took the clearer — and both pushed people out of earshot into a
+ *  faint trace (someone 120 m away "heard" a question asked at a door,
+ *  2026-11-18); removed. */
+export function topGrade<G extends string>(
   answer: DecisionAnswer | undefined,
-  nearGap: number,
-  noneMin: number
-): (typeof CLARITY_CHOICES)[number] {
+  order: readonly G[]
+): G {
   const probs = answer?.probabilities ?? {};
-  const ranked = CLARITY_CHOICES.map((g, idx) => ({
-    g,
-    idx,
-    p: probs[g] ?? 0,
-  })).sort((x, y) => y.p - x.p);
-  let best = ranked[0];
-  const second = ranked[1];
-  if (
-    second &&
-    Math.abs(best.idx - second.idx) === 1 &&
-    best.p - second.p < nearGap &&
-    second.idx > best.idx
-  ) {
-    best = second;
+  let best = order[0];
+  for (const g of order) {
+    if ((probs[g] ?? 0) > (probs[best] ?? 0)) best = g;
   }
-  if (best.g === "none" && best.p < noneMin) return "trace";
-  return best.g;
+  return best;
 }

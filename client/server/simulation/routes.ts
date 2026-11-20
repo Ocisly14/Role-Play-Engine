@@ -44,11 +44,24 @@ router.delete(
 
 // Single-player: the one character the player lives as
 router.get("/simulation/:id/player", playerController.getPlayer);
-router.post("/simulation/:id/player/input", playerController.submitInput);
 router.post("/simulation/:id/player/continue", playerController.continuePlayer);
 router.post("/simulation/:id/player/answer", playerController.answerFriend);
+router.post("/simulation/:id/player/advice", playerController.sendAdvice);
+router.post("/simulation/:id/player/command", playerController.submitCommand);
 router.put("/simulation/:id/player/mode", playerController.setMode);
-router.put("/simulation/:id/player/queue", playerController.replaceQueue);
 router.post("/simulation/:id/player/memories", playerController.editMemory);
+router.put(
+  "/simulation/:id/player/board/people/:handle/name",
+  playerController.namePerson
+);
+router.post(
+  "/simulation/:id/player/board/people/:handle/notes",
+  playerController.notePerson
+);
+router.post("/simulation/:id/player/board/links", playerController.linkPeople);
+router.delete(
+  "/simulation/:id/player/board/links/:linkId",
+  playerController.unlinkPeople
+);
 
 export default router;

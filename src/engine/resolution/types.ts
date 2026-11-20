@@ -31,9 +31,15 @@ export interface ItemSnapshot {
   type?: string;
   /** "scene:<placeId>" or a character id — same grammar as DGSM item moves. */
   holder: string;
-  /** The Engine is all-knowing: an item its place's description does not
-   *  cite is listed too, flagged — it is there, but nobody has noticed it.
-   *  Characters see it only by noticing it or finding it. */
+  /** Where it is within its place (absent for a fixture or a held item). */
+  placement?: string;
+  /** The item it sits in, when that can hide it. */
+  container?: string;
+  /** How many identical things it stands for (absent = one). */
+  quantity?: number;
+  /** The Engine is all-knowing: an item sitting in a container is listed
+   *  too, flagged — it is there, but out of plain view. Characters see it
+   *  only by noticing it or finding it. */
   unnoticed?: boolean;
   damaged?: boolean;
   properties?: Record<string, unknown>;
@@ -49,16 +55,15 @@ export type PlaceKind = "scene" | "road";
  *  separately (volatile), so this section stays byte-identical across ticks
  *  for prompt caching. */
 export interface WorldGraph {
-  /** Geography nodes only: top-level scenes (kind "scene") and roads.
-   *  `description` is the authored v2 prose — it cites local items,
-   *  conditions and the places its passages lead to, so the skeleton
-   *  renders in the same description-plus-references shape as every
-   *  place file. */
+  /** Geography nodes only: top-level scenes (kind "scene") and roads, by
+   *  id and name. No prose: the skeleton is for finding the way and the
+   *  connection ids, and the town's whole outdoor description (two thirds
+   *  of the request, measured) was read by nothing — the places a tick
+   *  involves carry their full text under Detailed Places. */
   places: Array<{
     id: string;
     kind: PlaceKind;
     name: string;
-    description?: string;
     parentLocationId?: string;
   }>;
   edges: Array<{
@@ -92,7 +97,8 @@ export interface PlaceSnapshot {
   id: string;
   kind: PlaceKind;
   name: string;
-  description: string;
+  /** The place itself (schema v3). */
+  setting: string;
   parentLocationId?: string;
   indoor?: boolean;
   conditions: SceneCondition[];
@@ -141,6 +147,28 @@ export interface CharacterSnapshot {
   spot?: string;
   conditions: CharacterCondition[];
   inventoryItemIds: string[];
+}
+
+/** Perception's view of the world around one minute's events (design §6.7). */
+export interface Surroundings {
+  /** One entry per place an action being settled took place in. */
+  origins: Array<{
+    placeId: string;
+    /** Every living character: where they stand and how far — `meters`, the
+     *  straight line between the two places' points, when both have one;
+     *  otherwise `walkMinutes` by the ways that join them (null = not
+     *  joined). See SURROUNDINGS_MEANING. */
+    characters: Array<{
+      characterId: string;
+      locationId: string;
+      meters?: number;
+      walkMinutes?: number | null;
+    }>;
+  }>;
+  /** The places those characters stand in that are not already among the
+   *  detailed places. A window onto the lane is often described on the
+   *  listener's side, so their side is shown too. */
+  places: PlaceSnapshot[];
 }
 
 // ==================== Context ====================
@@ -234,6 +262,11 @@ export interface EngineResolutionContext {
     concealedConnectionIds?: string[];
     /** ALL characters, untrimmed. */
     characters: CharacterSnapshot[];
+    /** Settlements only: where everyone else is, seen from each place an
+     *  action that is settling took place in. What perception reads — the
+     *  descriptions say what lies between (doors, windows, walls), the
+     *  minutes say how far; nothing validates against it. */
+    surroundings?: Surroundings;
   };
 
   actions: {

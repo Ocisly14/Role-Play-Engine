@@ -73,6 +73,17 @@ export interface BuildUserPromptOptions {
  * Reading order is: who you are -> what you remember -> how you are now ->
  * what you sense -> decide.
  */
+/** How an ended action ended, in the words the character reads. */
+const JUST_ENDED_STATUS: Record<
+  NonNullable<RoleSimContext["justEnded"]>["status"],
+  string
+> = {
+  completed: "done",
+  failed: "it did not come off",
+  interrupted: "it was cut short",
+  cancelled: "it was called off",
+};
+
 export function buildUserPromptSegments(
   ctx: RoleSimContext,
   opts: BuildUserPromptOptions
@@ -152,6 +163,14 @@ ${block}`
     const suffix = bits.length > 0 ? `\n(${bits.join(", ")})` : "";
     volatile.push(
       `## Currently doing\n"${ctx.currentAction.description}"${suffix}\nThis is your ongoing intention, not a list of completed steps. Elapsed time alone does not prove a transfer, move, result or delivered speech.`
+    );
+  }
+
+  if (ctx.justEnded && !ctx.currentAction) {
+    const how = JUST_ENDED_STATUS[ctx.justEnded.status];
+    const why = ctx.justEnded.reason ? `\n${ctx.justEnded.reason}` : "";
+    volatile.push(
+      `## Just ended\n"${ctx.justEnded.description}" — ${how}.${why}\nYou are not doing anything now. Whatever the paragraph below shows you still holding or looking at, that action is over; to do anything next — including carrying on with the same thing — start it with \`act\`. \`continue\` has nothing to continue.`
     );
   }
 

@@ -59,7 +59,7 @@ function bystander(id: string): Occurrence {
       { id: `${id}#f0`, type: "action_result", content: "x", entityRefs: [] },
     ],
     participants: [{ characterId: "npc_2", role: "actor" }],
-    perceivers: [{ characterId: "npc_1", clarity: "full" }],
+    perceivers: [{ characterId: "npc_1", sight: "clear", hearing: "clear" }],
     signals: [],
   };
 }

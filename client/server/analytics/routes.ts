@@ -10,8 +10,7 @@ router.post("/analytics/visitor/session", visitorController.startSession);
 router.post("/analytics/visitor/heartbeat", visitorController.heartbeat);
 
 // Admin-only routes
-router.use(authenticate);
-router.use(requireRole("ADMIN"));
+router.use("/analytics", authenticate, requireRole("ADMIN"));
 
 // Get daily analytics with historical data
 router.get("/analytics/daily", analyticsController.getDailyAnalytics);

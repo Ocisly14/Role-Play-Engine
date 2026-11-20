@@ -1,8 +1,13 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "id": "SCN_creek_ford",
   "name": "灰溪渡口",
-  "description": "灰溪在这里变宽变浅,一排被磨圆的踏石排到对岸,是过溪的唯一办法 [cond.creek_ford.stepping_stones]。溪水平时只到脚踝,暴雨之后会涨到没过踏石,湍得站不住人——对岸的桤木干上齐头高的地方留着一道褐色的水痕,枯草和塑料碎片还卡在枝桠之间 [item.creek_ford.high_water_line],那是这条溪涨起来能够到的高度。近岸的浅滩上堆着一片卵石,被水磨得又圆又滑,顺手捡一颗贴着水面甩出去,能连着跳出好几个水漂 [item.creek_ford.smooth_pebbles];卵石滩中间垒着一圈石头砌的火塘 [item.creek_ford.fire_ring],灰烬被雨水泡实了,边上还剩几截烧黑的柴头。入水的头一块踏石旁靠着一根磨得发亮的探水棍 [item.creek_ford.wading_pole],过溪的人拿它探深浅,过完了照例给下一个人留在原处。岸边一截倒伏的浮木架在两块石头之间,树皮早被水泡得发黑发软 [item.creek_ford.driftwood_snag];再往上游几步,一整棵树被水掏倒,翻起来的根盘立得比人还高 [item.creek_ford.root_wad],背风的凹处是干的,历年发大水冲下来的枝条都堆在它上游那一侧。溪床里还横着一根锈死的钢缆 [item.creek_ford.logging_cable],一头锁在岸上的老树桩里,是伐木年代往对岸拖原木留下的。石缝里钻出一丛水薄荷,踩过去就是一股清凉的气味 [item.creek_ford.wild_mint]。两岸的林子长得一模一样,过了溪回头看一眼,来路和去路几乎分不出彼此。",
+  "coordinates": {
+    "x": 1000,
+    "y": 3640,
+    "z": 22
+  },
+  "setting": "灰溪在这里变宽变浅,一排被磨圆的踏石排到对岸,是过溪的唯一办法。溪水平时只到脚踝,暴雨之后会涨到没过踏石,湍得站不住人——对岸的桤木干上齐头高的地方留着一道褐色的水痕,枯草和塑料碎片还卡在枝桠之间 [item.creek_ford.high_water_line],那是这条溪涨起来能够到的高度。近岸的浅滩上堆着一片卵石,被水磨得又圆又滑,顺手捡一颗贴着水面甩出去,能连着跳出好几个水漂 [item.creek_ford.smooth_pebbles];卵石滩中间垒着一圈石头砌的火塘 [item.creek_ford.fire_ring],灰烬被雨水泡实了,边上还剩几截烧黑的柴头。入水的头一块踏石旁靠着一根磨得发亮的探水棍 [item.creek_ford.wading_pole],过溪的人拿它探深浅,过完了照例给下一个人留在原处。岸边一截倒伏的浮木架在两块石头之间,树皮早被水泡得发黑发软 [item.creek_ford.driftwood_snag];再往上游几步,一整棵树被水掏倒,翻起来的根盘立得比人还高 [item.creek_ford.root_wad],背风的凹处是干的,历年发大水冲下来的枝条都堆在它上游那一侧。溪床里还横着一根锈死的钢缆 [item.creek_ford.logging_cable],一头锁在岸上的老树桩里,是伐木年代往对岸拖原木留下的。石缝里钻出一丛水薄荷,踩过去就是一股清凉的气味 [item.creek_ford.wild_mint]。两岸的林子长得一模一样,过了溪回头看一眼,来路和去路几乎分不出彼此。",
   "references": {
     "items": [
       {

@@ -28,6 +28,11 @@
 import { createHash } from "node:crypto";
 import type { ToolSpec } from "../../models/providers/types.js";
 import {
+  ENDING_MODE_MEANING,
+  TALK_DURATION_RULE,
+  renderEndingModes,
+} from "../rules/ruleTerms.js";
+import {
   CHARACTER_CHANGES_LIST,
   ITEM_CHANGES_LIST,
   OCCURRENCES_LIST,
@@ -164,7 +169,7 @@ const ENDING_DECISION_ITEM = {
         outcome: {
           type: "string",
           description:
-            "The new objective result of this action, third-person, final and without model reasoning. State world facts, never a personal account of what someone saw, heard, understood or learned over an interval. Ordinary observation and waiting use no_change when there is no new result to settle. If this action also changes the world, account only for that change, not a recap of surrounding events. A supplied `diceRoll` constrains the attempt; never restate it or invent another actor's reply, silence, belief or reaction. Pending speech cannot be paraphrased here. Route newly exposed evidence through occurrences with actual perceivers and clarity; character interpretation belongs to the character.",
+            "The new objective result of this action, third-person, final and without model reasoning. State world facts, never a personal account of what someone saw, heard, understood or learned over an interval. Ordinary observation and waiting use no_change when there is no new result to settle. If this action also changes the world, account only for that change, not a recap of surrounding events. A supplied `diceRoll` constrains the attempt; never restate it or invent another actor's reply, silence, belief or reaction. Pending speech cannot be paraphrased here. Route newly exposed evidence through occurrences with actual perceivers and their sight and hearing; character interpretation belongs to the character.",
         },
       },
       required: ["mode", "actionId", "outcome"],
@@ -188,8 +193,7 @@ const ENDING_DECISION_ITEM = {
         mode: { const: "no_change" },
         actionId: {
           type: "string",
-          description:
-            "An ending id with no new result, check or utterance to settle. Routine observation or waiting ends without a retrospective account.",
+          description: `An ending id: ${ENDING_MODE_MEANING.no_change}.`,
         },
       },
       required: ["mode", "actionId"],
@@ -200,8 +204,7 @@ const ENDING_DECISION_ITEM = {
 
 const ENDINGS_LIST = {
   type: "array",
-  description:
-    "One decision for every id the trigger lists under `ending`, and no others. outcome carries a new objective result, including a checked attempt. pure_speech carries no outcome and is only for an unchecked action whose whole result is its `utterance`. no_change carries no outcome and closes an action with no new objective result, no check and no utterance; ordinary observation or waiting does not require a retrospective summary. no_change must source no changes or occurrences. Events perceived during a wait retain their own source actions and are already routed when they happen.",
+  description: `One decision for every id the trigger lists under \`ending\`, and no others. The modes: ${renderEndingModes()}. pure_speech and no_change carry no outcome; no_change must source no changes or occurrences. Events perceived during a wait retain their own source actions and are already routed when they happen.`,
   items: ENDING_DECISION_ITEM,
 } as const;
 
@@ -213,10 +216,8 @@ const PHASE_CONTRACT =
   "The array is REQUIRED — a domain with nothing to say this tick sends `[]`, and never omits the list. Anything accepted in an earlier phase is shown to you as a settled, read-only fact of this tick: read it, do not restate it, and do not try to revise it here.";
 
 const PHASE_DESCRIPTIONS: Record<ResolutionPhase, string> = {
-  starts:
-    "The START JUDGEMENT — the Engine's first function, one phase. One entry for every action id the trigger lists under `starting`, and only those: for a non-travel action how long it should take and how hard it is — judged by what it ATTEMPTS, not by whether it speaks: plain talk takes 1 minute and no check, an attempt made while speaking takes the attempt's minutes and a check where the declared skill covers it — for travel the route the actor stated (and the vehicle, when they drive). Never an outcome — a starting action's time has not been spent yet, and a starting action's `utterance` is not spoken yet either. What comes of it is the settlement's business, on the tick its time runs out.",
-  endings:
-    "Phase 1 of 5 of the SETTLEMENT — ENDINGS. One decision for every finishing action: outcome for a new objective result; pure_speech for an unchecked action consisting only of its utterance; no_change for an unchecked action with no utterance and no new result. no_change closes the clock without generating a personal observation recap, changes or occurrences. A checked attempt always needs outcome. This phase writes no state changes or events. Roll actual damage with the deterministic tool before deciding; never invent damage.",
+  starts: `The START JUDGEMENT — the Engine's first function, one phase. One entry for every action id the trigger lists under \`starting\`, and only those: for a non-travel action how long it should take, judged by what it ATTEMPTS (${TALK_DURATION_RULE}), and, where the declared skill covers the attempt, how hard it is; for travel the route the actor stated (and the vehicle, when they drive). Never an outcome — a starting action's time has not been spent yet, and a starting action's \`utterance\` is not spoken yet either. What comes of it is the settlement's business, on the tick its time runs out.`,
+  endings: `Phase 1 of 5 of the SETTLEMENT — ENDINGS. One decision for every finishing action — ${renderEndingModes()}. no_change closes the clock without generating a personal observation recap, changes or occurrences. This phase writes no state changes or events. Roll actual damage with the deterministic tool before deciding; never invent damage.`,
   characterChanges:
     "Phase 2 of 5 of the SETTLEMENT — CHARACTER CHANGES. The persistent changes this tick's actions make to characters — one row per change, each sourced to the action that caused it. A result that is merely described, and leaves no state behind, is not a change and belongs to the occurrence phase.",
   itemChanges:

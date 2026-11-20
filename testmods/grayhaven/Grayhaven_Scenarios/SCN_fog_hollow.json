@@ -1,8 +1,13 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "id": "SCN_fog_hollow",
   "name": "雾谷",
-  "description": "一片低洼的谷地,四条林径在此交汇。海雾顺着地势灌进来就再也出不去,常年淤在谷底,十步之外只剩下树影的轮廓 [cond.fog_hollow.pooled_fog]。谷底中央积着一汪水,常年不干,雾气压得水面看不出一点波纹,黑得照不出人影 [item.fog_hollow.black_pool];潭边散落着几块石头,长满湿滑的青苔,是谷里唯一算得上落脚点的东西 [item.fog_hollow.mossy_stones],一截枯枝半沉在水里,泡得发黑发软,一碰就是一手黏腻的水汽 [item.fog_hollow.sunken_branch]。潭这一侧立着一棵剥光了树皮的白枯树,歪向水面,是雾里唯一还认得出形状的东西 [item.fog_hollow.leaning_snag];麻烦在于潭那一侧还立着一棵,同样白、同样歪、同样只剩半截 [item.fog_hollow.twin_snag]——认错哪一棵,人就会从错的岔口走出去,而且要走上一个钟头才发觉。其中一个岔口边垒着一堆齐膝高的石头,是谷里唯一确凿的人造记号 [item.fog_hollow.stone_cairn];另一个岔口边也有一堆,早已塌散成一片,看不出原本是记号还是石头自己滚成的 [item.fog_hollow.toppled_cairn]。伐木公司当年的木牌连桩带牌倒在泥里,字面朝下埋了一半,得先把它翻过来,才知道它曾经指向哪儿 [item.fog_hollow.fallen_signboard]。低处的枝条上还系着一截褪成白色的塑料飘带,是有人一路系过来做记号留下的,可顺着往前找,下一截就不见了 [item.fog_hollow.faded_ribbon]。谷边一截被虫蛀空的大树桩,里侧还是干的,蹲得进一个人,雨大时是这里唯一的去处 [item.fog_hollow.hollow_stump];树桩背后的泥里半埋着一副散开的鹿骨,骨头白得干净,不知道是什么把它留在了谷底 [item.fog_hollow.deer_bones]。谷里没有任何标志物挡得住雾,四个出口看起来一模一样——在灰港的林子里,没有比这里更容易转向的地方。",
+  "coordinates": {
+    "x": 1400,
+    "y": 8079,
+    "z": 110
+  },
+  "setting": "一片低洼的谷地,四条林径在此交汇。海雾顺着地势灌进来就再也出不去,常年淤在谷底,十步之外只剩下树影的轮廓。谷底中央积着一汪水,常年不干,雾气压得水面看不出一点波纹,黑得照不出人影 [item.fog_hollow.black_pool];潭边散落着几块石头,长满湿滑的青苔,是谷里唯一算得上落脚点的东西 [item.fog_hollow.mossy_stones],一截枯枝半沉在水里,泡得发黑发软,一碰就是一手黏腻的水汽 [item.fog_hollow.sunken_branch]。潭这一侧立着一棵剥光了树皮的白枯树,歪向水面,是雾里唯一还认得出形状的东西 [item.fog_hollow.leaning_snag];麻烦在于潭那一侧还立着一棵,同样白、同样歪、同样只剩半截 [item.fog_hollow.twin_snag]——认错哪一棵,人就会从错的岔口走出去,而且要走上一个钟头才发觉。其中一个岔口边垒着一堆齐膝高的石头,是谷里唯一确凿的人造记号 [item.fog_hollow.stone_cairn];另一个岔口边也有一堆,早已塌散成一片,看不出原本是记号还是石头自己滚成的 [item.fog_hollow.toppled_cairn]。伐木公司当年的木牌连桩带牌倒在泥里,字面朝下埋了一半,得先把它翻过来,才知道它曾经指向哪儿 [item.fog_hollow.fallen_signboard]。低处的枝条上还系着一截褪成白色的塑料飘带,是有人一路系过来做记号留下的,可顺着往前找,下一截就不见了 [item.fog_hollow.faded_ribbon]。谷边一截被虫蛀空的大树桩,里侧还是干的,蹲得进一个人,雨大时是这里唯一的去处 [item.fog_hollow.hollow_stump];树桩背后的泥里半埋着一副散开的鹿骨,骨头白得干净,不知道是什么把它留在了谷底 [item.fog_hollow.deer_bones]。谷里没有任何标志物挡得住雾,四个出口看起来一模一样——在灰港的林子里,没有比这里更容易转向的地方。",
   "references": {
     "items": [
       {

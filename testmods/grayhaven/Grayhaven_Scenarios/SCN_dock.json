@@ -1,8 +1,13 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "id": "SCN_dock",
   "name": "码头与海滩",
-  "description": "灰港的木码头和它旁边的一段灰沙海滩。栈桥入口的石座上嵌着一块发黑的铜牌 [item.dock.memorial_plaque],刻着 1889 年 Leonor 号上那十七个人的名字,葡语和英语各一遍;石座旁半埋在沙里的那口铸铁大锅 [item.dock.whale_trypot],是捕鲸站年代留下的,如今只用来接雨水。码头边一排被缆绳磨出深槽的系缆桩 [item.dock.bollards],桩身上刻着几代渔船的葡语名字;几条小渔船系在桩上随浪起伏 [item.dock.moored_boats],咸腥味混着柴油味。桥板中段立着一对油漆斑驳的木杆 [item.dock.festa_poles],每年祝福节挂彩旗和圣像用,其余日子空着。栈桥尽头那台老式加油泵 [item.dock.fuel_pump] 常年上着锁,价签还是三年前的;泵后头是鱼市棚 [item.dock.fish_shed],水泥台冲得发白,吊秤在风里轻轻晃,棚柱上钉着潮汐表和渔业局的告示 [item.dock.tide_board],最新的一行是手写的。码头一角搭着个晒网架 [item.dock.net_rack],几张要补的旧网常年挂在上头晾着;架子边摞着一堆柳条蟹笼 [item.dock.crab_pots],层层叠得快有人高,旁边那只公用的木渔具柜 [item.dock.gear_locker] 谁都能开,谁用完谁再码回去。伸出去的石砌防波堤 [item.dock.breakwater] 把浪挡在外头——雾从海面上来的时候,先吞掉它,再吞掉整个镇子,这里永远是雾最先到、最后走的地方。海滩尽头立着塌了半边的罐头厂废墟 [item.dock.cannery_ruins],锈铁皮在风里响;潮线上一道漂积物 [item.dock.driftline] 从废墟一直拖到水边,海藻、浮球碎片、玻璃渣,还有开春那批死鱼晒干的骨头。沿崖间小径向南可以一路爬上灯塔崖;坡道向北通回主街。",
+  "coordinates": {
+    "x": -450,
+    "y": -1180,
+    "z": 2
+  },
+  "setting": "灰港的木码头和它旁边的一段灰沙海滩。栈桥入口的石座上嵌着一块发黑的铜牌 [item.dock.memorial_plaque],刻着 1889 年 Leonor 号上那十七个人的名字,葡语和英语各一遍;石座旁半埋在沙里的那口铸铁大锅 [item.dock.whale_trypot],是捕鲸站年代留下的,如今只用来接雨水。码头边一排被缆绳磨出深槽的系缆桩 [item.dock.bollards],桩身上刻着几代渔船的葡语名字;几条小渔船系在桩上随浪起伏 [item.dock.moored_boats],咸腥味混着柴油味。桥板中段立着一对油漆斑驳的木杆 [item.dock.festa_poles],每年祝福节挂彩旗和圣像用,其余日子空着。栈桥尽头那台老式加油泵 [item.dock.fuel_pump] 常年上着锁,价签还是三年前的;泵后头是鱼市棚 [item.dock.fish_shed],水泥台冲得发白,吊秤在风里轻轻晃,棚柱上钉着潮汐表和渔业局的告示 [item.dock.tide_board],最新的一行是手写的。码头一角搭着个晒网架 [item.dock.net_rack],几张要补的旧网常年挂在上头晾着;架子边摞着一堆柳条蟹笼 [item.dock.crab_pots],层层叠得快有人高,旁边那只公用的木渔具柜 [item.dock.gear_locker] 谁都能开,谁用完谁再码回去。伸出去的石砌防波堤 [item.dock.breakwater] 把浪挡在外头——雾从海面上来的时候,先吞掉它,再吞掉整个镇子,这里永远是雾最先到、最后走的地方。海滩尽头立着塌了半边的罐头厂废墟 [item.dock.cannery_ruins],锈铁皮在风里响;潮线上一道漂积物 [item.dock.driftline] 从废墟一直拖到水边,海藻、浮球碎片、玻璃渣,还有开春那批死鱼晒干的骨头。沿崖间小径向南可以一路爬上灯塔崖;坡道向北通回主街。",
   "references": {
     "items": [
       {

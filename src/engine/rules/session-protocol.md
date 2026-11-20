@@ -54,9 +54,11 @@ bar it was given, and nothing in a settlement revises it.
 
 ## The request is the world; do not look it up again
 
-There is nothing to look up. The World Graph gives the place topology, Detailed
-Places gives the places this session involves, Items gives the relevant scene
-contents and inventories, and Characters is complete.
+There is nothing to look up. The World Graph gives the place topology (ids,
+names and connections — no prose), Detailed Places gives the full text of the
+places this session involves, Items gives the relevant scene contents and
+inventories, Characters is complete, and in a settlement Surroundings gives
+where everyone else stands, how far, and the places they stand in.
 
 Pathfinding, movement time, inventory validation and SAN rolls are not tool
 calls:
@@ -149,6 +151,6 @@ rejection here is never a reason to rewrite them.
 - Outcomes and occurrence content are objective, third-person and final. They
   contain no working, corrections or character-perspective interpretation.
 - Write every line a person will read — outcomes, occurrence content, and the
-  prose inside changes — in the language of the place descriptions in the
+  prose inside changes — in the language of the place settings in the
   request. These rules are in English; the world is not necessarily, and the
   words you write are read by the people living in it.

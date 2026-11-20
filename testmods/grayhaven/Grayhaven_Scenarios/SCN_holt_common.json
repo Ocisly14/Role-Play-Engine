@@ -1,8 +1,13 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "id": "SCN_holt_common",
   "name": "Holt 家起居餐厨",
-  "description": "老房子的心脏:起居、吃饭、做饭挤在一个大开间里,一张能坐下六个人的橡木长桌 [item.holt_common.dining_table] 占了中间——如今常坐的只有四个。靠墙的砖砌壁炉 [item.holt_common.fireplace] 一起雾就烧上,壁炉台上摆着一张镶框的海军新兵照 [item.holt_common.glen_photo],Glen 穿着水兵服笑得拘谨,相框前搁着他寄回来的明信片;炉子对面一张塌了弹簧的旧沙发 [item.holt_common.sofa] 正对着角落里的木壳电视机 [item.holt_common.television],电视顶上搭着蕾丝罩布,屏幕最近偶尔会无缘无故起雪花。厨房那半边先亮起来:白搪瓷面的煤气灶 [item.holt_common.stove] 上常年蹲着一只熏黑的咖啡壶 [item.holt_common.coffee_pot],天没亮就有人烧上第一壶;灶边是水槽和木案台 [item.holt_common.sink_counter],沥水架上永远有几只没收的碗。墙角那台圆肩冰箱 [item.holt_common.refrigerator] 嗡嗡地响,屋子一静就只剩它的声音;旁边的食品柜 [item.holt_common.pantry] 里码着罐头、面粉和一只铁皮面包箱。窗台上一台塑料壳收音机 [item.holt_common.kitchen_radio] 做饭时开着,这两年时不时串进一种说不出的杂音。门框边的墙上挂着一部黑色转盘电话 [item.holt_common.wall_telephone],电话旁边钉着一本家庭日历 [item.holt_common.family_calendar],格子里挤着门诊预约和轮班时间,Susan 的字迹占了大半;线绳被拉长到能绕过桌角接;电话底下那只餐具柜 [item.holt_common.sideboard] 的抽屉里,一支应急手电筒 [item.holt_common.flashlight] 和一盒保险丝就放在最上层。屋里有四扇内门:Ray 的房间 [SCN_holt_ray]、Frank 和 Susan 的主卧 [SCN_holt_master]、Denny 的小房间 [SCN_holt_denny],以及通后院的纱门 [SCN_holt_backyard]。正对院门的前门 [SCN_holt_gate] 出去是带栅栏的前院和 Holt 家的院门。",
+  "coordinates": {
+    "x": 632,
+    "y": 895,
+    "z": 28
+  },
+  "setting": "老房子的心脏:起居、吃饭、做饭挤在一个大开间里,一张能坐下六个人的橡木长桌 [item.holt_common.dining_table] 占了中间——如今常坐的只有四个。靠墙的砖砌壁炉 [item.holt_common.fireplace] 一起雾就烧上,壁炉台上摆着一张镶框的海军新兵照 [item.holt_common.glen_photo],Glen 穿着水兵服笑得拘谨,相框前搁着他寄回来的明信片;炉子对面一张塌了弹簧的旧沙发 [item.holt_common.sofa] 正对着角落里的木壳电视机 [item.holt_common.television],电视顶上搭着蕾丝罩布,屏幕最近偶尔会无缘无故起雪花。厨房那半边先亮起来:白搪瓷面的煤气灶 [item.holt_common.stove] 上常年蹲着一只熏黑的咖啡壶 [item.holt_common.coffee_pot],天没亮就有人烧上第一壶;灶边是水槽和木案台 [item.holt_common.sink_counter],沥水架上永远有几只没收的碗。墙角那台圆肩冰箱 [item.holt_common.refrigerator] 嗡嗡地响,屋子一静就只剩它的声音;旁边的食品柜 [item.holt_common.pantry] 里码着罐头、面粉和一只铁皮面包箱。窗台上一台塑料壳收音机 [item.holt_common.kitchen_radio] 做饭时开着,这两年时不时串进一种说不出的杂音。门框边的墙上挂着一部黑色转盘电话 [item.holt_common.wall_telephone],电话旁边钉着一本家庭日历 [item.holt_common.family_calendar],格子里挤着门诊预约和轮班时间,Susan 的字迹占了大半;线绳被拉长到能绕过桌角接;电话底下那只餐具柜 [item.holt_common.sideboard] 的抽屉里,一支应急手电筒 [item.holt_common.flashlight] 和一盒保险丝就放在最上层。屋里有四扇内门:Ray 的房间 [SCN_holt_ray]、Frank 和 Susan 的主卧 [SCN_holt_master]、Denny 的小房间 [SCN_holt_denny],以及通后院的纱门 [SCN_holt_backyard]。正对院门的前门 [SCN_holt_gate] 出去是带栅栏的前院和 Holt 家的院门。",
   "parentLocationId": "holt_house",
   "indoor": true,
   "references": {

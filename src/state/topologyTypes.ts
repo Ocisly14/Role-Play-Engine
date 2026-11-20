@@ -36,7 +36,8 @@ export interface AlongConnection {
 export interface RoadNode {
   id: string;
   name: string;
-  description: string;
+  /** The road itself (schema v3) — see DynamicScene.setting. */
+  setting: string;
   parentLocationId?: string;
   /** Authored connections (source of truth; carries id/role/position/concealed). */
   connections: RoadConnection[];

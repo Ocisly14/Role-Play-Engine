@@ -1,8 +1,13 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "id": "SCN_station_dock",
   "name": "雷德利站装卸区",
-  "description": "水泥地平得反常,划着褪色的黄色装卸线,顶棚的日光灯管一根不坏 [item.station_dock.ceiling_lights],不分昼夜地亮着。这里安静得不像一个装卸区——没有叉车声,没有人声,只有月台内侧那条传送轨道 [item.station_dock.conveyor_track] 偶尔自己动起来,把货从月台一件件收进去,再从墙上的铁盒里推出一张已经盖好章的签收单。靠墙的板条箱堆了好几层 [item.station_dock.stacked_crates],有些落着经年的灰,从没被拆过;其中一只的唛头喷着 1979 年的日期 [item.station_dock.old_crate_1979],封条和昨天钉上去的一样新。月台边上停着一台液压托盘车 [item.station_dock.pallet_jack],把手上包的胶带是自己缠的;旁边码着一摞空托盘 [item.station_dock.empty_pallets],边角磨得发白,是这间屋里唯一被用旧的东西。签收用的铁盒 [item.station_dock.receipt_box] 嵌在月台内侧的墙上,投进回执,咔哒一声,再无下文;铁盒下面接着一张斜面的铁皮签收台 [item.station_dock.sign_off_ledge],台沿拴着一支圆珠笔。台子上方的墙上挂着一只电钟 [item.station_dock.wall_clock],秒针走得一丝不乱。装卸区的尽头是一扇灰色的内门 [item.station_dock.inner_door],门上没有把手侧的磨痕,门缝里没有光——八年来没人见它开过。身后的卷帘门 [SCN_station_yard] 是这里唯一会为人打开的门,升起时露出站前场地和铁丝网外的车行道。",
+  "coordinates": {
+    "x": 1512,
+    "y": 13562,
+    "z": 470
+  },
+  "setting": "水泥地平得反常,划着褪色的黄色装卸线,顶棚的日光灯管一根不坏 [item.station_dock.ceiling_lights],不分昼夜地亮着。这里安静得不像一个装卸区——没有叉车声,没有人声,只有月台内侧那条传送轨道 [item.station_dock.conveyor_track] 偶尔自己动起来,把货从月台一件件收进去,再从墙上的铁盒里推出一张已经盖好章的签收单。靠墙的板条箱堆了好几层 [item.station_dock.stacked_crates],有些落着经年的灰,从没被拆过;其中一只的唛头喷着 1979 年的日期 [item.station_dock.old_crate_1979],封条和昨天钉上去的一样新。月台边上停着一台液压托盘车 [item.station_dock.pallet_jack],把手上包的胶带是自己缠的;旁边码着一摞空托盘 [item.station_dock.empty_pallets],边角磨得发白,是这间屋里唯一被用旧的东西。签收用的铁盒 [item.station_dock.receipt_box] 嵌在月台内侧的墙上,投进回执,咔哒一声,再无下文;铁盒下面接着一张斜面的铁皮签收台 [item.station_dock.sign_off_ledge],台沿拴着一支圆珠笔。台子上方的墙上挂着一只电钟 [item.station_dock.wall_clock],秒针走得一丝不乱。装卸区的尽头是一扇灰色的内门 [item.station_dock.inner_door],门上没有把手侧的磨痕,门缝里没有光——八年来没人见它开过。身后的卷帘门 [SCN_station_yard] 是这里唯一会为人打开的门,升起时露出站前场地和铁丝网外的车行道。",
   "parentLocationId": "station",
   "indoor": true,
   "references": {

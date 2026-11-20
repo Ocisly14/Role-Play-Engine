@@ -1,16 +1,18 @@
 /**
- * Schema v2 place-file parsing + derivation + module-wide reference validation.
+ * Place-file parsing + derivation + module-wide reference validation
+ * (schema v3; the `V2` names are historical).
  *
- * v2 is prose-first: `description` is the complete scene text, every visible
- * object / exit / condition is cited as `[reference-id]`, and the matching
- * machine-readable objects live in the same file under `references`. See
- * testmods/DYNAMIC_WORLD_SCENE_SCHEMA.md.
+ * v3: `setting` is the place itself — what is true of it at 3 a.m., empty, in
+ * any weather. It cites its fixtures and the places it leads to as
+ * `[reference-id]`; loose things carry a `placement` (and a `container` when
+ * they sit inside something that can hide them); conditions are state and
+ * are never cited. See testmods/DYNAMIC_WORLD_SCENE_SCHEMA.md.
  *
- * v1 files (anything without `schemaVersion: 2`) are no longer supported —
- * `parsePlaceFileV2` reports a clear error instead of guessing shapes.
+ * Any other `schemaVersion` is refused with a clear error.
  */
 
 import type { SceneCondition } from "../engine/core/types.js";
+import { normalizeSpot } from "./characterSpot.js";
 import type {
   AlongConnection,
   RoadConnection,
@@ -20,6 +22,7 @@ import type {
 import type {
   DynamicScene,
   Item,
+  PlaceCoordinates,
   SceneConnection,
   TransportEdge,
 } from "./types.js";
@@ -54,6 +57,13 @@ const ROAD_CONNECTION_ROLES: readonly RoadConnectionRole[] = [
 export interface PlaceFileV2Connection extends SceneConnection {
   role?: RoadConnectionRole;
   position?: number;
+  /** Authored INITIAL block, with its reason ("灯塔铁门上着锁"): the passage
+   *  cannot be walked when the session starts. Load-time only — the loader
+   *  seeds the runtime block map from it, and from then on that map is the
+   *  one record (the weather, scripted events and the Engine set and clear
+   *  it). Never copied onto the runtime connection, so the two cannot
+   *  disagree after someone unlocks the door. */
+  blocked?: string;
 }
 
 /** A condition as authored in a v2 place file — `id` is required. */
@@ -69,15 +79,18 @@ export interface PlaceFileV2References {
 
 /** The parsed, fully type-checked shape of a `SCN_*` / `ROAD_*` file. */
 export interface PlaceFileV2 {
-  schemaVersion: 2;
+  schemaVersion: 3;
   id: string;
   name: string;
-  description: string;
+  /** The place itself — see DynamicScene.setting. */
+  setting: string;
   /** Absent on a TOP-LEVEL scene — a geography node (street, crossroads,
    *  yard) that the road network runs between. */
   parentLocationId?: string;
   driveTimeMinutes?: number;
   indoor?: boolean;
+  /** SCN_* only; ROAD_* points come from their endpoints. */
+  coordinates?: PlaceCoordinates;
   /** Required for ROAD_* files (enforced by buildRoadV2). */
   travelTimeMinutes?: number;
   references: PlaceFileV2References;
@@ -136,6 +149,39 @@ function checkOptionalNumber(
     return undefined;
   }
   return value;
+}
+
+/** `coordinates: { x, y, z? }` in meters; z defaults to 0. */
+function checkOptionalCoordinates(
+  obj: Record<string, unknown>,
+  path: string,
+  problems: string[]
+): PlaceCoordinates | undefined {
+  const value = obj.coordinates;
+  if (value === undefined) return undefined;
+  const at = `${path}.coordinates`;
+  if (!isRecord(value)) {
+    problems.push(`${at}: expected { x, y, z? } in meters`);
+    return undefined;
+  }
+  const finite = (v: unknown): v is number =>
+    typeof v === "number" && Number.isFinite(v);
+  const bad: string[] = [];
+  if (!finite(value.x)) bad.push("x");
+  if (!finite(value.y)) bad.push("y");
+  if (value.z !== undefined && !finite(value.z)) bad.push("z");
+  const extra = Object.keys(value).filter((k) => !["x", "y", "z"].includes(k));
+  if (bad.length > 0)
+    problems.push(`${at}.${bad.join("/")}: expected a number`);
+  if (extra.length > 0) {
+    problems.push(`${at}: unknown field(s) ${extra.join(", ")} — only x, y, z`);
+  }
+  if (bad.length > 0 || extra.length > 0) return undefined;
+  return {
+    x: value.x as number,
+    y: value.y as number,
+    z: (value.z as number | undefined) ?? 0,
+  };
 }
 
 function checkRequiredString(
@@ -229,8 +275,22 @@ function parseItem(
   const description = checkOptionalString(value, "description", path, problems);
   if (value.hidden !== undefined) {
     problems.push(
-      `${path}.hidden: items have no hidden flag — an item its place's description does not cite is simply not yet noticed; remove the key`
+      `${path}.hidden: items have no hidden flag — a thing out of sight sits in a container (\"container\"), and whether anyone sees it is judged per viewer; remove the key`
     );
+  }
+  const rawPlacement = checkOptionalString(value, "placement", path, problems);
+  const placement =
+    rawPlacement === undefined ? undefined : normalizeSpot(rawPlacement);
+  const container = checkOptionalString(value, "container", path, problems);
+  if (container !== undefined && !container.trim()) {
+    problems.push(`${path}.container: must name an item id`);
+  }
+  const quantity = checkOptionalNumber(value, "quantity", path, problems);
+  if (
+    quantity !== undefined &&
+    (!Number.isInteger(quantity) || quantity < 1)
+  ) {
+    problems.push(`${path}.quantity: must be a whole number >= 1, got ${quantity}`);
   }
   const isLightSource = checkOptionalBoolean(
     value,
@@ -251,6 +311,9 @@ function parseItem(
   if (isLightSource !== undefined) item.isLightSource = isLightSource;
   if (lightLevel !== undefined) item.lightLevel = lightLevel;
   if (position !== undefined) item.position = position;
+  if (placement) item.placement = placement;
+  if (container?.trim()) item.container = container.trim();
+  if (quantity !== undefined && quantity > 1) item.quantity = quantity;
   return item;
 }
 
@@ -277,6 +340,12 @@ function parseConnection(
     );
   }
   const concealed = checkOptionalBoolean(value, "concealed", path, problems);
+  const blocked = checkOptionalString(value, "blocked", path, problems);
+  if (blocked !== undefined && blocked.trim() === "") {
+    problems.push(
+      `${path}.blocked: give the reason the passage cannot be walked (a non-empty string)`
+    );
+  }
   const position = checkOptionalNumber(value, "position", path, problems);
   let role: RoadConnectionRole | undefined;
   if (value.role !== undefined) {
@@ -299,6 +368,7 @@ function parseConnection(
   if (name !== undefined) connection.name = name;
   if (description !== undefined) connection.description = description;
   if (concealed !== undefined) connection.concealed = concealed;
+  if (blocked !== undefined) connection.blocked = blocked.trim();
   if (role !== undefined) connection.role = role;
   if (position !== undefined) connection.position = position;
   return connection;
@@ -390,9 +460,11 @@ export function parsePlaceFileV2(entryId: string, data: unknown): PlaceFileV2 {
       "JUNC_* 节点已移除:路口/院子等地理节点请改写为无 parentLocationId 的顶层 SCN_* 场景(道路端点直接指向它)",
     ]);
   }
-  if (data.schemaVersion !== 2) {
+  if (data.schemaVersion !== 3) {
+    const v =
+      typeof data.schemaVersion === "number" ? data.schemaVersion : "?";
     throw new ModuleSchemaError(entryId, [
-      `schemaVersion: v1 不再支持,请按 v2 格式重写(见 testmods/DYNAMIC_WORLD_SCENE_SCHEMA.md)— got ${JSON.stringify(
+      `schemaVersion: v${v} 不再支持,请按 v3 格式重写(见 testmods/DYNAMIC_WORLD_SCENE_SCHEMA.md)— got ${JSON.stringify(
         data.schemaVersion
       )}`,
     ]);
@@ -401,12 +473,12 @@ export function parsePlaceFileV2(entryId: string, data: unknown): PlaceFileV2 {
   const problems: string[] = [];
   const id = checkRequiredString(data, "id", entryId, problems);
   const name = checkRequiredString(data, "name", entryId, problems);
-  const description = checkRequiredString(
-    data,
-    "description",
-    entryId,
-    problems
-  );
+  if (data.description !== undefined) {
+    problems.push(
+      `${entryId}: places carry "setting", not "description" (schema v3)`
+    );
+  }
+  const setting = checkRequiredString(data, "setting", entryId, problems);
   const parentLocationId = checkOptionalString(
     data,
     "parentLocationId",
@@ -414,6 +486,7 @@ export function parsePlaceFileV2(entryId: string, data: unknown): PlaceFileV2 {
     problems
   );
   const indoor = checkOptionalBoolean(data, "indoor", entryId, problems);
+  const coordinates = checkOptionalCoordinates(data, entryId, problems);
   const travelTimeMinutes = checkOptionalNumber(
     data,
     "travelTimeMinutes",
@@ -459,22 +532,23 @@ export function parsePlaceFileV2(entryId: string, data: unknown): PlaceFileV2 {
     problems.length > 0 ||
     id === undefined ||
     name === undefined ||
-    description === undefined
+    setting === undefined
   ) {
     throw new ModuleSchemaError(entryId, problems);
   }
 
   const parsed: PlaceFileV2 = {
-    schemaVersion: 2,
+    schemaVersion: 3,
     id,
     name,
-    description,
+    setting,
     references: { items, connections, conditions },
   };
   if (parentLocationId !== undefined) {
     parsed.parentLocationId = parentLocationId;
   }
   if (indoor !== undefined) parsed.indoor = indoor;
+  if (coordinates !== undefined) parsed.coordinates = coordinates;
   if (travelTimeMinutes !== undefined) {
     parsed.travelTimeMinutes = travelTimeMinutes;
   }
@@ -524,7 +598,7 @@ export function buildSceneV2(file: PlaceFileV2): DynamicScene {
   const scene: DynamicScene = {
     id: file.id,
     name: file.name,
-    description: file.description,
+    setting: file.setting,
     items: file.references.items,
     conditions: file.references.conditions,
     connections,
@@ -533,6 +607,7 @@ export function buildSceneV2(file: PlaceFileV2): DynamicScene {
     scene.parentLocationId = file.parentLocationId;
   }
   if (file.indoor !== undefined) scene.indoor = file.indoor;
+  if (file.coordinates !== undefined) scene.coordinates = file.coordinates;
   return scene;
 }
 
@@ -611,6 +686,11 @@ export function buildRoadV2(file: PlaceFileV2): RoadNode {
       )}`
     );
   }
+  if (file.coordinates !== undefined) {
+    problems.push(
+      "coordinates: a road has none of its own — its points lie between its two endpoint scenes"
+    );
+  }
 
   if (problems.length > 0 || travelTimeMinutes === undefined) {
     throw new ModuleSchemaError(file.id, problems);
@@ -618,7 +698,7 @@ export function buildRoadV2(file: PlaceFileV2): RoadNode {
   const road: RoadNode = {
     id: file.id,
     name: file.name,
-    description: file.description,
+    setting: file.setting,
     connections,
     endpointA: endpoints.endpointA[0],
     endpointB: endpoints.endpointB[0],
@@ -689,6 +769,10 @@ export function parseVehicleFileV2(
       problems.push(
         `interiorSceneId "${interiorSceneId}" must not be a top-level scene (give it parentLocationId = the vehicle id)`
       );
+    } else if (interior.coordinates) {
+      problems.push(
+        `interiorSceneId "${interiorSceneId}" must not carry coordinates — a vehicle's interior is wherever the vehicle is`
+      );
     }
   }
   if (initialLocation !== undefined && !module.placeIds.has(initialLocation)) {
@@ -715,7 +799,7 @@ export function parseVehicleFileV2(
 
 // ─── Module-wide reference validation ──────────────────────────────
 
-/** Matches `[reference-id]` citations in place descriptions. */
+/** Matches `[reference-id]` citations in place settings. */
 const CITATION_RE = /\[([^\]\n]{1,64})\]/g;
 
 export const MODULE_REFERENCES_ENTRY_ID = "__module_references__";
@@ -723,7 +807,7 @@ export const MODULE_REFERENCES_ENTRY_ID = "__module_references__";
 interface PlaceForValidation {
   id: string;
   kind: "scene" | "road";
-  description: string;
+  setting: string;
   items: Item[];
   connections: SceneConnection[];
   conditions: SceneCondition[];
@@ -732,12 +816,11 @@ interface PlaceForValidation {
 /**
  * Cross-file validation over all loaded places:
  * - every place id and reference id shares one module-wide namespace (no dupes);
- * - every `[citation]` in a description resolves to a local item/condition or
- *   to the target place of one of this place's connections;
- * - an item is cited at most once; an item the description does NOT cite is
- *   in the place but not yet noticed (there is no hidden flag — not being in
- *   the prose is what being unnoticed means);
- * - conditions must always be cited;
+ * - every `[citation]` in a setting resolves to a local item (a fixture) or
+ *   to the target place of one of this place's connections; conditions are
+ *   never cited;
+ * - every item is a fixture (cited once, no placement), placed (placement),
+ *   or contained (placement + a container item of the same place, no cycle);
  * - connections are topology bookkeeping, never citable by their own id: the
  *   prose points at the PLACE a passage leads to, not at the passage. Every
  *   non-concealed connection's targetId must be cited exactly once; a target
@@ -799,24 +882,19 @@ export function validateModuleReferences(module: {
   const placeIds = new Set<string>(places.map((p) => p.id));
 
   for (const place of places) {
-    // Citation counts within this place's description.
+    // Citation counts within this place's setting.
     const citationCounts = new Map<string, number>();
-    for (const match of place.description.matchAll(CITATION_RE)) {
+    for (const match of place.setting.matchAll(CITATION_RE)) {
       const cited = match[1];
       citationCounts.set(cited, (citationCounts.get(cited) ?? 0) + 1);
     }
 
-    // `optional`: an item may go uncited (it is there, unnoticed); a
-    // condition is always part of what anyone here perceives.
-    const localReferences = new Map<string, { optional: boolean }>();
-    for (const item of place.items) {
-      localReferences.set(item.id, { optional: true });
-    }
-    for (const condition of place.conditions) {
-      if (condition.id !== undefined) {
-        localReferences.set(condition.id, { optional: false });
-      }
-    }
+    const itemsById = new Map(place.items.map((i) => [i.id, i]));
+    const conditionIds = new Set(
+      place.conditions
+        .map((c) => c.id)
+        .filter((id): id is string => id !== undefined)
+    );
 
     // Where can you go from here — cited by TARGET place id, never by the
     // connection's own id. A target reachable both through a concealed and an
@@ -830,36 +908,72 @@ export function validateModuleReferences(module: {
     }
     for (const target of visibleTargets) hiddenTargets.delete(target);
 
-    // Every citation must resolve to a local item/condition or a connection
-    // target of THIS place.
+    // Every citation must resolve to a local item (a fixture) or a
+    // connection target of THIS place. Conditions are state, never cited.
     for (const cited of citationCounts.keys()) {
-      if (localReferences.has(cited) || visibleTargets.has(cited)) continue;
-      if (hiddenTargets.has(cited)) {
+      if (itemsById.has(cited) || visibleTargets.has(cited)) continue;
+      if (conditionIds.has(cited)) {
         problems.push(
-          `${place.id}: description cites [${cited}], reached only through a concealed connection (the prose would reveal it)`
+          `${place.id}: setting cites [${cited}], a condition — conditions are not cited (they are state, listed on their own)`
+        );
+      } else if (hiddenTargets.has(cited)) {
+        problems.push(
+          `${place.id}: setting cites [${cited}], reached only through a concealed connection (the prose would reveal it)`
         );
       } else if (placeIds.has(cited)) {
         problems.push(
-          `${place.id}: description cites [${cited}], a place this file has no connection to`
+          `${place.id}: setting cites [${cited}], a place this file has no connection to`
         );
       } else {
         problems.push(
-          `${place.id}: description cites [${cited}], which is not declared in this file's references`
+          `${place.id}: setting cites [${cited}], which is not declared in this file's references`
         );
       }
     }
 
-    // Items at most once; conditions exactly once.
-    for (const [refId, { optional }] of localReferences) {
-      const count = citationCounts.get(refId) ?? 0;
-      if (count === 0 && !optional) {
+    // Every item is exactly one of: a fixture (cited once, no placement, no
+    // container), placed in plain view (placement), or in a container
+    // (placement + container).
+    for (const item of place.items) {
+      const count = citationCounts.get(item.id) ?? 0;
+      if (count > 1) {
         problems.push(
-          `${place.id}: reference "${refId}" is never cited in the description (every visible reference must appear exactly once as [${refId}])`
+          `${place.id}: item "${item.id}" is cited ${count} times (expected at most once)`
         );
-      } else if (count > 1) {
+      }
+      if (count > 0 && (item.placement || item.container)) {
         problems.push(
-          `${place.id}: reference "${refId}" is cited ${count} times (expected exactly once)`
+          `${place.id}: item "${item.id}" is cited in the setting and has a placement/container — a fixture has neither; a loose thing is not cited`
         );
+      }
+      if (count === 0 && !item.placement) {
+        problems.push(
+          `${place.id}: item "${item.id}" is neither cited in the setting nor given a placement — say where it is`
+        );
+      }
+      if (item.container !== undefined) {
+        if (item.container === item.id) {
+          problems.push(
+            `${place.id}: item "${item.id}" names itself as its container`
+          );
+        } else if (!itemsById.has(item.container)) {
+          problems.push(
+            `${place.id}: item "${item.id}": container "${item.container}" is not an item of this place`
+          );
+        } else {
+          const seen = new Set([item.id]);
+          let next: string | undefined = item.container;
+          while (next !== undefined) {
+            if (seen.has(next)) {
+              problems.push(
+                `${place.id}: item "${item.id}": container chain forms a cycle`
+              );
+              break;
+            }
+            seen.add(next);
+            next = itemsById.get(next)?.container;
+          }
+        }
       }
     }
 
@@ -869,7 +983,7 @@ export function validateModuleReferences(module: {
       const count = citationCounts.get(target) ?? 0;
       if (count === 0) {
         problems.push(
-          `${place.id}: connection target "${target}" is never cited in the description (the prose must say where you can go, as [${target}])`
+          `${place.id}: connection target "${target}" is never cited in the setting (the prose must say where you can go, as [${target}])`
         );
       } else if (count > 1) {
         problems.push(

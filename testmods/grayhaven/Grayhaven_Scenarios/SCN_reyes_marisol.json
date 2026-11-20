@@ -1,8 +1,13 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "id": "SCN_reyes_marisol",
   "name": "Marisol 的卧室",
-  "description": "一间收拾得一丝不苟的小卧室:床 [item.reyes_marisol.bed] 罩绷得平整,只有靠门这一侧的枕头压出了印子;窗帘洗得发白,拉开就是朝后巷的那扇窗 [item.reyes_marisol.lane_window]——夜里巷子里过一辆自行车,她躺着都听得出来是谁的车。梳妆台 [item.reyes_marisol.vanity] 上的东西按大小排成一列,只有一把木背梳子 [item.reyes_marisol.hairbrush] 梳齿里绞着几根白发,显得不那么听话。床头柜上立着一张相框 [item.reyes_marisol.rafael_photo]——Rafael 站在渔船甲板上眯眼笑着,相框每天都被擦过;挨着它是一盏布罩床头灯 [item.reyes_marisol.bedside_lamp] 和一只上发条的闹钟 [item.reyes_marisol.alarm_clock],铃针每晚都拨到五点四十。衣柜 [item.reyes_marisol.wardrobe] 里她自己的衣服只占了一半,最里头还挂着一件不是她尺码的呢外套。柜子最上层放着一只针线盒 [item.reyes_marisol.sewing_box],里面除了线轴还压着几张按月份叠好的收据;盒盖底下压着一叠信纸、信封和一卷邮票 [item.reyes_marisol.letter_set],最上面那一封已经写好了地址,还没封口。整间屋子唯一的门通回客厅 [SCN_reyes_living],门轴上了油,推起来没有声音。",
+  "coordinates": {
+    "x": 94,
+    "y": -326,
+    "z": 13
+  },
+  "setting": "一间收拾得一丝不苟的小卧室:床 [item.reyes_marisol.bed] 罩绷得平整,只有靠门这一侧的枕头压出了印子;窗帘洗得发白,拉开就是朝后巷的那扇窗 [item.reyes_marisol.lane_window]——夜里巷子里过一辆自行车,她躺着都听得出来是谁的车。梳妆台 [item.reyes_marisol.vanity] 上的东西按大小排成一列,只有一把木背梳子 [item.reyes_marisol.hairbrush] 梳齿里绞着几根白发,显得不那么听话。床头柜上立着一张相框 [item.reyes_marisol.rafael_photo]——Rafael 站在渔船甲板上眯眼笑着,相框每天都被擦过;挨着它是一盏布罩床头灯 [item.reyes_marisol.bedside_lamp] 和一只上发条的闹钟 [item.reyes_marisol.alarm_clock],铃针每晚都拨到五点四十。衣柜 [item.reyes_marisol.wardrobe] 里她自己的衣服只占了一半,最里头还挂着一件不是她尺码的呢外套。柜子最上层放着一只针线盒 [item.reyes_marisol.sewing_box],里面除了线轴还压着几张按月份叠好的收据;盒盖底下压着一叠信纸、信封和一卷邮票 [item.reyes_marisol.letter_set],最上面那一封已经写好了地址,还没封口。整间屋子唯一的门通回客厅 [SCN_reyes_living],门轴上了油,推起来没有声音。",
   "parentLocationId": "reyes_house",
   "indoor": true,
   "references": {

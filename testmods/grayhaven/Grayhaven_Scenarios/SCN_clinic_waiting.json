@@ -1,8 +1,13 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "id": "SCN_clinic_waiting",
   "name": "诊所·候诊室",
-  "description": "候诊室不大,却是主街南口又一个闲聊的去处:靠墙两条长椅[item.clinic_waiting.benches],坐垫凹陷的位置说明常客都有各自的座,长椅一端摆着个旧木箱[item.clinic_waiting.toy_box],装着掉漆的玩具车和缺角的积木,是留给候诊孩子的老古董;中间的茶几上一摞旧杂志[item.clinic_waiting.magazine_stack],最新的一本也是去年的。Susan 的护士台[item.clinic_waiting.nurse_desk]正对着门,台面一尘不染,台上摊着预约簿[item.clinic_waiting.appointment_book],她的圆体字排得像药品标签一样清楚;旁边那台黑色转盘电话[item.clinic_waiting.telephone]是全镇叫医生的唯一号码,进药、叫车、跟 Fort Anne 的药房对单子,都从这只听筒里出去。台子背后立着按姓氏分格的病历柜[item.clinic_waiting.file_cabinet],抽屉推起来吱一声,这镇上大半个人一生的纸都在里面。墙上的体检宣传画[item.clinic_waiting.health_poster]从六十年代挂到今天,旁边的软木告示板[item.clinic_waiting.bulletin]钉着当季的疫苗接种日程和几个用粗笔写下的电话号码;告示板下的挂钟[item.clinic_waiting.wall_clock]走得比谁都准,是 Susan 每天早上第一件要对的东西。门边的衣帽架[item.clinic_waiting.coat_rack]底下带个伞桶,雾天里总在滴水;墙角的冷水机[item.clinic_waiting.water_cooler]旁摞着一叠尖底纸杯,孩子们最爱按那个按钮。临街门通向主街[ROAD_main_street],门楣上的铜铃[item.clinic_waiting.door_bell]一响,楼上楼下都知道有人来了;诊室的门[SCN_clinic_exam]关着时,候诊的人自觉压低声音;楼梯口挂着「私人」的小木牌,通向楼上 Weaver 医生的住处[SCN_clinic_upstairs]。",
+  "coordinates": {
+    "x": -14,
+    "y": -371,
+    "z": 13
+  },
+  "setting": "候诊室不大,却是主街南口又一个闲聊的去处:靠墙两条长椅[item.clinic_waiting.benches],坐垫凹陷的位置说明常客都有各自的座,长椅一端摆着个旧木箱[item.clinic_waiting.toy_box],装着掉漆的玩具车和缺角的积木,是留给候诊孩子的老古董;中间的茶几上一摞旧杂志[item.clinic_waiting.magazine_stack],最新的一本也是去年的。Susan 的护士台[item.clinic_waiting.nurse_desk]正对着门,台面一尘不染,台上摊着预约簿[item.clinic_waiting.appointment_book],她的圆体字排得像药品标签一样清楚;旁边那台黑色转盘电话[item.clinic_waiting.telephone]是全镇叫医生的唯一号码,进药、叫车、跟 Fort Anne 的药房对单子,都从这只听筒里出去。台子背后立着按姓氏分格的病历柜[item.clinic_waiting.file_cabinet],抽屉推起来吱一声,这镇上大半个人一生的纸都在里面。墙上的体检宣传画[item.clinic_waiting.health_poster]从六十年代挂到今天,旁边的软木告示板[item.clinic_waiting.bulletin]钉着当季的疫苗接种日程和几个用粗笔写下的电话号码;告示板下的挂钟[item.clinic_waiting.wall_clock]走得比谁都准,是 Susan 每天早上第一件要对的东西。门边的衣帽架[item.clinic_waiting.coat_rack]底下带个伞桶,雾天里总在滴水;墙角的冷水机[item.clinic_waiting.water_cooler]旁摞着一叠尖底纸杯,孩子们最爱按那个按钮。临街门通向主街[ROAD_main_street],门楣上的铜铃[item.clinic_waiting.door_bell]一响,楼上楼下都知道有人来了;诊室的门[SCN_clinic_exam]关着时,候诊的人自觉压低声音;楼梯口挂着「私人」的小木牌,通向楼上 Weaver 医生的住处[SCN_clinic_upstairs]。",
   "parentLocationId": "clinic",
   "indoor": true,
   "references": {

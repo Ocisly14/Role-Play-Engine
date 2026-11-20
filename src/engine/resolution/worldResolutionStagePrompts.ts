@@ -21,6 +21,12 @@ import type {
   ResolvedCheck,
   SkillRollRecord,
 } from "../actions/types.js";
+import {
+  CHECK_NEED_RULE,
+  SURROUNDINGS_MEANING,
+  TALK_DURATION_RULE,
+  renderEndingModes,
+} from "../rules/ruleTerms.js";
 import { catalogSkillName } from "../rules/skillCatalog.js";
 import {
   buildSkillCatalogPrompt,
@@ -227,7 +233,7 @@ ${tools} Call it once, with the complete array; a phase with nothing to report s
     case "endings":
       return `${head}
 
-Decide each ending action's objective result or absence of a new result. There are three closed modes: \`outcome\` for a new objective result; \`pure_speech\` for an unchecked action consisting only of its \`utterance\`; \`no_change\` for an action with no new result, no check and no utterance. A check always needs \`outcome\`, consistent with the supplied verdict. Its words, if any, still get their own speech row later.
+Decide each ending action's objective result or absence of a new result. There are three closed modes: ${renderEndingModes()}. An \`outcome\` for a checked attempt is consistent with the supplied verdict. Its words, if any, still get their own speech row later.
 
 Routine observation, listening or waiting does not create a retrospective result. Events reach their perceivers through occurrences when they happen and are rendered then. At the observer's ending, use \`no_change\` if nothing new needs settling. Do not summarize the interval, repeat events already delivered, or claim "no new information" or "nobody spoke". If the command also caused an actual change (sitting down, moving an item), use \`outcome\` for only that supported change; do not append a report of other people's activity. A checked search may expose a supported clue: state the objective evidence and route it in occurrences, leaving its interpretation to the character.
 
@@ -247,7 +253,7 @@ You set how long an action should take and how hard it is. You do not set whethe
 
 ### Action before speech
 
-Judge the attempt itself. Words alone take one minute. If the actor also does something observable, assess its duration, and deliver any structured utterance when the action ends. Persuading, questioning, deceiving, intimidating, negotiating and reading someone's intent use neither \`check\` nor \`opposedBy\`, regardless of the declared skill. An independent task such as lockpicking, first aid, combat or learned-language comprehension can still be checked when the declared skill applies and success is uncertain. Add \`opposedBy\` only for established active resistance to that checked task. Words quoted in \`description\` do not supply an \`utterance\`. Code rolls after this phase and supplies the result at settlement.`;
+Judge the attempt itself. ${TALK_DURATION_RULE} Any structured utterance is delivered when the action ends. Add \`opposedBy\` only for established active resistance to a checked task. Words quoted in \`description\` do not supply an \`utterance\`. Code rolls after this phase and supplies the result at settlement.`;
     case "characterChanges":
       return `${head}
 
@@ -332,7 +338,7 @@ You have two functions, each a session of its own. The START JUDGEMENT is one ph
  *  itself — the success ladder and the tie-to-defender rule live in code.
  *  `fumble` goes: it is `actor.successLevel === "fumble"`, already visible.
  *  Roll ids are bookkeeping and mean nothing to the reader. */
-function diceRollForPrompt(check: ResolvedCheck) {
+export function diceRollForPrompt(check: ResolvedCheck) {
   const strip = ({ rollId: _, ...record }: SkillRollRecord) => record;
   return {
     actor: strip(check.actor),
@@ -350,19 +356,20 @@ function diceRollForPrompt(check: ResolvedCheck) {
   };
 }
 
-function commandForPrompt(command: ActionCommand): Record<string, unknown> {
+export function commandForPrompt(
+  command: ActionCommand
+): Record<string, unknown> {
   const { commandId: _commandId, declaredSkillId, ...rest } = command;
   const skill = catalogSkillName(declaredSkillId ?? "");
   return { ...rest, ...(skill ? { declaredSkillId: skill } : {}) };
 }
 
 /**
- * The skeleton graph in the module's own authoring shape: each node is its
- * prose description plus a `connections:` reference line — the same
- * description-and-references format as the v2 place files and the Tier-2
- * snapshots, so the Engine reads one format everywhere. Junction/road prose
- * is the authored text and already cites its `[connection.*]` ids; the reference
- * line resolves each id to its (lifted) target and travel time.
+ * The skeleton graph as topology only: each node by id and name, plus a
+ * `connections:` line resolving each connection id to its (lifted) target and
+ * travel time. The node prose used to ride along — 88% of the section, two
+ * thirds of a Decisions request — and nothing read it: the involved places
+ * carry their full text under Detailed Places.
  */
 export function renderWorldGraph(graph: WorldGraph): string {
   const edgesByFrom = new Map<string, WorldGraph["edges"]>();
@@ -379,13 +386,8 @@ export function renderWorldGraph(graph: WorldGraph): string {
         : []),
       ...(edge.concealed ? ["(concealed)"] : []),
     ].join(" ");
-  const nodeLines = (
-    id: string,
-    name: string,
-    description: string | undefined
-  ): string[] => {
-    const prose = description?.replace(/\s*\n\s*/g, " ").trim();
-    const head = `- ${id} (${name})${prose ? `: ${prose}` : ""}`;
+  const nodeLines = (id: string, name: string): string[] => {
+    const head = `- ${id} (${name})`;
     const edges = edgesByFrom.get(id);
     if (!edges) return [head];
     return [head, `  connections: ${edges.map(renderEdge).join("; ")}`];
@@ -396,7 +398,7 @@ export function renderWorldGraph(graph: WorldGraph): string {
     if (nodes.length === 0) continue;
     lines.push(kind === "scene" ? "Outdoor node scenes:" : "Roads:");
     for (const node of nodes) {
-      lines.push(...nodeLines(node.id, node.name, node.description));
+      lines.push(...nodeLines(node.id, node.name));
     }
   }
   return lines.join("\n");
@@ -480,7 +482,7 @@ export function renderContextSegments(context: EngineResolutionContext): {
   const stable = [
     "# Tick Resolution Request",
     section("World Invariants", context.rules.worldInvariants),
-    `## World Graph (skeleton: macro locations + geography, each as description + connection references; interior scenes appear only under Detailed Places; the [connectionId] references are what connectionBlock/connectionConcealed take)\n${renderWorldGraph(context.state.graph)}`,
+    `## World Graph (skeleton: geography nodes by id and name, each with its connection references; interior scenes and every place's text appear only under Detailed Places; the [connectionId] references are what connectionBlock/connectionConcealed take)\n${renderWorldGraph(context.state.graph)}`,
   ].join("\n\n");
 
   const volatile = [
@@ -489,7 +491,7 @@ export function renderContextSegments(context: EngineResolutionContext): {
       context.state.blockedEdges
     ),
     section(
-      "Detailed Places (the places involved this tick; an item flagged `unnoticed` is there but cited by no description, and a `concealed` exit is physically obscured — characters perceive neither until they notice or find it)",
+      "Detailed Places (the places involved this tick; each place's `setting` is the place itself and cites only its fixtures and exits; a loose item carries its `placement`; an item flagged `unnoticed` sits in a `container` and is out of plain view, and a `concealed` exit is physically obscured — characters perceive neither until they notice or find it)",
       context.state.places
     ),
     section(
@@ -501,6 +503,14 @@ export function renderContextSegments(context: EngineResolutionContext): {
       context.state.items
     ),
     section("Characters", context.state.characters),
+    ...(context.state.surroundings
+      ? [
+          section(
+            `Surroundings (for perception. ${SURROUNDINGS_MEANING})`,
+            context.state.surroundings
+          ),
+        ]
+      : []),
     section("Trigger", {
       ...context.trigger,
       resolve: {
@@ -508,7 +518,7 @@ export function renderContextSegments(context: EngineResolutionContext): {
         // Phase-neutral: what each list MEANS, never which call answers it.
         // The phase instruction that follows the context names the one list
         // this request is about and demands it.
-        note: "`starting` and `ending` are the ids this tick asks about, and they are the only ones. `stillRunning` owes no ending entry. These actions stay active; a settlement may record supported intermediate effects without completing their pending steps. Every id under `starting` is an action that begins this minute — its time has not been spent, so it has no result yet. Every id under `ending` is an action whose time is up: choose outcome for a new objective result, pure_speech for words alone, or no_change when an unchecked, non-speaking action ends without a new result. Ordinary observation or waiting needs no retrospective summary. `endingWithUtterance` lists the ending actions whose command carries an `utterance`: code attaches those exact words verbatim wherever they are delivered — never restate them; what is written about such a moment is what the words were NOT. `startingWithUtterance` lists starting actions whose command carries an `utterance`: those words are NOT said yet — they are delivered when the action ends (one minute for plain talk, the attempt's own clock for a command that also does something), when the id returns under `endingWithUtterance`. A `diceRoll` on an action row is what code rolled, and it is INPUT — judge consistently with it, never contradict it. `startingWithoutSkill` lists actions without a skill in the current catalog. These actions take no check. `replaced` lists endings the actor themselves cut short by issuing a new command this tick (the separately submitted successor with a matching `replacesActionId`): account for what was done up to this minute and stop there — never narrate how it would have finished, and never let it and its successor both happen in full.",
+        note: `\`starting\` and \`ending\` are the ids this tick asks about, and they are the only ones. \`stillRunning\` owes no ending entry. These actions stay active; a settlement may record supported intermediate effects without completing their pending steps. Every id under \`starting\` is an action that begins this minute — its time has not been spent, so it has no result yet. Every id under \`ending\` is an action whose time is up, ended in one of three modes: ${renderEndingModes()}. Ordinary observation or waiting needs no retrospective summary. \`endingWithUtterance\` lists the ending actions whose command carries an \`utterance\`: code attaches those exact words verbatim wherever they are delivered — never restate them; what is written about such a moment is what the words were NOT. \`startingWithUtterance\` lists starting actions whose command carries an \`utterance\`: those words are NOT said yet — they are delivered when the action ends (${TALK_DURATION_RULE}), when the id returns under \`endingWithUtterance\`. A \`diceRoll\` on an action row is what code rolled, and it is INPUT — judge consistently with it, never contradict it. \`startingWithoutSkill\` lists actions without a skill in the current catalog. These actions take no check. \`replaced\` lists endings the actor themselves cut short by issuing a new command this tick (the separately submitted successor with a matching \`replacesActionId\`): account for what was done up to this minute and stop there — never narrate how it would have finished, and never let it and its successor both happen in full.`,
       },
     }),
     section("Tick", context.tick),
@@ -618,12 +628,11 @@ function startObligationRows(
       declaredSkillId: skill ?? null,
       proposedDurationTicks: command?.proposedDurationTicks,
       timing: spoken
-        ? "Judge the attempt, not the sentence. Nothing but these words: resolvedDurationTicks 1, no check. Also does something observable: assess its duration. Check only an independently uncertain task that the declared skill covers. The words land when the action ends. If deliberate travel: movement.route, omit duration."
+        ? `Judge the attempt, not the sentence. Nothing but these words: resolvedDurationTicks 1, no check. Also does something observable: assess its duration. ${CHECK_NEED_RULE} The words land when the action ends. If deliberate travel: movement.route, omit duration.`
         : "If non-travel: resolvedDurationTicks is REQUIRED, integer >= 1; assess the proposed duration. If deliberate travel: movement.route, omit duration. Quoted words in description are not an utterance.",
       ...(skill
         ? {
-            check:
-              "A skill was declared: expect a check only for an independently uncertain task the skill covers. Interpersonal attempts omit check and opposedBy. Name supported active resistance to a checked task in opposedBy.",
+            check: `A skill was declared. ${CHECK_NEED_RULE} Name supported active resistance to a checked task in opposedBy.`,
           }
         : {}),
     };
@@ -733,9 +742,9 @@ function phaseDemand(phase: ResolutionPhase): string {
   const call = `Call ${toolRef(phase)} now with ${fieldRef(phase)}`;
   switch (phase) {
     case "endings":
-      return `${call}: exactly one decision for every ending id. \`mode: "outcome"\` with the new objective result; \`mode: "pure_speech"\` without outcome for unchecked words alone; or \`mode: "no_change"\` without outcome when there is no new result, check or utterance. Ordinary observation/waiting ends without a recap of personal experience. Do not reconstruct the interval or execute other active commands. For mixed commands, settle only actual new changes. Roll any actual damage first with real formulas.`;
+      return `${call}: exactly one decision for every ending id. one of ${renderEndingModes()}; only \`outcome\` carries an outcome. Ordinary observation/waiting ends without a recap of personal experience. Do not reconstruct the interval or execute other active commands. For mixed commands, settle only actual new changes. Roll any actual damage first with real formulas.`;
     case "starts":
-      return `${call}: exactly one entry for every id listed under \`starting\` above, and no other id. A non-travel action gets \`resolvedDurationTicks\` in whole minutes, at least 1 — 1 for plain talk, the attempt's minutes for a command that speaks while it does something; a travel action gets \`movement\` with the route the actor stated (and \`vehicleId\` when they drive) and no duration, because code derives travel time from the route. A \`check\` for uncertain tasks covered by the declared skill. Interpersonal attempts and ids under \`startingWithoutSkill\` omit \`check\` and \`opposedBy\`. No outcome and no speech: nothing has happened yet.`;
+      return `${call}: exactly one entry for every id listed under \`starting\` above, and no other id. A non-travel action gets \`resolvedDurationTicks\` in whole minutes, at least 1 (${TALK_DURATION_RULE}); a travel action gets \`movement\` with the route the actor stated (and \`vehicleId\` when they drive) and no duration, because code derives travel time from the route. ${CHECK_NEED_RULE} Ids under \`startingWithoutSkill\` omit \`check\` and \`opposedBy\`. No outcome and no speech: nothing has happened yet.`;
     case "characterChanges":
       return `${call}: one row for every persistent change this tick's actions actually made to a character, each naming its \`sourceActionId\` and \`characterId\`. Only state that CHANGED — a moment worth describing that leaves nothing behind is not a change and is not written here. Nothing changed is \`[]\`.`;
     case "itemChanges":
@@ -743,7 +752,7 @@ function phaseDemand(phase: ResolutionPhase): string {
     case "sceneChanges":
       return `${call}: one row for every persistent change this tick's actions made to a place or a passage, each naming its \`sourceActionId\` and \`sceneId\`. A \`passBlockedConnectionId\` on an accepted start already got that one walker through and leaves the passage shut for everybody else — so it is never paired with \`connectionBlock {blocked:false}\` for the same passage, which says the obstacle itself is gone. Nothing changed is \`[]\`.`;
     case "occurrences":
-      return `${call}: one \`speech:false\` row citing every ending decided \`mode: "outcome"\` above, and one \`speech:true\` row for EVERY id under \`endingWithUtterance\`, including endings with an outcome. An action that both spoke and did something needs both rows. Never a speech row for an id that is starting this tick — its words are delivered only when it ends under \`endingWithUtterance\`. Each row states one objective fact at full detail and lists in \`perceivers\` every character the evidence actually reached, with that character's \`clarity\`; write \`content\` last, after the row's ids and perceivers are settled. Complete every required coverage pair listed above. Never cite a no_change ending, and never add an interval recap for an observer.`;
+      return `${call}: one \`speech:false\` row citing every ending decided \`mode: "outcome"\` above, and one \`speech:true\` row for EVERY id under \`endingWithUtterance\`, including endings with an outcome. An action that both spoke and did something needs both rows. Never a speech row for an id that is starting this tick — its words are delivered only when it ends under \`endingWithUtterance\`. Each row states one objective fact at full detail and lists in \`perceivers\` every character the evidence actually reached, with that character's \`sight\` and \`hearing\`; write \`content\` last, after the row's ids and perceivers are settled. Complete every required coverage pair listed above. Never cite a no_change ending, and never add an interval recap for an observer.`;
   }
 }
 

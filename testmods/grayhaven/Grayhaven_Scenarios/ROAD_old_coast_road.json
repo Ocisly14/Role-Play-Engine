@@ -1,8 +1,8 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "id": "ROAD_old_coast_road",
   "name": "旧海岸公路",
-  "description": "高速改线前的旧海岸公路,如今路面开裂,黄色中线褪成了灰白,步行二十五分钟。南头接着主街北口 [SCN_main_north],向北的尽头是汽车旅馆的院子 [SCN_motel]。出镇不远,路东一间钉了木板的路边货摊 [item.old_coast_road.shuttered_stand] 塌了半边顶,招牌上「鲜鱼 · 樱桃」的字还认得出来;再往北,路肩上立着一根水泥里程碑 [item.old_coast_road.mile_post],刻的英里数是照着改线前的路算的,如今哪儿也对不上。中段路东那块高木架广告牌 [item.old_coast_road.motel_billboard] 是旅馆当年立的,油漆晒得只剩个轮廓;快到旅馆时,野草里歪着一块从没竖起来过的绿底高速指示牌 [item.old_coast_road.freeway_sign]——那条高速最终没有从这儿过。整条路的西侧路肩下走着一道排水沟 [item.old_coast_road.drainage_ditch],雨季过水,平时半干。偶尔有一辆车驶过,引擎声在雾里传得很远,然后是更长的安静。",
+  "setting": "高速改线前的旧海岸公路,如今路面开裂,黄色中线褪成了灰白,步行二十五分钟。南头接着主街北口 [SCN_main_north],向北的尽头是汽车旅馆的院子 [SCN_motel]。出镇不远,路东一间钉了木板的路边货摊 [item.old_coast_road.shuttered_stand] 塌了半边顶,招牌上「鲜鱼 · 樱桃」的字还认得出来;再往北,路肩上立着一根水泥里程碑 [item.old_coast_road.mile_post],刻的英里数是照着改线前的路算的,如今哪儿也对不上。中段路东那块高木架广告牌 [item.old_coast_road.motel_billboard] 是旅馆当年立的,油漆晒得只剩个轮廓;快到旅馆时,野草里歪着一块从没竖起来过的绿底高速指示牌 [item.old_coast_road.freeway_sign]——那条高速最终没有从这儿过。整条路的西侧路肩下走着一道排水沟 [item.old_coast_road.drainage_ditch],雨季过水,平时半干。偶尔有一辆车驶过,引擎声在雾里传得很远,然后是更长的安静。",
   "parentLocationId": "OUTDOOR",
   "travelTimeMinutes": 25,
   "references": {

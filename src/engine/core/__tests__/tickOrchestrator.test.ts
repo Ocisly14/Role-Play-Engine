@@ -112,7 +112,9 @@ function stubResolve(durationTicks = 2) {
         raw.occurrences.push({
           actionIds: [actionId],
           speech: false,
-          perceivers: [{ characterId: "npc_1", clarity: "full" }],
+          perceivers: [
+            { characterId: "npc_1", sight: "clear", hearing: "clear" },
+          ],
           content: "stub fact",
         });
       };
@@ -436,7 +438,7 @@ describe("an ended action always leaves something to perceive", () => {
     expect(occurrences[0].sourceActionIds).toEqual([receipt.actionId]);
     // The actor perceives their own failure; nobody else necessarily could.
     expect(occurrences[0].perceivers).toEqual([
-      { characterId: "npc_1", clarity: "full" },
+      { characterId: "npc_1", sight: "clear", hearing: "clear" },
     ]);
     expect(occurrences[0].facts[0].type).toBe("action_result");
     expect(occurrences[0].facts[0].content).toContain("actor is dead");

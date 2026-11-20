@@ -1,7 +1,6 @@
-// Schema v2 place files: parse guards, v1 rejection, per-kind derivation
-// (SCN/ROAD — junctions are gone: geography nodes are top-level scenes), and
-// module-wide reference integrity. The loader supports
-// ONLY v2 — the whole migration strategy for v1 modules is the error message.
+// Schema v3 place files: parse guards, old-version rejection, per-kind
+// derivation (SCN/ROAD — junctions are gone: geography nodes are top-level
+// scenes), and module-wide reference integrity. The loader supports ONLY v3.
 
 import {
   ModuleSchemaError,
@@ -20,13 +19,13 @@ import { describe, expect, it } from "vitest";
 
 function rawScene(overrides: Record<string, unknown> = {}) {
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     id: "SCN_library",
     name: "Town Library",
-    description:
+    setting:
       "Dusty archives fill the reading room [item.library.archives]. " +
       "A stairway rises to the stacks [SCN_library_stacks]. " +
-      "The unlit back row is hard to examine [cond.library.dim].",
+      "The unlit back row is hard to examine.",
     parentLocationId: "LOC_downtown",
     references: {
       items: [
@@ -59,10 +58,10 @@ function rawScene(overrides: Record<string, unknown> = {}) {
 /** A top-level node scene (street corner) — no parentLocationId. */
 function rawNodeScene(overrides: Record<string, unknown> = {}) {
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     id: "SCN_main_north",
     name: "North Corner",
-    description:
+    setting:
       "The library door faces the corner [SCN_library]. " +
       "A cellar hatch hides under leaves.",
     references: {
@@ -81,10 +80,10 @@ function rawNodeScene(overrides: Record<string, unknown> = {}) {
 
 function rawRoad(overrides: Record<string, unknown> = {}) {
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     id: "ROAD_main_street",
     name: "Main Street",
-    description:
+    setting:
       "The street runs from the north corner [SCN_main_north] " +
       "to the south corner [SCN_main_south], past the diner " +
       "[SCN_diner].",
@@ -119,7 +118,7 @@ function roadWithConnections(
   overrides: Record<string, unknown> = {}
 ) {
   return rawRoad({
-    description: "A bare stretch of road.",
+    setting: "A bare stretch of road.",
     references: { connections },
     ...overrides,
   });
@@ -143,7 +142,7 @@ function builtModule(
       rawScene({
         id: "SCN_library_stacks",
         name: "Stacks",
-        description: "Rows of shelves, and the stairway down [SCN_library].",
+        setting: "Rows of shelves, and the stairway down [SCN_library].",
         references: {
           connections: [
             { id: "connection.stacks.down", targetId: "SCN_library" },
@@ -165,7 +164,7 @@ function builtModule(
       rawScene({
         id: "SCN_cellar",
         name: "Cellar",
-        description: "A dirt-floored cellar.",
+        setting: "A dirt-floored cellar.",
         references: {},
       })
     )
@@ -205,15 +204,87 @@ describe("parsePlaceFileV2", () => {
     const error = expectSchemaError(() => parsePlaceFileV2("SCN_old", v1));
     expect(error.entryId).toBe("SCN_old");
     expect(error.message).toContain("SCN_old");
-    expect(error.message).toContain("v1 不再支持");
+    expect(error.message).toContain("不再支持");
     expect(error.message).toContain("DYNAMIC_WORLD_SCENE_SCHEMA.md");
   });
 
-  it("rejects schemaVersion values other than 2", () => {
+  it("rejects schemaVersion 2 — v3 only", () => {
     const error = expectSchemaError(() =>
-      parsePlaceFileV2("SCN_v3", rawScene({ schemaVersion: 3 }))
+      parsePlaceFileV2("SCN_a", rawScene({ schemaVersion: 2 }))
     );
-    expect(error.problems[0]).toContain("v1 不再支持");
+    expect(error.problems[0]).toContain("schemaVersion: v2 不再支持");
+  });
+
+  it("rejects a place carrying description instead of setting", () => {
+    const error = expectSchemaError(() =>
+      parsePlaceFileV2("SCN_a", rawScene({ description: "old prose" }))
+    );
+    expect(error.problems.join("\n")).toMatch(/"setting", not "description"/);
+  });
+
+  it("copies setting, placement and container onto the built scene", () => {
+    const scene = buildSceneV2(
+      parsePlaceFileV2(
+        "SCN_library",
+        rawScene({
+          references: {
+            ...rawScene().references,
+            items: [
+              ...rawScene().references.items,
+              { id: "item.library.desk", name: "Desk", placement: "by the door" },
+              {
+                id: "item.library.ledger",
+                name: "Ledger",
+                placement: "in the desk drawer",
+                container: "item.library.desk",
+              },
+            ],
+          },
+        })
+      )
+    );
+    expect(scene.setting).toContain("[item.library.archives]");
+    expect(scene.items.find((i) => i.id === "item.library.ledger")).toMatchObject({
+      placement: "in the desk drawer",
+      container: "item.library.desk",
+    });
+  });
+
+  it("keeps a whole quantity above one and rejects a fractional or zero one", () => {
+    const withQty = (quantity: unknown) =>
+      rawScene({
+        references: {
+          ...rawScene().references,
+          items: [
+            ...rawScene().references.items,
+            { id: "item.library.leaflets", name: "Leaflets", placement: "on the desk", quantity },
+          ],
+        },
+      });
+    expect(
+      parsePlaceFileV2("SCN_library", withQty(12)).references.items[1].quantity
+    ).toBe(12);
+    for (const bad of [0, 2.5]) {
+      expect(
+        expectSchemaError(() => parsePlaceFileV2("SCN_library", withQty(bad))).problems.join("\n")
+      ).toContain("quantity: must be a whole number >= 1");
+    }
+  });
+
+  it("normalizes a placement like a spot (brackets stripped, spaces folded)", () => {
+    const parsed = parsePlaceFileV2(
+      "SCN_library",
+      rawScene({
+        references: {
+          ...rawScene().references,
+          items: [
+            ...rawScene().references.items,
+            { id: "item.library.jar", name: "Jar", placement: " beside  the [desk] " },
+          ],
+        },
+      })
+    );
+    expect(parsed.references.items[1].placement).toBe("beside the desk");
   });
 
   it("rejects a JUNC_* file — geography nodes are top-level scenes now", () => {
@@ -501,7 +572,7 @@ describe("buildRoadV2", () => {
     (road.references as Record<string, unknown>).items = [
       { id: "item.main_street.lamp", name: "Street lamp", position: 0.25 },
     ];
-    road.description =
+    road.setting =
       "The street runs from the north corner [SCN_main_north] " +
       "to the south corner [SCN_main_south], past the diner [SCN_diner]. " +
       "A lamp leans at the corner [item.main_street.lamp].";
@@ -563,7 +634,7 @@ describe("validateModuleReferences", () => {
     const module = builtModule((m) => {
       const cellar = m.scenes.get("SCN_cellar");
       if (!cellar) throw new Error("fixture broke");
-      cellar.description =
+      cellar.setting =
         "A dirt-floored cellar. A lamp [item.library.archives].";
       cellar.items = [{ id: "item.library.archives", name: "Lamp" }];
     });
@@ -573,13 +644,79 @@ describe("validateModuleReferences", () => {
     );
   });
 
-  it("accepts an item that is never cited — it is there, not yet noticed", () => {
+  it("rejects an uncited item with no placement — say where it is", () => {
     const module = builtModule((m) => {
       const cellar = m.scenes.get("SCN_cellar");
       if (!cellar) throw new Error("fixture broke");
       cellar.items = [{ id: "item.cellar.crate", name: "Crate" }];
     });
+    const error = expectSchemaError(() => validateModuleReferences(module));
+    expect(error.problems.join("\n")).toContain(
+      "neither cited in the setting nor given a placement"
+    );
+  });
+
+  it("accepts a placed item and a contained item", () => {
+    const module = builtModule((m) => {
+      const cellar = m.scenes.get("SCN_cellar");
+      if (!cellar) throw new Error("fixture broke");
+      cellar.items = [
+        { id: "item.cellar.crate", name: "Crate", placement: "against the wall" },
+        {
+          id: "item.cellar.bills",
+          name: "Bills",
+          placement: "under the crate's lid",
+          container: "item.cellar.crate",
+        },
+      ];
+    });
     expect(() => validateModuleReferences(module)).not.toThrow();
+  });
+
+  it("rejects a cited item that also has a placement", () => {
+    const module = builtModule((m) => {
+      const library = m.scenes.get("SCN_library");
+      if (!library) throw new Error("fixture broke");
+      library.items[0].placement = "along the wall";
+    });
+    const error = expectSchemaError(() => validateModuleReferences(module));
+    expect(error.problems.join("\n")).toContain(
+      "is cited in the setting and has a placement/container"
+    );
+  });
+
+  it("rejects a container that is not an item of this place", () => {
+    const module = builtModule((m) => {
+      const cellar = m.scenes.get("SCN_cellar");
+      if (!cellar) throw new Error("fixture broke");
+      cellar.items = [
+        {
+          id: "item.cellar.bills",
+          name: "Bills",
+          placement: "in a drawer",
+          container: "item.library.archives",
+        },
+      ];
+    });
+    const error = expectSchemaError(() => validateModuleReferences(module));
+    expect(error.problems.join("\n")).toContain(
+      'container "item.library.archives" is not an item of this place'
+    );
+  });
+
+  it("rejects a container naming itself, and a container cycle", () => {
+    const module = builtModule((m) => {
+      const cellar = m.scenes.get("SCN_cellar");
+      if (!cellar) throw new Error("fixture broke");
+      cellar.items = [
+        { id: "item.cellar.a", name: "A", placement: "x", container: "item.cellar.a" },
+        { id: "item.cellar.b", name: "B", placement: "x", container: "item.cellar.c" },
+        { id: "item.cellar.c", name: "C", placement: "x", container: "item.cellar.b" },
+      ];
+    });
+    const text = expectSchemaError(() => validateModuleReferences(module)).problems.join("\n");
+    expect(text).toContain('"item.cellar.a" names itself as its container');
+    expect(text).toContain("container chain forms a cycle");
   });
 
   it("rejects a connection whose target place is never cited", () => {
@@ -600,7 +737,7 @@ describe("validateModuleReferences", () => {
     const module = builtModule((m) => {
       const stacks = m.scenes.get("SCN_library_stacks");
       if (!stacks) throw new Error("fixture broke");
-      stacks.description =
+      stacks.setting =
         "Rows of shelves, and the stairway down [connection.stacks.down].";
     });
     const error = expectSchemaError(() => validateModuleReferences(module));
@@ -615,7 +752,7 @@ describe("validateModuleReferences", () => {
     const module = builtModule((m) => {
       const cellar = m.scenes.get("SCN_cellar");
       if (!cellar) throw new Error("fixture broke");
-      cellar.description =
+      cellar.setting =
         "A dirt-floored cellar. Somehow the corner is visible [SCN_main_north].";
     });
     const error = expectSchemaError(() => validateModuleReferences(module));
@@ -628,7 +765,7 @@ describe("validateModuleReferences", () => {
     const module = builtModule((m) => {
       const cellar = m.scenes.get("SCN_cellar");
       if (!cellar) throw new Error("fixture broke");
-      cellar.description =
+      cellar.setting =
         "A dirt-floored cellar with a ghost [item.cellar.ghost].";
     });
     const error = expectSchemaError(() => validateModuleReferences(module));
@@ -641,7 +778,7 @@ describe("validateModuleReferences", () => {
     const module = builtModule((m) => {
       const library = m.scenes.get("SCN_library");
       if (!library) throw new Error("fixture broke");
-      library.description += " The shelves again [item.library.archives].";
+      library.setting += " The shelves again [item.library.archives].";
     });
     const error = expectSchemaError(() => validateModuleReferences(module));
     expect(error.problems.join("\n")).toContain(
@@ -653,7 +790,7 @@ describe("validateModuleReferences", () => {
     const module = builtModule((m) => {
       const corner = m.scenes.get("SCN_main_north");
       if (!corner) throw new Error("fixture broke");
-      corner.description += " A hatch [SCN_cellar].";
+      corner.setting += " A hatch [SCN_cellar].";
     });
     const error = expectSchemaError(() => validateModuleReferences(module));
     expect(error.problems.join("\n")).toContain(
@@ -665,24 +802,28 @@ describe("validateModuleReferences", () => {
     const module = builtModule((m) => {
       const cellar = m.scenes.get("SCN_cellar");
       if (!cellar) throw new Error("fixture broke");
-      cellar.description = "A dirt-floored cellar. Bills on a crate [item.cellar.duplicate_bills].";
+      cellar.setting = "A dirt-floored cellar. A crate [item.cellar.duplicate_bills].";
       cellar.items = [{ id: "item.cellar.duplicate_bills", name: "Bills" }];
     });
     expect(() => validateModuleReferences(module)).not.toThrow();
   });
 
-  it("requires conditions to be cited", () => {
-    const module = builtModule((m) => {
+  it("accepts an uncited condition and rejects a cited one — conditions are state", () => {
+    const ok = builtModule((m) => {
       const cellar = m.scenes.get("SCN_cellar");
       if (!cellar) throw new Error("fixture broke");
-      cellar.conditions = [
-        { id: "cond.cellar.damp", description: "Damp air." },
-      ];
+      cellar.conditions = [{ id: "cond.cellar.damp", description: "Damp air." }];
     });
-    const error = expectSchemaError(() => validateModuleReferences(module));
-    expect(error.problems.join("\n")).toContain(
-      '"cond.cellar.damp" is never cited'
-    );
+    expect(() => validateModuleReferences(ok)).not.toThrow();
+    const cited = builtModule((m) => {
+      const cellar = m.scenes.get("SCN_cellar");
+      if (!cellar) throw new Error("fixture broke");
+      cellar.conditions = [{ id: "cond.cellar.damp", description: "Damp air." }];
+      cellar.setting = "A dirt-floored cellar [cond.cellar.damp].";
+    });
+    expect(
+      expectSchemaError(() => validateModuleReferences(cited)).problems.join("\n")
+    ).toContain("a condition — conditions are not cited");
   });
 
   it("rejects a connection to a place that does not exist", () => {
@@ -712,7 +853,7 @@ describe("validateModuleReferences", () => {
       m.roads.set("ROAD_main_street", {
         id: "ROAD_main_street",
         name: "Main Street",
-        description:
+        setting:
           "North to the corner [connection.ms.n], south into the library [connection.ms.s].",
         connections: [
           {
@@ -739,7 +880,7 @@ describe("validateModuleReferences", () => {
       // SCN_library → SCN_library_stacks exists; remove the reverse connection.
       const stacks = m.scenes.get("SCN_library_stacks");
       if (!stacks) throw new Error("fixture broke");
-      stacks.description = "Rows of shelves.";
+      stacks.setting = "Rows of shelves.";
       stacks.connections = [];
     });
     expect(() => validateModuleReferences(module)).not.toThrow();

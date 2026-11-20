@@ -59,8 +59,9 @@ describe("player tools", () => {
     expect(rest).toEqual(props(actTool));
     expect(playerActTool.description).toBe(actTool.description);
     expect(playerActTool.noGrammar).toBe(actTool.noGrammar);
-    expect((playerActTool.inputSchema as { required: string[] }).required)
-      .toEqual((actTool.inputSchema as { required: string[] }).required);
+    expect(
+      (playerActTool.inputSchema as { required: string[] }).required
+    ).toEqual((actTool.inputSchema as { required: string[] }).required);
     // A deep copy: the player's schema shares no object with the NPCs'.
     expect(playerActTool.inputSchema).not.toBe(actTool.inputSchema);
     expect(props(playerActTool)).not.toBe(props(actTool));
@@ -68,8 +69,9 @@ describe("player tools", () => {
 
   it("askFriend takes one required question", () => {
     expect(Object.keys(props(askFriendTool))).toEqual(["question"]);
-    expect((askFriendTool.inputSchema as { required: string[] }).required)
-      .toEqual(["question"]);
+    expect(
+      (askFriendTool.inputSchema as { required: string[] }).required
+    ).toEqual(["question"]);
   });
 
   it("askFriend is terminal and whitelisted, and uncapped", () => {
@@ -89,6 +91,8 @@ describe("PLAYER_SYSTEM_PROMPT", () => {
     const tail = PLAYER_SYSTEM_PROMPT.slice(SYSTEM_PROMPT.length);
     expect(tail).toContain(askFriendDoc);
     expect(tail).toContain(sleepFieldDoc);
-    expect(tail.indexOf(askFriendDoc)).toBeLessThan(tail.indexOf(sleepFieldDoc));
+    expect(tail.indexOf(askFriendDoc)).toBeLessThan(
+      tail.indexOf(sleepFieldDoc)
+    );
   });
 });

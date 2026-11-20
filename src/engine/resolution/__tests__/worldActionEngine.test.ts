@@ -210,7 +210,7 @@ function makeContext(
           id: "SCN_1",
           kind: "scene",
           name: "Reading room",
-          description: "Shelves and a long table.",
+          setting: "Shelves and a long table.",
           parentLocationId: "OUTDOOR",
           conditions: [],
           itemIds: ["lamp_1"],
@@ -231,7 +231,14 @@ function makeContext(
           presentCharacterIds: ["npc_1", "npc_2"],
         },
       ],
-      items: [{ id: "lamp_1", name: "oil lamp", holder: "scene:SCN_1" }],
+      items: [
+        {
+          id: "lamp_1",
+          name: "oil lamp",
+          holder: "scene:SCN_1",
+          placement: "on the long table",
+        },
+      ],
       itemHolders: { lamp_1: "scene:SCN_1" },
       characters: [
         {
@@ -453,7 +460,7 @@ const LIVE_TRACE = {
     {
       actionIds: [LIVE],
       speech: false,
-      perceivers: [{ characterId: "npc_2", clarity: "full" }],
+      perceivers: [{ characterId: "npc_2", sight: "clear", hearing: "clear" }],
       content: "The cabinet door gives way.",
     },
   ],
@@ -574,7 +581,9 @@ describe("resolveTick — the staged runner", () => {
             {
               actionIds: [LIVE],
               speech: false,
-              perceivers: [{ characterId: "npc_2", clarity: "full" }],
+              perceivers: [
+                { characterId: "npc_2", sight: "clear", hearing: "clear" },
+              ],
               content: "The cabinet door gives way.",
             },
           ],
@@ -663,7 +672,9 @@ describe("resolveTick — the staged runner", () => {
               actionIds: [TALK],
               speech: true,
               targetIds: ["npc_1"],
-              perceivers: [{ characterId: "npc_1", clarity: "full" }],
+              perceivers: [
+                { characterId: "npc_1", sight: "clear", hearing: "clear" },
+              ],
             },
           ],
         },
@@ -697,7 +708,9 @@ describe("resolveTick — the staged runner", () => {
       "I spread the ledger open and point at the date.";
     action.command.utterance = "Where were you that night?";
     const conduct = "She spreads the ledger open and points at the date.";
-    const perceivers = [{ characterId: "npc_1", clarity: "full" }];
+    const perceivers = [
+      { characterId: "npc_1", sight: "clear", hearing: "clear" },
+    ];
     script(
       ...settlementPath({
         endings: {
@@ -749,7 +762,9 @@ describe("resolveTick — the staged runner", () => {
           actionIds: [TALK],
           speech: true,
           targetIds: ["npc_1"],
-          perceivers: [{ characterId: "npc_1", clarity: "full" }],
+          perceivers: [
+            { characterId: "npc_1", sight: "clear", hearing: "clear" },
+          ],
         },
       ],
     };
@@ -917,8 +932,8 @@ describe("resolveTick — the staged runner", () => {
         // grade the stub gave (the last option, "full").
         expect(row.perceivers).toEqual(
           expect.arrayContaining([
-            { characterId: "npc_2", clarity: "full" },
-            { characterId: "npc_1", clarity: "full" },
+            { characterId: "npc_2", sight: "clear", hearing: "clear" },
+            { characterId: "npc_1", sight: "clear", hearing: "clear" },
           ])
         );
       } finally {
@@ -964,8 +979,8 @@ describe("resolveTick — the staged runner", () => {
         ).not.toHaveProperty("perceivers");
         expect(result.resolution.occurrences[0].perceivers).toEqual(
           expect.arrayContaining([
-            { characterId: "npc_1", clarity: "full" },
-            { characterId: "npc_2", clarity: "full" },
+            { characterId: "npc_1", sight: "clear", hearing: "clear" },
+            { characterId: "npc_2", sight: "clear", hearing: "clear" },
           ])
         );
       } finally {
@@ -1066,7 +1081,9 @@ describe("resolveTick — the staged runner", () => {
         {
           actionIds: [LIVE],
           speech: false,
-          perceivers: [{ characterId: "npc_2", clarity: "full" }],
+          perceivers: [
+            { characterId: "npc_2", sight: "clear", hearing: "clear" },
+          ],
           content: "The cabinet door gives way.",
         },
       ],
@@ -1353,12 +1370,16 @@ describe("resolveTick — the staged runner", () => {
         actionIds: [TALK],
         speech: true,
         targetIds: ["npc_1"],
-        perceivers: [{ characterId: "npc_1", clarity: "full" }],
+        perceivers: [
+          { characterId: "npc_1", sight: "clear", hearing: "clear" },
+        ],
       };
       const fact = {
         actionIds: [LIVE],
         speech: false,
-        perceivers: [{ characterId: "npc_1", clarity: "full" }],
+        perceivers: [
+          { characterId: "npc_1", sight: "clear", hearing: "clear" },
+        ],
         content: "The cabinet door splinters around the lock and swings open.",
       };
       script(
@@ -1405,12 +1426,16 @@ describe("resolveTick — the staged runner", () => {
         actionIds: [TALK],
         speech: true,
         targetIds: ["npc_1"],
-        perceivers: [{ characterId: "npc_1", clarity: "full" }],
+        perceivers: [
+          { characterId: "npc_1", sight: "clear", hearing: "clear" },
+        ],
       };
       const fact = {
         actionIds: [LIVE],
         speech: false,
-        perceivers: [{ characterId: "npc_1", clarity: "full" }],
+        perceivers: [
+          { characterId: "npc_1", sight: "clear", hearing: "clear" },
+        ],
         content: "The cabinet opens.",
       };
       script(
@@ -1449,7 +1474,9 @@ describe("resolveTick — the staged runner", () => {
         actionIds: [TALK],
         speech: true,
         targetIds: ["npc_1"],
-        perceivers: [{ characterId: "npc_1", clarity: "full" }],
+        perceivers: [
+          { characterId: "npc_1", sight: "clear", hearing: "clear" },
+        ],
       };
       script(
         ...retrying(
@@ -2149,14 +2176,13 @@ describe("renderContextSegments caching layout", () => {
 });
 
 describe("renderWorldGraph", () => {
-  it("renders each node as description + connection references", () => {
+  it("renders each node as id, name and connection references", () => {
     const text = renderWorldGraph({
       places: [
         {
           id: "J_A",
           kind: "scene",
           name: "Crossing",
-          description: "A windswept\ncrossing.",
         },
         {
           id: "R_MAIN",
@@ -2181,11 +2207,9 @@ describe("renderWorldGraph", () => {
     });
     expect(text.split("\n")).toEqual([
       "Outdoor node scenes:",
-      // Authored prose rides along, newlines flattened.
-      "- J_A (Crossing): A windswept crossing.",
+      "- J_A (Crossing)",
       "  connections: [connection.home.secret] -> R_MAIN (concealed)",
       "Roads:",
-      // No description and no prose — the node line stands alone.
       "- R_MAIN (Star Avenue)",
       "  connections: [connection.road.a] -> J_A 15min",
     ]);

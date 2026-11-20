@@ -58,10 +58,14 @@ export interface StagedItem {
   id: string;
   name: string;
   description?: string;
+  /** Where in the scene it is staged; default "放在显眼处". */
+  placement?: string;
 }
 
 export interface StagedActor {
   npcId: string;
+  /** Where this actor starts; default `StageSpec.sceneId`. */
+  sceneId?: string;
   /** Seeded as a `long_term_intent` memory — the production path a goal takes
    *  into the agent prompt (NpcActionController.loadLongTermIntent). */
   goal?: string;
@@ -194,7 +198,7 @@ export interface OccurrenceRecord {
   locationId?: string;
   facts: Array<{ type: string; content: string }>;
   participants: Array<{ characterId: string; role: string }>;
-  perceivers: Array<{ characterId: string; clarity: string }>;
+  perceivers: Array<{ characterId: string; sight: string; hearing: string }>;
   signals: Array<{ channel: string; originLocationId?: string }>;
 }
 
@@ -461,8 +465,14 @@ export async function runStagedCase(
   // module JSON with no normalize step, and production reads it everywhere as
   // `scene?.items ?? []` — so don't trust it.
   if (!scene.items) scene.items = [];
+  // A staged prop is meant to be in plain view: a loose thing with a
+  // placement and no container (schema v3). Without one it would sit nowhere
+  // anyone can see, and the case that staged it for use could not use it.
   for (const item of stage.sceneItems ?? []) {
-    scene.items.push({ ...item } as Item);
+    scene.items.push({
+      ...item,
+      placement: item.placement ?? "放在显眼处",
+    } as Item);
   }
 
   const gameDateTime = dgsm.getGameDateTime();
@@ -470,9 +480,13 @@ export async function runStagedCase(
   for (const actor of stage.actors) {
     const profile = dgsm.getNpcProfile(actor.npcId);
     if (!profile) throw new Error(`Staged NPC ${actor.npcId} not in module`);
+    const actorScene = actor.sceneId ?? stage.sceneId;
+    if (!dgsm.getScene(actorScene)) {
+      throw new Error(`Staged scene ${actorScene} not in module`);
+    }
     dgsm.setCharacterPosition(actor.npcId, {
       type: "scene",
-      sceneId: stage.sceneId,
+      sceneId: actorScene,
     });
 
     if (typeof actor.hp === "number") {
@@ -756,7 +770,8 @@ export async function runStagedCase(
         })),
         perceivers: occ.perceivers.map((p) => ({
           characterId: p.characterId,
-          clarity: p.clarity,
+          sight: p.sight,
+          hearing: p.hearing,
         })),
         signals: occ.signals.map((sig) => ({
           channel: sig.channel,
@@ -768,7 +783,7 @@ export async function runStagedCase(
       log(
         `   [occurrence] ${occ.facts.map((f) => f.type).join(",")} → ` +
           `perceivers=[${occ.perceivers
-            .map((p) => `${p.characterId}:${p.clarity}`)
+            .map((p) => `${p.characterId}:${p.sight}/${p.hearing}`)
             .join(",")}]`
       );
     }
@@ -811,18 +826,18 @@ export async function runStagedCase(
                   description: `removed condition (${JSON.stringify(sc.predicate)})`,
                 },
               ];
-            case "scene.setDescription":
+            case "scene.setSetting":
               return [
                 {
                   kind: sc.kind,
-                  description: `${sc.sceneId} description rewritten`,
+                  description: `${sc.sceneId} setting rewritten`,
                 },
               ];
             case "item.set":
               return [
                 {
                   kind: sc.kind,
-                  description: `${sc.itemId}: ${
+                  description: `${sc.itemId}${whereNote(sc)}: ${
                     sc.description ?? sc.appendDescription ?? "updated"
                   }`,
                 },
@@ -831,14 +846,14 @@ export async function runStagedCase(
               return [
                 {
                   kind: sc.kind,
-                  description: `${sc.name} created at ${sc.location}`,
+                  description: `${sc.name}${sc.id ? ` (${sc.id})` : ""} created at ${sc.location}${whereNote(sc)}`,
                 },
               ];
             case "item.move":
               return [
                 {
                   kind: sc.kind,
-                  description: `${sc.itemId}: ${sc.from} → ${sc.to}`,
+                  description: `${sc.itemId}: ${sc.from} → ${sc.to}${whereNote(sc)}`,
                 },
               ];
             case "item.destroy":
@@ -1050,4 +1065,21 @@ export async function runStagedCase(
 
   observation.elapsedMs = Date.now() - started;
   return observation;
+}
+
+/** Where a change put a thing and how many — the part of an item change the
+ *  setting design adds, printed so a run shows what the Engine wrote. */
+function whereNote(sc: {
+  kind?: string;
+  placement?: string;
+  container?: string;
+  quantity?: number;
+}): string {
+  const takenOut = sc.kind === "item.set" && sc.container === "";
+  const parts = [
+    sc.placement ? `@${sc.placement}` : "",
+    sc.container ? `in ${sc.container}` : takenOut ? "out of its container" : "",
+    sc.quantity !== undefined ? `×${sc.quantity}` : "",
+  ].filter(Boolean);
+  return parts.length > 0 ? ` [${parts.join(" ")}]` : "";
 }

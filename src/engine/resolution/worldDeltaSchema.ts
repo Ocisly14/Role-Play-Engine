@@ -14,8 +14,19 @@
 // and cannot drift apart.
 
 import type { ToolSpec } from "../../models/providers/types.js";
-import { PERCEPTION_CLARITIES } from "../actions/types.js";
-import type { PerceptionClarity } from "../actions/types.js";
+import {
+  HEARING_GRADES,
+  HEARING_GRADE_MEANING,
+  SIGHT_GRADES,
+  SIGHT_GRADE_MEANING,
+} from "../actions/types.js";
+import type { HearingGrade, SightGrade } from "../actions/types.js";
+import {
+  CHECK_NEED_RULE,
+  ITEM_CONTAINER_MEANING,
+  ITEM_PLACEMENT_MEANING,
+  STATED_ROUTE_RULE,
+} from "../rules/ruleTerms.js";
 
 // ==================== Raw (model-shaped) resolution ====================
 
@@ -158,17 +169,17 @@ export interface RawSanityCheck {
  * line (29 rejections) or left the array empty when the line was all there
  * was (2 dead ticks). Now the line is code's, the paragraph is the model's,
  * and `speech` says which kind of row this is. What came back is one narrow
- * field: a per-perceiver `clarity` grade — not a channel and not a
+ * field: per-perceiver grades, one for sight and one for hearing (they
+ * travel differently: a closed door stops a look, not a shout) — not a
  * per-character subset of the facts. The paragraph stays single and
- * objective; the grade tells the renderer how much of it to let through.
+ * objective; the grades tell the renderer how much of it to let through.
  */
 export interface RawPerceiver {
   characterId: string;
-  /** How much of the row reaches this character: `full` — the event and its
-   *  relevant detail; `limited` — the kind of event and its immediate result,
-   *  no fine detail; `trace` — only that something happened, with no source,
-   *  cause, actor or words. */
-  clarity: PerceptionClarity;
+  /** clear / partial / glimpse / none — see `SIGHT_GRADES`. */
+  sight: SightGrade;
+  /** clear / muffled / faint / none — see `HEARING_GRADES`. */
+  hearing: HearingGrade;
 }
 
 export interface RawOccurrence {
@@ -177,7 +188,7 @@ export interface RawOccurrence {
    *  only when
    *  the audiences receive different FACTS in different places (the departure
    *  in one room, the landing in the courtyard); different degrees of one
-   *  fact are ONE row with a per-perceiver clarity. These ids also address
+   *  fact are ONE row with per-perceiver grades. These ids also address
    *  precise validation feedback about the row. */
   actionIds: string[];
   /** `true`: this row IS a spoken line being delivered, and it is the whole
@@ -194,7 +205,7 @@ export interface RawOccurrence {
    *  refs when omitted. */
   targetIds?: string[];
   /** Everyone who receives any evidence of this row, one entry per character,
-   *  each with the single clarity they actually reach. `content` is written
+   *  each with the sight and hearing they actually reach. `content` is written
    *  at full objective detail regardless; the renderer degrades per grade. */
   perceivers: RawPerceiver[];
   sanityChecks?: RawSanityCheck[];
@@ -357,10 +368,10 @@ export const SCENE_OPS: OperationSpec[] = [
     },
   },
   {
-    kinds: ["setDescription"],
+    kinds: ["setSetting"],
     fields:
-      "description:string — REPLACES the place's whole prose; keep every still-true [reference-id] citation, drop citations to things no longer visibly here",
-    schema: { properties: { description: STR }, required: ["description"] },
+      "setting:string — REPLACES the place's whole setting; only when the place itself physically changed (a window smashed, a fixture torn out or put in); keep every still-true [reference-id] citation, drop a fixture that is gone. Loose things never need it — they carry their own placement",
+    schema: { properties: { setting: STR }, required: ["setting"] },
   },
   {
     kinds: ["connectionBlock"],
@@ -416,35 +427,55 @@ export const SCENE_OPS: OperationSpec[] = [
 export const ITEM_OPS: OperationSpec[] = [
   {
     kinds: ["create"],
-    fields:
-      "name:string, location:<\"scene:<placeId>\" or characterId>, description?:string, id?:string — stable id; must be unused; omit to auto-generate; ALWAYS pass one for non-Latin names. If it comes into being IN PLAIN VIEW at a place (not in someone's hands, not hidden there on purpose), the same submission rewrites that place's description to cite it as [id] — an item no description cites is there but unnoticed by everyone, its maker included. The occurrence that shows it coming into being names it with its [id], so whoever perceives that can point at it",
+    fields: `name:string, location:<"scene:<placeId>" or characterId>, placement:string, container:string, description?:string, id?:string, quantity?:integer — stable id; must be unused; omit to auto-generate; ALWAYS pass one for non-Latin names. quantity is how many identical things it stands for (default 1). At a place, placement says where it is and container is "" unless it was made inside something that hides it; on a character both are "". ${ITEM_PLACEMENT_MEANING} ${ITEM_CONTAINER_MEANING} The occurrence that shows it coming into being names it with its [id], so whoever perceives that can point at it`,
     schema: {
-      properties: { name: STR, location: STR, description: STR, id: STR },
-      required: ["name", "location"],
+      properties: {
+        name: STR,
+        location: STR,
+        placement: STR,
+        container: STR,
+        description: STR,
+        id: STR,
+        quantity: { type: "integer" },
+      },
+      required: ["name", "location", "placement", "container"],
     },
   },
   {
     kinds: ["move"],
     fields:
-      "from:<current holder, exactly as the Items section shows it>, to:<\"scene:<placeId>\" for a place — a vehicle interior scene included — or a bare characterId> (one holder grammar, same as create.location). If the FROM place's prose cites this item, the same submission must rewrite that description (scene setDescription) — the prose must not keep pointing at what left. If it lands IN PLAIN VIEW at a place (set down on the counter, dropped in the road), rewrite that place's description to cite it too — an item a place's prose does not cite is there but unnoticed, which is right only when it was hidden there on purpose",
-    schema: { properties: { from: STR, to: STR }, required: ["from", "to"] },
+      "from:<current holder, exactly as the Items section shows it>, to:<\"scene:<placeId>\" for a place — a vehicle interior scene included — or a bare characterId> (one holder grammar, same as create.location), placement:string, container:string — to a place: placement is where it was set down (\"on the counter\", \"in the road\") and container is \"\" unless it was put inside something that hides it; to a character: both \"\". What sits in a moved container goes with it by itself. If the item is a FIXTURE the FROM place's setting cites, the same submission must rewrite that setting (scene setSetting) — the setting must not keep pointing at what left",
+    schema: {
+      properties: { from: STR, to: STR, placement: STR, container: STR },
+      required: ["from", "to", "placement", "container"],
+    },
+  },
+  {
+    kinds: ["place"],
+    fields:
+      "placement:string, container:string — the item stays at its place but is now somewhere else in it: moved along the counter, put into a drawer (container = the drawer's item id), taken out of one (container \"\"). Opening or shutting a container is a set {description} on the container, not this. A fixture given a placement becomes a loose thing: the same submission rewrites the setting (scene setSetting) to drop its citation",
+    schema: {
+      properties: { placement: STR, container: STR },
+      required: ["placement", "container"],
+    },
   },
   {
     kinds: ["destroy"],
     fields:
-      "(no fields). If the holder place's prose cites this item, the same submission must rewrite that description (scene setDescription)",
+      "(no fields). If the item is a fixture its place's setting cites, the same submission must rewrite that setting (scene setSetting). What sat in it stays where it was, loose",
     schema: { properties: {} },
   },
   {
     kinds: ["set"],
     fields:
-      "any of — description:string (REPLACES the whole description; write everything still true of the thing) · appendDescription:string (adds a supported detail only when the existing description remains true; replace description instead if damage or displacement made an old claim false) · isLightSource:boolean (false when it no longer lights the room, e.g. smashed) · lightLevel:number",
+      "any of — description:string (REPLACES the whole description; write everything still true of the thing — for a container, whether it is open or shut is part of it) · appendDescription:string (adds a supported detail only when the existing description remains true; replace description instead if damage or displacement made an old claim false) · isLightSource:boolean (false when it no longer lights the room, e.g. smashed) · lightLevel:number · quantity:integer (how many identical things it now stands for, >= 1). Taking some of a stack is set {quantity: what is left} on it plus create for what was taken (with its own quantity); taking all of it is a move; using the last of it is destroy",
     schema: {
       properties: {
         description: STR,
         appendDescription: STR,
         isLightSource: BOOL,
         lightLevel: { type: "number" },
+        quantity: { type: "integer" },
       },
     },
   },
@@ -519,7 +550,7 @@ export const OCCURRENCE_ITEM = {
       items: { type: "string" },
       minItems: 1,
       description:
-        "The action(s) this is the trace of — at least one. Every id under the trigger's `ending` MUST be cited by at least one occurrence, of the kind its endings-phase decision calls for — a decision nothing cites is refused. Separate rows may cite one action for distinct facts (its speech and physical result, or the shove in one room and landing elsewhere); different clarity grades of the same fact belong in ONE row.",
+        "The action(s) this is the trace of — at least one. Every id under the trigger's `ending` MUST be cited by at least one occurrence, of the kind its endings-phase decision calls for — a decision nothing cites is refused. Separate rows may cite one action for distinct facts (its speech and physical result, or the shove in one room and landing elsewhere); different grades of the same fact belong in ONE row.",
     },
     speech: {
       type: "boolean",
@@ -542,18 +573,22 @@ export const OCCURRENCE_ITEM = {
             type: "string",
             description: "A character who receives some evidence of this row.",
           },
-          clarity: {
+          sight: {
             type: "string",
-            enum: [...PERCEPTION_CLARITIES],
-            description:
-              "How much of the row reaches them. full: the event and its relevant detail — bodily contact, a clear nearby view, intelligible words. limited: the kind of event and its immediate result, no fine detail — a struggle through a dirty window, a machine heard starting through a wall, a speaker seen or recognised whose words do not carry. trace: only that something happened — a muffled impact, a flash beyond the fog, an indistinct voice whose source cannot be placed — with no source, cause, actor or words.",
+            enum: [...SIGHT_GRADES],
+            description: `What they get by seeing. ${SIGHT_GRADES.map((g) => `${g}: ${SIGHT_GRADE_MEANING[g]}`).join(". ")}.`,
+          },
+          hearing: {
+            type: "string",
+            enum: [...HEARING_GRADES],
+            description: `What they get by hearing. ${HEARING_GRADES.map((g) => `${g}: ${HEARING_GRADE_MEANING[g]}`).join(". ")}.`,
           },
         },
-        required: ["characterId", "clarity"],
+        required: ["characterId", "sight", "hearing"],
         additionalProperties: false,
       },
       description:
-        "Everyone who receives ANY evidence of this row, one entry per character, each with their grade. Geography, environment, barriers, the concrete action and observer conditions decide both the list and the grade; target and participant do not imply perceiver. Write `content` at FULL objective detail regardless of who is listed — the renderer degrades it per grade. Never split a row by degree: rows are split only when audiences receive different FACTS (the shove in one room, the landing in the courtyard). On a speech row, list everyone who heard or saw the speaking at all: words made out → full; knows who spoke but not the words (a watched whisper) → limited; an indistinct voice through a wall → trace.",
+        "Everyone who receives ANY evidence of this row, one entry per character, each with a sight and a hearing grade (never both none). Geography, environment, barriers, the concrete action and observer conditions decide both the list and the grades — sight needs a line of sight and light, hearing passes walls and closed doors weakened and is masked by noise; target and participant do not imply perceiver. Write `content` at FULL objective detail regardless of who is listed — the renderer degrades it per grade. Never split a row by degree: rows are split only when audiences receive different FACTS (the shove in one room, the landing in the courtyard). On a speech row: the listener beside her → sight clear, hearing clear; an onlooker who saw her lean close but caught nothing → sight clear, hearing muffled or faint; someone through the wall → sight none, hearing faint; someone in the dark room → sight none, hearing clear.",
     },
     // Declared here, rolled by code. The count and minute bounds live in the
     // validator and in these descriptions, not as schema keywords: strict mode
@@ -568,7 +603,7 @@ export const OCCURRENCE_ITEM = {
           characterId: {
             type: "string",
             description:
-              "Must be one of this occurrence's `perceivers` at clarity full or limited — exposure is perception, and a trace (a sound with no source) cannot shock.",
+              "Must be one of this occurrence's `perceivers` who perceives its source — sight clear or partial, or hearing clear or muffled. Exposure is perception: a glimpse or a faint sound with no source cannot shock.",
           },
           failureLoss: {
             type: "string",
@@ -634,8 +669,7 @@ const SUBMISSION_PROPERTIES = {
         },
         check: {
           type: "object",
-          description:
-            "The bar for the skill the actor declared, set BEFORE any roll exists. Omit entirely when the declared skill does not fit the attempt or no check is needed: an omitted check means the skill grants nothing, and the action is settled on its own merits. Never raise the bar to punish a poor skill choice. Omit check and opposedBy for interpersonal attempts. A check requires a declared skill from the catalog.",
+          description: `The bar for the skill the actor declared, set BEFORE any roll exists. ${CHECK_NEED_RULE} An omitted check means the skill grants nothing, and the action is settled on its own merits. Never raise the bar to punish a poor skill choice. A check requires a declared skill from the catalog.`,
           properties: {
             requiredLevel: {
               type: "string",
@@ -661,8 +695,7 @@ const SUBMISSION_PROPERTIES = {
         },
         movement: {
           type: "object",
-          description:
-            "REQUIRED whenever the actor deliberately travels along the world's connected ways — a 40-minute haul or one step into the next room alike; a single adjacent waypoint is a complete route. Forced or discontinuous displacement (thrown, dragged, knocked through an opening, falling, jumping directly through a window) uses a character position change instead. A duration alone moves nobody, and no outcome or occurrence may put hands on what the applied position cannot reach. `route` = the path the ACTOR STATED, grounded to place ids: ordered waypoints, each adjacent to the previous, last = destination. Ground only what their words carry (stepping out of the current room onto its street is an implied first hop). NEVER invent an unstated leg — a character who did not say how to get somewhere walks only as far as their words go, and re-decides there. Code derives travel time from the route (walk or drive): omit resolvedDurationTicks for pure travel.",
+          description: `REQUIRED whenever the actor deliberately travels along the world's connected ways — a 40-minute haul or one step into the next room alike; a single adjacent waypoint is a complete route. Forced or discontinuous displacement (thrown, dragged, knocked through an opening, falling, jumping directly through a window) uses a character position change instead. A duration alone moves nobody, and no outcome or occurrence may put hands on what the applied position cannot reach. ${STATED_ROUTE_RULE} Each waypoint is adjacent to the previous; the last is the destination. Ground only what their words carry (stepping out of the current room onto its street is an implied first hop). A character who did not say how to get somewhere walks only as far as their words go, and re-decides there. Code derives travel time from the route (walk or drive): omit resolvedDurationTicks for pure travel.`,
           properties: {
             route: {
               type: "array",

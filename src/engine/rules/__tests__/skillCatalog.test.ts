@@ -52,6 +52,7 @@ describe("catalogSkillName", () => {
       "First Aid",
       "Cooking",
       "Social",
+      "Medicine & Psychology",
     ]) {
       expect(catalogSkillName(legacy)).toBeUndefined();
     }
@@ -139,7 +140,7 @@ describe("skill guidance documents", () => {
       scene: [
         "addCondition",
         "removeCondition",
-        "setDescription",
+        "setSetting",
         "connectionBlock",
         "connectionConcealed",
         "environmentContribute",

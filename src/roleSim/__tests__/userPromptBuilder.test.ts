@@ -622,3 +622,52 @@ describe("the player's friend log", () => {
     expect(asNpcClosing(text.slice(0, start) + text.slice(end))).toBe(npcText);
   });
 });
+
+describe("## Just ended", () => {
+  it("tells the character their action is over and that nothing is running", () => {
+    const text = buildUserPrompt(
+      makeCtx({
+        perception: { narrative: "The letter is open in my hands." },
+        justEnded: {
+          description: "展开最近那封信一行行细看",
+          status: "completed",
+        },
+      }),
+      opts
+    );
+    expect(text).toContain('## Just ended\n"展开最近那封信一行行细看" — done.');
+    expect(text).toContain("You are not doing anything now.");
+    expect(text).toContain("`continue` has nothing to continue");
+    // Before the paragraph, so it frames what the paragraph shows.
+    expect(text.indexOf("## Just ended")).toBeLessThan(
+      text.indexOf("## What you perceive now")
+    );
+  });
+
+  it("carries the reason for a failed action", () => {
+    const text = buildUserPrompt(
+      makeCtx({
+        justEnded: {
+          description: "pry the lid open",
+          status: "failed",
+          reason: "The lid is nailed shut.",
+        },
+      }),
+      opts
+    );
+    expect(text).toContain(
+      '"pry the lid open" — it did not come off.\nThe lid is nailed shut.'
+    );
+  });
+
+  it("says nothing when a new action is already running", () => {
+    const text = buildUserPrompt(
+      makeCtx({
+        currentAction: { description: "walking to the door" },
+        justEnded: { description: "reading", status: "completed" },
+      }),
+      opts
+    );
+    expect(text).not.toContain("## Just ended");
+  });
+});

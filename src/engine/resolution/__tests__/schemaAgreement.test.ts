@@ -10,7 +10,7 @@
 // either side alone — so it gets a test.
 
 import { describe, expect, it } from "vitest";
-import { PERCEPTION_CLARITIES } from "../../actions/types.js";
+import { HEARING_GRADES, SIGHT_GRADES } from "../../actions/types.js";
 import {
   CHARACTER_OPS,
   CODE_TOOL_SPECS,
@@ -105,7 +105,7 @@ const OCCURRENCE = fields<RawOccurrence>()(
   "sanityChecks",
   "content"
 );
-const PERCEIVER = fields<RawPerceiver>()("characterId", "clarity");
+const PERCEIVER = fields<RawPerceiver>()("characterId", "sight", "hearing");
 const SANITY_CHECK = fields<RawSanityCheck>()(
   "characterId",
   "failureLoss",
@@ -229,20 +229,28 @@ describe("the tool schema and the TS types describe the same thing", () => {
     ]);
   });
 
-  it("a perceiver entry matches RawPerceiver, and its clarity is the shared enum", () => {
-    // The list used to be bare ids; what came back is one narrow field, the
-    // per-perceiver grade. The enum the model is shown and the one the
-    // validator accepts are the same constant, not two hand-kept lists.
+  it("a perceiver entry matches RawPerceiver, and its grades are the shared enums", () => {
+    // The list used to be bare ids; what came back is two narrow fields, the
+    // per-perceiver sight and hearing grades. The enums the model is shown and
+    // the ones the validator accepts are the same constants, not hand-kept
+    // lists.
     const perceivers = submit.properties.occurrences.items?.properties
       .perceivers as Schema & { items?: Schema; minItems?: number };
     expect(propsOf(perceivers.items)).toEqual(sorted(PERCEIVER));
-    expect(perceivers.items?.required).toEqual(["characterId", "clarity"]);
+    expect(perceivers.items?.required).toEqual([
+      "characterId",
+      "sight",
+      "hearing",
+    ]);
     expect(perceivers.minItems).toBe(1);
-    const clarity = perceivers.items?.properties.clarity as
-      | { type?: string; enum?: unknown }
-      | undefined;
-    expect(clarity?.type).toBe("string");
-    expect(clarity?.enum).toEqual([...PERCEPTION_CLARITIES]);
+    const grade = (name: string) =>
+      perceivers.items?.properties[name] as
+        | { type?: string; enum?: unknown }
+        | undefined;
+    expect(grade("sight")?.type).toBe("string");
+    expect(grade("sight")?.enum).toEqual([...SIGHT_GRADES]);
+    expect(grade("hearing")?.type).toBe("string");
+    expect(grade("hearing")?.enum).toEqual([...HEARING_GRADES]);
   });
 
   it("a declared sanity check matches RawSanityCheck", () => {
@@ -641,16 +649,20 @@ describe("the Engine phase schemas and provider limits", () => {
     const optionalsByPhase = RESOLUTION_PHASES.map((phase) =>
       optionalCount(PHASE_TOOLS[phase].inputSchema)
     );
-    expect(optionalsByPhase).toEqual([7, 0, 0, 7, 5, 4]);
+    expect(optionalsByPhase).toEqual([7, 0, 0, 9, 5, 4]);
     expect(
       RESOLUTION_PHASES.map((phase) =>
         branchCount(PHASE_TOOLS[phase].inputSchema)
       )
-    ).toEqual([2, 3, 7, 4, 7, 0]);
+    ).toEqual([2, 3, 7, 5, 7, 0]);
+    // itemChanges went 4 → 5 branches with the setting change's `place` op
+    // (2026-11-18); its placement/container ride as REQUIRED fields on
+    // create/move/place. `quantity` (create, set) took its optionals 7 → 9.
+    // Probed strict-accepted on DeepSeek (deepseek-v4-flash); not on Anthropic.
     // The five reused lists still add up to the 23 optionals the two-tool
     // partition carried (6 in the action half, 17 in the effect half); the
     // endings decision adds none. Same six lists, cut differently.
-    expect(optionalsByPhase.reduce((a, b) => a + b, 0)).toBe(23);
+    expect(optionalsByPhase.reduce((a, b) => a + b, 0)).toBe(25);
   });
 
   it("gives each list to exactly one phase tool", () => {

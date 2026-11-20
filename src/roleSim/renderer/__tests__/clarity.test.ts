@@ -1,6 +1,7 @@
-// One occurrence row, three viewers. The Engine writes the facts once, at
-// full objective detail, and grades each perceiver; the renderer's INPUT must
-// already withhold what the grade withholds — at `trace` the actor's handle
+// One occurrence row, several viewers. The Engine writes the facts once, at
+// full objective detail, and grades each perceiver by sight and by hearing;
+// the renderer's INPUT must already withhold what the grades withhold — when
+// they put no person to it (sight none, hearing faint) the actor's handle
 // must not reach the model on the involved line, nor under "Other entities"
 // with a place line — because a name printed anywhere in the prompt is a
 // name the paragraph will use. The facts themselves (utterance included)
@@ -8,7 +9,10 @@
 // are quoted.
 
 import { describe, expect, it, vi } from "vitest";
-import type { Occurrence } from "../../../engine/actions/types.js";
+import {
+  type Occurrence,
+  renderGradeScale,
+} from "../../../engine/actions/types.js";
 
 const generateText = vi.fn();
 vi.mock("../../../models/index.js", async () => {
@@ -34,11 +38,11 @@ const positions: Record<string, unknown> = {
   npc_2: { type: "scene", sceneId: "SCN_denny" },
 };
 const scenes: Record<string, unknown> = {
-  SCN_common: { id: "SCN_common", name: "Common room", description: "" },
+  SCN_common: { id: "SCN_common", name: "Common room", setting: "" },
   SCN_denny: {
     id: "SCN_denny",
     name: "Denny's room",
-    description: "A small room; a towel is wedged under the door.",
+    setting: "A small room; a towel is wedged under the door.",
   },
 };
 
@@ -70,7 +74,14 @@ const dgsm = {
   getSceneConditions: () => [],
 } as never;
 
-function occurrenceAt(clarity: "full" | "limited" | "trace"): Occurrence {
+type Grades = Pick<Occurrence["perceivers"][number], "sight" | "hearing">;
+
+const SEEN_AND_HEARD: Grades = { sight: "clear", hearing: "clear" };
+const SEEN_NOT_HEARD: Grades = { sight: "clear", hearing: "faint" };
+const HEARD_NOT_SEEN: Grades = { sight: "none", hearing: "clear" };
+const MURMUR: Grades = { sight: "none", hearing: "faint" };
+
+function occurrenceAt(grades: Grades): Occurrence {
   return {
     id: "occ_1",
     tickId: "t1",
@@ -92,8 +103,8 @@ function occurrenceAt(clarity: "full" | "limited" | "trace"): Occurrence {
     ],
     participants: [{ characterId: "npc_2", role: "actor" }],
     perceivers: [
-      { characterId: "npc_1", clarity },
-      { characterId: "npc_2", clarity: "full" },
+      { characterId: "npc_1", ...grades },
+      { characterId: "npc_2", sight: "clear", hearing: "clear" },
     ],
     signals: [{ factIds: ["occ_1#f0", "occ_1#f1"], channel: "sound" }],
   };
@@ -116,12 +127,12 @@ function bundleWith(occ: Occurrence) {
   } as never;
 }
 
-async function renderFor(clarity: "full" | "limited" | "trace") {
+async function renderFor(grades: Grades) {
   generateText.mockReset();
   generateText.mockResolvedValueOnce("Something reaches me from the hall.");
   await renderViaLLM({
     npcId: "npc_1",
-    bundle: bundleWith(occurrenceAt(clarity)),
+    bundle: bundleWith(occurrenceAt(grades)),
     dgsm,
     language: "en",
     recentPerceptions: [],
@@ -139,19 +150,19 @@ function occurrenceLine(context: string): string {
   return line;
 }
 
-/** The alias the renderer printed for npc_2, read off the `full` render. */
+/** The alias the renderer printed for npc_2, read off a seen-and-heard render. */
 async function actorHandle(): Promise<string> {
-  const { context } = await renderFor("full");
+  const { context } = await renderFor(SEEN_AND_HEARD);
   const match = occurrenceLine(context).match(/involved: (stranger_\w+)/);
   if (!match) throw new Error("full render did not name the actor");
   return match[1];
 }
 
-describe("per-perceiver clarity in the renderer input", () => {
-  it("full: prints the grade and names the actor on the involved line", async () => {
-    const { context } = await renderFor("full");
+describe("per-perceiver sight and hearing in the renderer input", () => {
+  it("seen and heard: prints both grades and names the actor", async () => {
+    const { context } = await renderFor(SEEN_AND_HEARD);
     const line = occurrenceLine(context);
-    expect(line).toContain("your clarity: full");
+    expect(line).toContain("you see: clear; you hear: clear");
     expect(line).toMatch(/involved: stranger_\w+ \(actor\)/);
     // The remote actor is placed for the renderer, as before.
     expect(context).toContain("# Other entities involved in events");
@@ -160,11 +171,13 @@ describe("per-perceiver clarity in the renderer input", () => {
     );
   });
 
-  it("trace: prints the grade, withholds the actor everywhere, keeps the facts", async () => {
+  it("a murmur: withholds the actor everywhere, keeps the facts", async () => {
     const handle = await actorHandle();
-    const { context } = await renderFor("trace");
+    const { context } = await renderFor(MURMUR);
     const line = occurrenceLine(context);
-    expect(line).toContain("your clarity: trace");
+    expect(line).toContain("you see: none");
+    expect(line).toContain("you hear: faint");
+    expect(line).toContain("render only that something happened");
     expect(line).not.toContain(handle);
     expect(line).not.toContain("involved:");
     // No "Other entities" entry for the actor — a person printed there
@@ -173,7 +186,7 @@ describe("per-perceiver clarity in the renderer input", () => {
     if (other !== undefined) {
       expect(other).not.toContain(handle);
       expect(other).not.toContain("Person (");
-      // The place the trace came from is still legitimate direction.
+      // The place the sound came from is still legitimate direction.
       expect(other).toContain("Denny's room");
     }
     // The utterance stays in the input at every grade; the prompt rule, not
@@ -182,30 +195,32 @@ describe("per-perceiver clarity in the renderer input", () => {
     expect(context).toContain("fact (speech): Denny speaks low");
   });
 
-  it("limited: prints the grade and still names the actor", async () => {
+  it("seen but not heard: still names the actor, says no words carry", async () => {
     const handle = await actorHandle();
-    const { context } = await renderFor("limited");
+    const { context } = await renderFor(SEEN_NOT_HEARD);
     const line = occurrenceLine(context);
-    expect(line).toContain("your clarity: limited");
+    expect(line).toContain("you see: clear; you hear: faint");
     expect(line).toContain(`involved: ${handle} (actor)`);
     expect(context).toContain("fact (utterance): Give me the key.");
   });
 
-  it("the system prompt carries the three grade rules and drops the old one", async () => {
-    const { customSystemPrompt } = await renderFor("full");
+  it("heard but not seen: a voice with words still has a source", async () => {
+    const handle = await actorHandle();
+    const { context } = await renderFor(HEARD_NOT_SEEN);
+    const line = occurrenceLine(context);
+    expect(line).toContain("you see: none");
+    expect(line).toContain(`involved: ${handle} (actor)`);
+    expect(line).not.toContain("render only that something happened");
+  });
+
+  it("the system prompt carries the per-sense rules and the four-viewpoint example", async () => {
+    const { customSystemPrompt } = await renderFor(SEEN_AND_HEARD);
+    expect(customSystemPrompt).toContain("`you see: …; you hear: …`");
+    // The scale is the engine's one definition, printed whole.
+    expect(customSystemPrompt).toContain(renderGradeScale("    "));
     expect(customSystemPrompt).toContain(
-      "your clarity: full | limited | trace"
+      "# Example — one moment, four viewpoints"
     );
-    expect(customSystemPrompt).toMatch(/`full`: render the event/);
-    expect(customSystemPrompt).toMatch(/`limited`: render the KIND of event/);
-    expect(customSystemPrompt).toMatch(
-      /`trace`: render only that something happened/
-    );
-    expect(customSystemPrompt).toContain(
-      "# Example — one moment, three grades"
-    );
-    expect(customSystemPrompt).not.toContain(
-      "Who heard what is already decided"
-    );
+    expect(customSystemPrompt).not.toContain("your clarity:");
   });
 });

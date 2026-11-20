@@ -23,8 +23,6 @@ that language's number.
 Nobody rolls to speak the language they think in. Intake removes a Languages
 declaration for a native tongue. Technical interpretation and noticing a
 detail in already delivered speech can use an applicable declared skill.
-Persuasion and other attempts to influence a listener proceed through the
-words and conduct the listener perceives.
 
 ## Applicability
 
@@ -46,11 +44,9 @@ is not automatically heard or understood by nearby people.
 
 - **Regular** — The gist, reliably: the actor knows what is being said or
   asked, with rough edges and gaps.
-- **Hard** — Accurate and complete, including idiom, register, and what the
-  phrasing implies about the speaker or writer.
+- **Hard** — Accurate and complete, including idiom and register.
 - **Extreme** — Subtle distinctions supported by the supplied text or delivered
-  speech. An accent may suggest a region but does not establish a speaker's
-  identity or hidden intention.
+  speech.
 
 ## Failure
 

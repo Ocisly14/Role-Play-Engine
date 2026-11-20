@@ -1,8 +1,8 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "id": "ROAD_creek_sawmill",
   "name": "渡口北径",
-  "description": "过了灰溪之后继续向北深入的林径,一个半小时的路。一头起于渡口对岸 [SCN_creek_ford],另一头钻出林子,正对旧锯木厂的废墟 [SCN_sawmill]。离开溪岸不久,路边有一只木板围起的泉眼水箱 [item.creek_sawmill.spring_box],板缝里长满青苔,水却清得见底。途中要翻两道长满倒木的浅沟:头一道沟底堆着一层交错的倒木,得手脚并用地爬过去 [item.creek_sawmill.first_gully];两沟之间的路侧有一棵被人弯下来别成拱形的小树,长歪了也就那么定了形 [item.creek_sawmill.bent_sapling],除了它,这段路上再没有第二个记号;第二道沟更深更暗,沟底常年积着一汪浑水 [item.creek_sawmill.second_gully]。快出林子时,一棵大冷杉上钉着几块木板搭成的旧猎人踏板 [item.creek_sawmill.hunter_stand],钉上去的横档朽了一半。雾大的时候,沟这边和沟那边看起来像同一个地方。",
+  "setting": "过了灰溪之后继续向北深入的林径,一个半小时的路。一头起于渡口对岸 [SCN_creek_ford],另一头钻出林子,正对旧锯木厂的废墟 [SCN_sawmill]。离开溪岸不久,路边有一只木板围起的泉眼水箱 [item.creek_sawmill.spring_box],板缝里长满青苔,水却清得见底。途中要翻两道长满倒木的浅沟:头一道沟底堆着一层交错的倒木,得手脚并用地爬过去 [item.creek_sawmill.first_gully];两沟之间的路侧有一棵被人弯下来别成拱形的小树,长歪了也就那么定了形 [item.creek_sawmill.bent_sapling],除了它,这段路上再没有第二个记号;第二道沟更深更暗,沟底常年积着一汪浑水 [item.creek_sawmill.second_gully]。快出林子时,一棵大冷杉上钉着几块木板搭成的旧猎人踏板 [item.creek_sawmill.hunter_stand],钉上去的横档朽了一半。雾大的时候,沟这边和沟那边看起来像同一个地方。",
   "parentLocationId": "OUTDOOR",
   "travelTimeMinutes": 90,
   "references": {

@@ -16,7 +16,7 @@ function makeDgsm(): DynamicGameStateManager {
       {
         id,
         name: id,
-        description: `about ${id}`,
+        setting: `about ${id}`,
         parentLocationId: "L1",
         items: id === "SCN_1" ? [{ id: "lamp", name: "lamp" }] : [],
         conditions: [],

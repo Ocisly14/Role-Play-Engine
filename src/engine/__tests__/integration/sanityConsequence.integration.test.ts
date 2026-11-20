@@ -39,7 +39,9 @@ function resolveWithShock(context: EngineResolutionContext): RawTickResolution {
       {
         actionIds: [actionId],
         speech: false,
-        perceivers: [{ characterId: "npc_1", clarity: "full" }],
+        perceivers: [
+          { characterId: "npc_1", sight: "clear", hearing: "clear" },
+        ],
         sanityChecks: [
           {
             characterId: "npc_1",

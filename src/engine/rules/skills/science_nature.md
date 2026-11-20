@@ -20,7 +20,7 @@ sample quality bound the result as hard as the roll does.
   calculating a physical result; and for the bench work that produces one.
 - Rejected when the actor lacks the equipment or reagent the procedure needs —
   state the missing thing — and for medical treatment of a person
-  (Medicine & Psychology) or supernatural phenomena (Occult).
+  (Medicine) or supernatural phenomena (Occult).
 - A phenomenon with no natural explanation does not acquire one on a good
   roll. Report only exclusions the available method and evidence establish;
   otherwise the phenomenon remains unexplained.

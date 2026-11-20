@@ -2,10 +2,10 @@
 // + full-world itemHolders), so node scenes and roads are first-class places —
 // their items are movable, their conditions removable — and connection ids
 // are checked against the registry-backed edge list. New operations:
-// setDescription, connectionConcealed, removeCondition-by-id, item.create with
+// setSetting, connectionConcealed, removeCondition-by-id, item.create with
 // a stable id, and the start row's one-use viaConcealedConnectionId grant.
 // (Items have no hidden flag any more: an item is in plain view iff its
-// place's description cites it, so a public reveal is a setDescription.)
+// place's description cites it, so a public reveal is a setSetting.)
 
 import { describe, expect, it } from "vitest";
 import type { ActionCommand } from "../../actions/types.js";
@@ -144,6 +144,7 @@ describe("node scenes and roads are first-class item holders", () => {
               kind: "move",
               from: "scene:R_MAIN",
               to: "scene:SCN_1",
+              placement: "on the floor",
             },
           },
         ],
@@ -161,6 +162,7 @@ describe("node scenes and roads are first-class item holders", () => {
               kind: "create",
               name: "a milestone",
               location: "scene:R_MAIN",
+              placement: "on the floor",
             },
           },
         ],
@@ -320,7 +322,11 @@ describe("connectionBlock / connectionConcealed take registry ids", () => {
 
   it("rejects the retired connectionHidden / connectionDiscovered operations", () => {
     for (const operation of [
-      { kind: "connectionHidden", connectionId: "connection.home.junc", hidden: false },
+      {
+        kind: "connectionHidden",
+        connectionId: "connection.home.junc",
+        hidden: false,
+      },
       {
         kind: "connectionDiscovered",
         connectionId: "connection.home.junc",
@@ -373,7 +379,7 @@ describe("a move that changes no holder is not a move", () => {
   // There is no item-level position within a holder, so `from === to` applies
   // cleanly and changes the world not at all: the actor perceives nothing and
   // tries it again.
-  it("rejects a no-op move and points at the occurrence instead", () => {
+  it("rejects a no-op move and points at place { placement } instead", () => {
     const out = validate({
       itemChanges: [
         {
@@ -383,8 +389,7 @@ describe("a move that changes no holder is not a move", () => {
         },
       ],
     });
-    expect(out).toContain("there is no item-level position within a holder");
-    expect(out).toContain("occurrence");
+    expect(out).toContain("moving a thing within its place is item place { placement, container }");
   });
 
   it("still accepts a move that actually changes holder", () => {
@@ -415,6 +420,7 @@ describe("a name code cannot derive an id from must bring its own", () => {
             kind: "create",
             name,
             location: "scene:SCN_1",
+            placement: "on the floor",
             ...(id !== undefined ? { id } : {}),
           },
         },
@@ -445,6 +451,7 @@ describe("item.create with an explicit id", () => {
             kind: "create",
             name: "账本",
             location: "scene:SCN_1",
+            placement: "on the floor",
             id,
           },
         },
@@ -475,6 +482,7 @@ describe("item.create with an explicit id", () => {
               kind: "create",
               name: "Ledger",
               location: "scene:SCN_1",
+              placement: "on the floor",
               id: "item.home.ledger",
             },
           },
@@ -484,6 +492,7 @@ describe("item.create with an explicit id", () => {
               kind: "create",
               name: "Ledger copy",
               location: "scene:J_A",
+              placement: "on the floor",
               id: "item.home.ledger",
             },
           },
@@ -502,6 +511,7 @@ describe("item.create with an explicit id", () => {
               kind: "create",
               name: "Repair Ledger",
               location: "scene:SCN_1",
+              placement: "on the floor",
               id: "item.home.ledger",
             },
           },
@@ -510,7 +520,9 @@ describe("item.create with an explicit id", () => {
           {
             actionIds: [ACTION_ID],
             speech: false,
-            perceivers: [{ characterId: "npc_1", clarity: "full" }],
+            perceivers: [
+              { characterId: "npc_1", sight: "clear", hearing: "clear" },
+            ],
             content: "a ledger tumbles from the shelf",
           },
         ],
@@ -519,7 +531,7 @@ describe("item.create with an explicit id", () => {
   });
 });
 
-describe("item.set and scene setDescription", () => {
+describe("item.set and scene setSetting", () => {
   it("accepts a set that carries only a lighting change", () => {
     expect(
       validate({
@@ -546,7 +558,7 @@ describe("item.set and scene setDescription", () => {
     );
   });
 
-  it("does not take the retired hidden flag as a change — a reveal is a setDescription now", () => {
+  it("does not take the retired hidden flag as a change — a reveal is a setSetting now", () => {
     expect(
       validate({
         itemChanges: [
@@ -560,7 +572,7 @@ describe("item.set and scene setDescription", () => {
     ).toContain("set needs at least one of");
   });
 
-  it("accepts setDescription with prose and rejects an empty one", () => {
+  it("accepts setSetting with prose and rejects an empty one", () => {
     expect(
       validate({
         sceneChanges: [
@@ -568,8 +580,8 @@ describe("item.set and scene setDescription", () => {
             ...sourced,
             sceneId: "R_MAIN",
             operation: {
-              kind: "setDescription",
-              description: "The avenue lies bare where the stall once stood.",
+              kind: "setSetting",
+              setting: "The avenue lies bare where the stall once stood.",
             },
           },
         ],
@@ -581,10 +593,114 @@ describe("item.set and scene setDescription", () => {
           {
             ...sourced,
             sceneId: "R_MAIN",
-            operation: { kind: "setDescription", description: "  " },
+            operation: { kind: "setSetting", setting: "  " },
           },
         ],
       })
-    ).toContain("non-empty description");
+    ).toContain("non-empty setting");
+  });
+});
+
+describe("where an item lands: placement and container (schema v3)", () => {
+  const move = (to: string, extra: Record<string, unknown> = {}) =>
+    validate({
+      itemChanges: [
+        {
+          ...sourced,
+          itemId: "item_coin",
+          operation: { kind: "move", from: "npc_1", to, ...extra },
+        },
+      ],
+    });
+
+  it("rejects a move to a place without a placement", () => {
+    expect(move("scene:SCN_1")).toContain("needs a placement");
+  });
+
+  it("rejects a move to a character carrying a placement", () => {
+    expect(
+      validate({
+        itemChanges: [
+          {
+            ...sourced,
+            itemId: "item_lamppost",
+            operation: {
+              kind: "move",
+              from: "scene:J_A",
+              to: "npc_1",
+              placement: "in a pocket",
+            },
+          },
+        ],
+      })
+    ).toContain('carries no placement or container — write both as ""');
+  });
+
+  it("accepts a container that is an item of the destination place", () => {
+    expect(
+      move("scene:SCN_1", { placement: "under the chair", container: "item_chair" })
+    ).toBe("");
+  });
+
+  it("rejects a container that is not at the destination place", () => {
+    expect(
+      move("scene:SCN_1", {
+        placement: "in the post",
+        container: "item_lamppost",
+      })
+    ).toContain('container "item_lamppost" is not an item at "scene:SCN_1"');
+  });
+
+  it("place moves a thing within its place; on a held thing it is refused", () => {
+    expect(
+      validate({
+        itemChanges: [
+          {
+            ...sourced,
+            itemId: "item_glove",
+            operation: { kind: "place", placement: "on the kerb", container: "" },
+          },
+        ],
+      })
+    ).toBe("");
+    expect(
+      validate({
+        itemChanges: [
+          {
+            ...sourced,
+            itemId: "item_coin",
+            operation: { kind: "place", placement: "on the table", container: "" },
+          },
+        ],
+      })
+    ).toContain("held by a character");
+  });
+
+  it("place without a usable placement is refused", () => {
+    expect(
+      validate({
+        itemChanges: [
+          {
+            ...sourced,
+            itemId: "item_glove",
+            operation: { kind: "place", placement: "[ ]", container: "" },
+          },
+        ],
+      })
+    ).toContain("place.placement must say where");
+  });
+});
+
+describe("quantity on a stack", () => {
+  it("accepts counting a stack down and rejects zero or a fraction", () => {
+    const setQty = (quantity: unknown) =>
+      validate({
+        itemChanges: [
+          { ...sourced, itemId: "item_glove", operation: { kind: "set", quantity } },
+        ],
+      });
+    expect(setQty(3)).toBe("");
+    expect(setQty(0)).toContain("destroy the item instead");
+    expect(setQty(1.5)).toContain("must be a whole number");
   });
 });

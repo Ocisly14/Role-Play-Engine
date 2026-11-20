@@ -60,7 +60,8 @@ export async function getTopology(
     return {
       id: s.id,
       name: s.name,
-      description: s.description,
+      // The viewer API keeps its field name; a place's prose is its setting.
+      description: s.setting,
       parentLocationId: s.parentLocationId,
       conditions: s.conditions ?? [],
       connections: s.connections ?? [],

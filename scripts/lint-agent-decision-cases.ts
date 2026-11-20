@@ -174,19 +174,21 @@ for (const f of readdirSync(dir)) {
 }
 for (const sc of SCENARIOS)
   for (const c of sc.cases) {
-    const hint = c.scene;
-    if (!hint) continue;
-    const hits = names.filter((nm) =>
-      nm.toLowerCase().includes(hint.toLowerCase())
-    );
-    if (hits.length === 0)
-      problems.push(
-        `${sc.id}/${c.label}: scene hint "${hint}" 在模组里匹配不到任何场景`
+    const caseHints = [c.scene, ...c.actors.map((a) => a.scene)];
+    for (const hint of caseHints) {
+      if (!hint) continue;
+      const hits = names.filter((nm) =>
+        nm.toLowerCase().includes(hint.toLowerCase())
       );
-    else if (hits.length > 1)
-      problems.push(
-        `${sc.id}/${c.label}: scene hint "${hint}" 匹配到 ${hits.length} 个场景: ${hits.join("/")}`
-      );
+      if (hits.length === 0)
+        problems.push(
+          `${sc.id}/${c.label}: scene hint "${hint}" 在模组里匹配不到任何场景`
+        );
+      else if (hits.length > 1)
+        problems.push(
+          `${sc.id}/${c.label}: scene hint "${hint}" 匹配到 ${hits.length} 个场景: ${hits.join("/")}`
+        );
+    }
   }
 
 console.log(

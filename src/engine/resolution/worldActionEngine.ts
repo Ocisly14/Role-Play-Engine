@@ -484,15 +484,20 @@ function acceptPayload(
   return true;
 }
 
-/** sceneChanges is owed when an accepted item change took an item out of a
- *  place whose prose still cites it — that prose must be rewritten. */
+/** sceneChanges is owed when an accepted item change took a FIXTURE out of
+ *  a place whose setting still cites it — that setting must be rewritten.
+ *  A loose thing carries its own placement and owes nothing. */
 function sceneChangesOwed(session: Session): boolean {
   const places = session.context.state.places;
   for (const row of session.draft.itemChanges ?? []) {
     const op = (row as { operation?: { kind?: string; from?: string } })
       .operation;
     const itemId = (row as { itemId?: string }).itemId;
-    if (!op || !itemId || (op.kind !== "move" && op.kind !== "destroy")) {
+    if (
+      !op ||
+      !itemId ||
+      (op.kind !== "move" && op.kind !== "destroy" && op.kind !== "place")
+    ) {
       continue;
     }
     const holder =
@@ -501,7 +506,7 @@ function sceneChangesOwed(session: Session): boolean {
         : session.context.state.itemHolders?.[itemId];
     if (!holder?.startsWith("scene:")) continue;
     const place = places.find((p) => p.id === holder.slice("scene:".length));
-    if (place?.description?.includes(`[${itemId}]`)) return true;
+    if (place?.setting?.includes(`[${itemId}]`)) return true;
   }
   return false;
 }
@@ -609,10 +614,13 @@ async function recordPhaseShadow(
     let agree = 0;
     llmRows.forEach((row, i) => {
       const llm = new Map(
-        row.perceivers.map((p) => [p.characterId, p.clarity])
+        row.perceivers.map((p) => [p.characterId, `${p.sight}/${p.hearing}`])
       );
       const ours = new Map(
-        decided[i].perceivers.map((p) => [p.characterId, p.clarity])
+        decided[i].perceivers.map((p) => [
+          p.characterId,
+          `${p.sight}/${p.hearing}`,
+        ])
       );
       for (const id of new Set([...llm.keys(), ...ours.keys()])) {
         pairs += 1;

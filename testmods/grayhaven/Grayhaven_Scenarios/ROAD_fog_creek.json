@@ -1,8 +1,8 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "id": "ROAD_fog_creek",
   "name": "沼泽绕径",
-  "description": "雾谷与灰溪渡口之间的林径,要绕开一大片黑水沼泽,单程近两小时。谷侧的入口没在雾里 [SCN_fog_hollow],溪侧的出口开在渡口下游的柳丛后 [SCN_creek_ford]。整段路都贴着那片沼泽走,黑水面上浮着一层铁锈色的膜,看着结实,底下没有底 [item.fog_creek.black_bog]。出谷不远有一道冲沟,一根倒木横在上面当桥用,树皮早被踩秃了 [item.fog_creek.deadfall_bridge]。绕行段最烂的一截当年铺过圆木栈道,如今大半沉进泥里,只剩几根还露着背,踩得准才不会陷 [item.fog_creek.sunken_corduroy];栈道尽头的烂泥里立着一只旧胶靴,靴口朝天,谁也没能把它拔回去 [item.fog_creek.mired_boot]。再往前,一根界桩从中间折断,倒在蕨类里,漆掉得一点不剩 [item.fog_creek.snapped_post]。快到溪边时柳丛密得看不见人,得侧着身子挤过去,出来就是渡口下游的浅滩 [item.fog_creek.willow_thicket]。泥浆能吞掉半只靴子,这是整片林区最招人咒骂的一段路。",
+  "setting": "雾谷与灰溪渡口之间的林径,要绕开一大片黑水沼泽,单程近两小时。谷侧的入口没在雾里 [SCN_fog_hollow],溪侧的出口开在渡口下游的柳丛后 [SCN_creek_ford]。整段路都贴着那片沼泽走,黑水面上浮着一层铁锈色的膜,看着结实,底下没有底 [item.fog_creek.black_bog]。出谷不远有一道冲沟,一根倒木横在上面当桥用,树皮早被踩秃了 [item.fog_creek.deadfall_bridge]。绕行段最烂的一截当年铺过圆木栈道,如今大半沉进泥里,只剩几根还露着背,踩得准才不会陷 [item.fog_creek.sunken_corduroy];栈道尽头的烂泥里立着一只旧胶靴,靴口朝天,谁也没能把它拔回去 [item.fog_creek.mired_boot]。再往前,一根界桩从中间折断,倒在蕨类里,漆掉得一点不剩 [item.fog_creek.snapped_post]。快到溪边时柳丛密得看不见人,得侧着身子挤过去,出来就是渡口下游的浅滩 [item.fog_creek.willow_thicket]。泥浆能吞掉半只靴子,这是整片林区最招人咒骂的一段路。",
   "parentLocationId": "OUTDOOR",
   "travelTimeMinutes": 110,
   "references": {

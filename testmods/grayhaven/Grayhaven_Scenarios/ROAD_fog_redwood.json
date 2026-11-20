@@ -1,8 +1,8 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "id": "ROAD_fog_redwood",
   "name": "雾谷北径",
-  "description": "雾谷通往红杉环的五十分钟上坡。谷底的一头常年泡在雾里 [SCN_fog_hollow],爬出雾线之后,红杉环的树冠就在前方合拢 [SCN_redwood_ring]。出谷不到十分钟,路边立着一根方木桩,顶上钉牌子的两个钉眼还在,牌子不知丢在哪一年 [item.fog_redwood.post_stub]——从雾里出来的人往往指望它确认方向,而它什么也不说。上坡最陡的一段被人垫过石头,大小不一,踩上去还算稳,是伐木工留下的手笔 [item.fog_redwood.stone_steps]。再往上,一线细流从岩缝里渗出来,顺着石面淌成一条湿痕,是这条路上唯一喝得着的水 [item.fog_redwood.seep_spring]。快到坡顶时,一只锈死的钢缆卷盘半陷在腐叶里,盘上还剩几圈缆,朝北的一头断在林子里 [item.fog_redwood.cable_spool]。回头望,来路只是一片白——很多人就是在这里开始怀疑自己刚才走的方向。",
+  "setting": "雾谷通往红杉环的五十分钟上坡。谷底的一头常年泡在雾里 [SCN_fog_hollow],爬出雾线之后,红杉环的树冠就在前方合拢 [SCN_redwood_ring]。出谷不到十分钟,路边立着一根方木桩,顶上钉牌子的两个钉眼还在,牌子不知丢在哪一年 [item.fog_redwood.post_stub]——从雾里出来的人往往指望它确认方向,而它什么也不说。上坡最陡的一段被人垫过石头,大小不一,踩上去还算稳,是伐木工留下的手笔 [item.fog_redwood.stone_steps]。再往上,一线细流从岩缝里渗出来,顺着石面淌成一条湿痕,是这条路上唯一喝得着的水 [item.fog_redwood.seep_spring]。快到坡顶时,一只锈死的钢缆卷盘半陷在腐叶里,盘上还剩几圈缆,朝北的一头断在林子里 [item.fog_redwood.cable_spool]。回头望,来路只是一片白——很多人就是在这里开始怀疑自己刚才走的方向。",
   "parentLocationId": "OUTDOOR",
   "travelTimeMinutes": 50,
   "references": {

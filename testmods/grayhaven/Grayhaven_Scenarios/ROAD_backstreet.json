@@ -1,8 +1,8 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "id": "ROAD_backstreet",
   "name": "后巷",
-  "description": "从主街南口 [SCN_main_south] 拐进来的窄巷,两侧是商铺楼的背面:后门、雨水管、糊了报纸的窗。路面是压实的煤渣和碎石 [item.backstreet.cinder_surface],被一年年的雨泡出一串坑——晚归的 Tommy 摸黑也能骑车穿过这条巷,每一道坑他闭着眼都记得。巷口不远处并排立着几只商铺的铁皮垃圾桶 [item.backstreet.trash_cans],盖子从来盖不严,天热的时候半条巷子都是那个味儿;再往里,一盏铁皮罩的巷灯 [item.backstreet.alley_lamp] 吊在两墙之间,灯泡坏了不知多少年,入夜后整条巷子只剩两头有光。巷子中段的地面上嵌着一块排水铁篦子 [item.backstreet.drain_grate],雨天呼呼地灌水,掉下去的东西没人捞得上来;贴着墙根摆着一只豁了口的搪瓷碗 [item.backstreet.cat_bowl],不知是谁给野猫添的,水总是满的。过了中段,一段爬满牵牛花的破篱笆 [item.backstreet.morning_glory_fence] 歪在墙外,花早上开、正午就蔫。快到头的砖墙上有一片粉笔道道 [item.backstreet.chalk_marks]:箭头、名字缩写,和几个只有那三个孩子看得懂的记号,雨一淋淡一层,总有人再描回来。巷子只容两人并肩,走到头就是雷耶斯家的门口 [SCN_reyes_gate]。",
+  "setting": "从主街南口 [SCN_main_south] 拐进来的窄巷,两侧是商铺楼的背面:后门、雨水管、糊了报纸的窗。路面是压实的煤渣和碎石 [item.backstreet.cinder_surface],被一年年的雨泡出一串坑——晚归的 Tommy 摸黑也能骑车穿过这条巷,每一道坑他闭着眼都记得。巷口不远处并排立着几只商铺的铁皮垃圾桶 [item.backstreet.trash_cans],盖子从来盖不严,天热的时候半条巷子都是那个味儿;再往里,一盏铁皮罩的巷灯 [item.backstreet.alley_lamp] 吊在两墙之间,灯泡坏了不知多少年,入夜后整条巷子只剩两头有光。巷子中段的地面上嵌着一块排水铁篦子 [item.backstreet.drain_grate],雨天呼呼地灌水,掉下去的东西没人捞得上来;贴着墙根摆着一只豁了口的搪瓷碗 [item.backstreet.cat_bowl],不知是谁给野猫添的,水总是满的。过了中段,一段爬满牵牛花的破篱笆 [item.backstreet.morning_glory_fence] 歪在墙外,花早上开、正午就蔫。快到头的砖墙上有一片粉笔道道 [item.backstreet.chalk_marks]:箭头、名字缩写,和几个只有那三个孩子看得懂的记号,雨一淋淡一层,总有人再描回来。巷子只容两人并肩,走到头就是雷耶斯家的门口 [SCN_reyes_gate]。",
   "parentLocationId": "OUTDOOR",
   "travelTimeMinutes": 8,
   "references": {

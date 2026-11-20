@@ -23,10 +23,9 @@ is limited to what is actually there.
 - Nothing is found that the world does not hold. An adequately searched, explicitly empty area can yield an absence.
   Missing detail in the input or a failed search is only a limit on the finding,
   not proof that the room contains nothing.
-- Questions put to a person and attempts to read their sincerity are
-  interpersonal actions without a check. Deliver the question through speech.
-  Any answer comes from the other person's own action, and the observer
-  interprets the behavior they perceive.
+- A question put to a person is delivered through speech. Any answer comes
+  from the other person's own action, and the observer interprets the
+  behavior they perceive.
 
 ## Success levels
 
@@ -70,7 +69,7 @@ for what actually happened — a one-off descriptive result is occurrence
 `content`, not a state change.
 
 - Usually NOTHING. What was found is occurrence `content` with the searcher
-  at the supported clarity. Nearby observers may see the search without learning
+  at the supported grades. Nearby observers may see the search without learning
   its finding; private knowledge does not require an item to be globally revealed.
 - `item.move` — something picked up, pocketed, or shifted while looking.
 - `scene.addCondition` — the room is visibly searched, the trail is trampled,

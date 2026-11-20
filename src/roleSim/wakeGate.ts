@@ -1,8 +1,10 @@
 // src/roleSim/wakeGate.ts
 //
 // The wake gate (design: docs/superpowers/specs/2026-11-13-decisions-api-
-// fast-paths-design.md §6.1) and the "noticing" judgement (concealment design
-// §5.3), both answered by the Decisions API before a character is rendered.
+// fast-paths-design.md §6.1), answered by the Decisions API before a
+// character is rendered. (It once carried a per-thing "noticing" question as
+// well; the renderer judges what is out of plain view now — setting design
+// §5.3.)
 //
 // The gate decides only WHEN a character is woken, never what they perceive:
 // a character it lets sleep keeps every occurrence of the minute in a pending
@@ -49,11 +51,11 @@ export function hardWakeReason(f: WakeFacts): string | null {
       return "a participant in an occurrence";
     }
     const addressedSomeone = occ.participants.some((p) => p.role === "target");
-    const clarity = occ.perceivers.find(
+    const hearing = occ.perceivers.find(
       (p) => p.characterId === f.npcId
-    )?.clarity;
+    )?.hearing;
     const speech = occ.facts.some((fact) => fact.type === "utterance");
-    if (speech && clarity === "full" && !addressedSomeone) {
+    if (speech && hearing === "clear" && !addressedSomeone) {
       return "spoken to the room within earshot";
     }
   }
@@ -64,61 +66,29 @@ export function hardWakeReason(f: WakeFacts): string | null {
 
 export const ACT_QUESTION = "acts";
 
-/** One predicate per thing that is here but not in plain view. */
-export interface NoticeCandidate {
-  kind: "item" | "connection";
-  id: string;
-  /** What the thing is, from its own description — the basis for noticing. */
-  description: string;
-}
-
-export function noticeQuestionName(c: NoticeCandidate): string {
-  return `notice:${c.kind}:${c.id}`;
-}
-
 const GATE_INSTRUCTIONS =
-  "You are given everything this character knows and has lived through, and what reaches their senses this minute (as structured data). Answer: in this minute, will this person start something new or change what they are doing? True also when they are idle and would now take up something — time passing is enough (closing time, a plan for this hour). False when they would carry on as they are.";
-
-function noticeInstructions(c: NoticeCandidate): string {
-  return `Something is here that this person has not noticed: ${
-    c.kind === "item" ? "an object" : "a concealed way through"
-  } — ${c.description}. Given what they are doing this minute, where they are, the light and their state, do they notice it now? A thing tucked away is noticed only by someone searching or handling what hides it; something left out in the open is noticed by most people.`;
-}
+  "You are given everything this character knows and has lived through, and what reaches their senses this minute (as structured data). Answer: in this minute, will this person start something new or change what they are doing? False when they would carry on as they are.";
 
 /**
  * The gate request: the character's own decision prompt (minus this minute's
  * rendered paragraph, which does not exist yet, and minus the decide
- * instruction), plus this minute's structured perception. Notice questions
- * ride along in the same request when given.
+ * instruction), plus this minute's structured perception.
  */
 export function buildGateRequest(params: {
   npcId: string;
   /** `buildUserPromptSegments` output for this character. */
   agentSegments: readonly PromptSegment[];
   bundle: PerceivedBundle;
-  ask: { act: boolean; notice: readonly NoticeCandidate[] };
 }): DecisionRequest {
   const text = params.agentSegments
     .map((s) => s.text)
     .map(stripSections)
     .filter((t) => t.trim().length > 0);
-  const questions: DecisionQuestion[] = [];
-  if (params.ask.act) {
-    questions.push({
-      type: "predicate",
-      name: ACT_QUESTION,
-      instructions: GATE_INSTRUCTIONS,
-    });
-  }
-  for (const c of params.ask.notice) {
-    questions.push({
-      type: "predicate",
-      name: noticeQuestionName(c),
-      instructions: noticeInstructions(c),
-    });
-  }
+  const questions: DecisionQuestion[] = [
+    { type: "predicate", name: ACT_QUESTION, instructions: GATE_INSTRUCTIONS },
+  ];
   return {
-    operation: params.ask.act ? "decisions:wake-gate" : "decisions:noticing",
+    operation: "decisions:wake-gate",
     input: {
       text,
       json: {
@@ -126,7 +96,7 @@ export function buildGateRequest(params: {
           scene: {
             id: params.bundle.scene.id,
             name: params.bundle.scene.name,
-            description: params.bundle.scene.description,
+            setting: params.bundle.scene.setting,
             conditions: params.bundle.scene.activeConditions,
           },
           ownAction: params.bundle.ownAction,
@@ -134,13 +104,17 @@ export function buildGateRequest(params: {
             appearance: c.appearance,
             ...(c.currentAction ? { doing: c.currentAction.description } : {}),
           })),
-          occurrences: params.bundle.occurrences.map((o) => ({
-            at: o.tickId,
-            clarity:
-              o.perceivers.find((p) => p.characterId === params.npcId)
-                ?.clarity ?? "full",
-            facts: o.facts.map((f) => f.content),
-          })),
+          occurrences: params.bundle.occurrences.map((o) => {
+            const own = o.perceivers.find(
+              (p) => p.characterId === params.npcId
+            );
+            return {
+              at: o.tickId,
+              sight: own?.sight ?? "clear",
+              hearing: own?.hearing ?? "clear",
+              facts: o.facts.map((f) => f.content),
+            };
+          }),
         },
       },
     },
@@ -170,24 +144,6 @@ export function gateSaysSkip(answers: Map<string, DecisionAnswer>): boolean {
   const p = answers.get(ACT_QUESTION)?.probability;
   if (p === undefined) return false;
   return p <= thresholdEnv("WAKE_GATE_SKIP_MAX", 0.1);
-}
-
-/** Noticed only when the model is fairly sure; unsure is "not noticed" — the
- *  side that keeps a secret (concealment design §5.3). */
-export function noticedFrom(
-  answers: Map<string, DecisionAnswer> | null,
-  candidates: readonly NoticeCandidate[]
-): { itemIds: Set<string>; connectionIds: Set<string> } {
-  const itemIds = new Set<string>();
-  const connectionIds = new Set<string>();
-  if (!answers) return { itemIds, connectionIds };
-  const min = thresholdEnv("NOTICE_MIN", 0.6);
-  for (const c of candidates) {
-    const p = answers.get(noticeQuestionName(c))?.probability;
-    if (p === undefined || p < min) continue;
-    (c.kind === "item" ? itemIds : connectionIds).add(c.id);
-  }
-  return { itemIds, connectionIds };
 }
 
 // ==================== Pending delivery ====================

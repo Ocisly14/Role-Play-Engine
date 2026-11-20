@@ -146,7 +146,7 @@ export function seedScene(
   dgsm.getState().scenes.set(sceneId, {
     id: sceneId,
     name: sceneId,
-    description: "",
+    setting: "",
     parentLocationId: opts.parentLocationId ?? "",
     items: opts.items ?? [],
     conditions: [],

@@ -1,8 +1,13 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "id": "SCN_holt_ray",
   "name": "Ray 的房间",
-  "description": "老警长的房间有一种懒得体面、又懒得不体面的气味:烟斗丝、旧皮革、晒过的报纸。窗边一把陷出人形的扶手椅 [item.holt_ray.armchair],扶手上摊着一摞填了一半的填字游戏册 [item.holt_ray.crossword_stack],铅笔头就卡在页缝里;椅子边的矮几上搁着他的烟斗和烟丝罐 [item.holt_ray.pipe_and_tin],烟丝只在镇上那家杂货店买。靠墙一张铺着军毯的单人床 [item.holt_ray.bed],床头一台旧电子管收音机 [item.holt_ray.tube_radio] 常年调在同一个台上,他听的是天气和潮汐;床底下拖出半摞晒脆了的旧报纸 [item.holt_ray.newspaper_stack],他嘴上说是留着引火。衣柜顶上横着一只钓具箱 [item.holt_ray.tackle_box],搭扣被手摸得发亮,潮水好的傍晚他就提着它、拎上门后那根钓竿 [item.holt_ray.fishing_rod] 去码头;衣柜脚下那口 1949 年跟他一起退伍回来的旧行李箱 [item.holt_ray.footlocker] 倒是好些年没打开过。制服外套 [item.holt_ray.uniform_jacket] 挂在门后,肩章洗得有点发白,和屋里其余的一切格格不入;外套上方的墙上钉着一张 1930 年代伐木班组的合影 [item.holt_ray.logging_photo],最边上那个扛着双人大锯的年轻人是他父亲。房门 [SCN_holt_common] 通向起居的大开间。",
+  "coordinates": {
+    "x": 630,
+    "y": 903,
+    "z": 28
+  },
+  "setting": "老警长的房间有一种懒得体面、又懒得不体面的气味:烟斗丝、旧皮革、晒过的报纸。窗边一把陷出人形的扶手椅 [item.holt_ray.armchair],扶手上摊着一摞填了一半的填字游戏册 [item.holt_ray.crossword_stack],铅笔头就卡在页缝里;椅子边的矮几上搁着他的烟斗和烟丝罐 [item.holt_ray.pipe_and_tin],烟丝只在镇上那家杂货店买。靠墙一张铺着军毯的单人床 [item.holt_ray.bed],床头一台旧电子管收音机 [item.holt_ray.tube_radio] 常年调在同一个台上,他听的是天气和潮汐;床底下拖出半摞晒脆了的旧报纸 [item.holt_ray.newspaper_stack],他嘴上说是留着引火。衣柜顶上横着一只钓具箱 [item.holt_ray.tackle_box],搭扣被手摸得发亮,潮水好的傍晚他就提着它、拎上门后那根钓竿 [item.holt_ray.fishing_rod] 去码头;衣柜脚下那口 1949 年跟他一起退伍回来的旧行李箱 [item.holt_ray.footlocker] 倒是好些年没打开过。制服外套 [item.holt_ray.uniform_jacket] 挂在门后,肩章洗得有点发白,和屋里其余的一切格格不入;外套上方的墙上钉着一张 1930 年代伐木班组的合影 [item.holt_ray.logging_photo],最边上那个扛着双人大锯的年轻人是他父亲。房门 [SCN_holt_common] 通向起居的大开间。",
   "parentLocationId": "holt_house",
   "indoor": true,
   "references": {

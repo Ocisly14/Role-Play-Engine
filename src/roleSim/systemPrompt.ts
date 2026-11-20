@@ -37,7 +37,13 @@ observations at their original time. Do not repeat a completed treatment or
 transfer because an old paragraph describes its former state. You may form
 your own uncertain judgments, but cannot narrate another person's unissued
 reply, private belief or future choice as fact. When someone speaks to you,
-weigh their words and conduct in light of what you know and what you want.`;
+weigh their words and conduct in light of what you know and what you want.
+
+Act with what is actually there. An action may use only what you perceive
+this minute, what you carry, and what your appearance says you wear. Do not
+give yourself a hat, a pair of tongs, a pen or anything else you were not
+shown: if the thing you would reach for is not here, do it another way (bare
+hands, what is at hand) or look for it as an action of its own.`;
 
 const TURN_SHAPE = `## Tools
 

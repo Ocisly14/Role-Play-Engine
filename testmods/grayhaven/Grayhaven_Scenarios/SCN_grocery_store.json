@@ -1,8 +1,13 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "id": "SCN_grocery_store",
   "name": "杂货店兼邮局·店堂",
-  "description": "店堂是全镇最老的字号,从 Reis 时代传到今天:木地板被一个世纪的脚步磨出浅沟,货架排得整整齐齐,罐头一律标签朝外[item.grocery_store.canned_shelf],隔壁一格是面包、面粉和干货[item.grocery_store.bread_rack],再过去是电池、灯泡、火柴和灯油的杂用货格[item.grocery_store.sundry_bin],墙上的挂板上垂着鱼线、鱼钩和铅坠[item.grocery_store.tackle_pegboard]——镇上钓鱼的都在这儿配齐。靠墙那台老冰柜[item.grocery_store.cooler_case]低低地嗡着,里面是牛奶、黄油和一屉冰镇汽水;门边的报纸架[item.grocery_store.newspaper_rack]上,外埠的报纸总要迟一天到,灰港的新闻从来靠嘴不靠纸,旁边那块钉便条的软木板[item.grocery_store.notice_cards]上写着卖船的、找零工的和谁家丢了猫。收银台上那台黄铜收银机[item.grocery_store.cash_register]也是老铺传下的物件,按键的脆响半条街都认得;矮凳边那排糖果货架[item.grocery_store.candy_shelf]的玻璃罐盖被摸得发亮,收银机旁摊着 Marisol 的账本[item.grocery_store.account_ledger],铅笔字一路算到小数点后两位,柜台后的烟柜[item.grocery_store.tobacco_case]里码着烟盒和几听烟丝,谁抽哪一种她记得比本人还清。靠里一角是邮政柜台,铜栅栏后挂着邮资表和窗口的营业时间[item.grocery_store.postal_counter],柜台正中那台邮政秤[item.grocery_store.postal_scale]的秤盘边缘也磨得发亮,身后一整面墙是分信格[item.grocery_store.pigeonholes],谁家的信落进哪一格几十年没变过;旁边的木架上摞着等人来取的包裹[item.grocery_store.parcel_shelf],栅栏下那只上锁的抽屉[item.grocery_store.stamp_drawer]里是邮票、汇票和当天的现金。柜台后一台旧收音机[item.grocery_store.shop_radio]常年开着 KGRV,音量压得很低,只在没有客人的时候听得见。邮件车每周二来,这里就是灰港与外界的全部往来。临街的门上挂着铃铛,出去便是主街[ROAD_main_street];柜台后一扇门通向后仓[SCN_grocery_backroom],门框上钉着历年身高刻痕,最高的一道写着 Tommy。",
+  "coordinates": {
+    "x": 14,
+    "y": 371,
+    "z": 17
+  },
+  "setting": "店堂是全镇最老的字号,从 Reis 时代传到今天:木地板被一个世纪的脚步磨出浅沟,货架排得整整齐齐,罐头一律标签朝外[item.grocery_store.canned_shelf],隔壁一格是面包、面粉和干货[item.grocery_store.bread_rack],再过去是电池、灯泡、火柴和灯油的杂用货格[item.grocery_store.sundry_bin],墙上的挂板上垂着鱼线、鱼钩和铅坠[item.grocery_store.tackle_pegboard]——镇上钓鱼的都在这儿配齐。靠墙那台老冰柜[item.grocery_store.cooler_case]低低地嗡着,里面是牛奶、黄油和一屉冰镇汽水;门边的报纸架[item.grocery_store.newspaper_rack]上,外埠的报纸总要迟一天到,灰港的新闻从来靠嘴不靠纸,旁边那块钉便条的软木板[item.grocery_store.notice_cards]上写着卖船的、找零工的和谁家丢了猫。收银台上那台黄铜收银机[item.grocery_store.cash_register]也是老铺传下的物件,按键的脆响半条街都认得;矮凳边那排糖果货架[item.grocery_store.candy_shelf]的玻璃罐盖被摸得发亮,收银机旁摊着 Marisol 的账本[item.grocery_store.account_ledger],铅笔字一路算到小数点后两位,柜台后的烟柜[item.grocery_store.tobacco_case]里码着烟盒和几听烟丝,谁抽哪一种她记得比本人还清。靠里一角是邮政柜台,铜栅栏后挂着邮资表和窗口的营业时间[item.grocery_store.postal_counter],柜台正中那台邮政秤[item.grocery_store.postal_scale]的秤盘边缘也磨得发亮,身后一整面墙是分信格[item.grocery_store.pigeonholes],谁家的信落进哪一格几十年没变过;旁边的木架上摞着等人来取的包裹[item.grocery_store.parcel_shelf],栅栏下那只上锁的抽屉[item.grocery_store.stamp_drawer]里是邮票、汇票和当天的现金。柜台后一台旧收音机[item.grocery_store.shop_radio]常年开着 KGRV,音量压得很低,只在没有客人的时候听得见。邮件车每周二来,这里就是灰港与外界的全部往来。临街的门上挂着铃铛,出去便是主街[ROAD_main_street];柜台后一扇门通向后仓[SCN_grocery_backroom],门框上钉着历年身高刻痕,最高的一道写着 Tommy。",
   "parentLocationId": "grocery_store",
   "indoor": true,
   "references": {
@@ -95,7 +100,9 @@
       {
         "id": "item.grocery_store.duplicate_bills",
         "name": "两张序列号相同的十美元钞票",
-        "description": "两张十美元钞票,序列号一字不差地相同,被折好压在收银机钱箱的最底下。周四对账时 Marisol 发现的;她把它们单独夹在一起,谁也没告诉,宁愿相信是自己看花了眼。"
+        "description": "两张十美元钞票,序列号一字不差地相同,折好夹在一起。周四对账时 Marisol 发现的;她把它们单独夹在一起,谁也没告诉,宁愿相信是自己看花了眼。",
+        "placement": "收银机钱箱的最底下",
+        "container": "item.grocery_store.cash_register"
       }
     ],
     "connections": [

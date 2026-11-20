@@ -251,7 +251,10 @@ describe("the player character's delegated mode", () => {
   } as never;
 
   /** What the agent asked the model with on its Nth request. */
-  function requestOn(n: number): { customSystemPrompt: string; tools: unknown } {
+  function requestOn(n: number): {
+    customSystemPrompt: string;
+    tools: unknown;
+  } {
     return generateToolCalls.mock.calls[n][0];
   }
 

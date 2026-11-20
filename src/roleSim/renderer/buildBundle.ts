@@ -10,13 +10,15 @@ import type { TickEngine } from "../../engine/core/tickEngine.js";
 import type { TickReport } from "../../engine/core/types.js";
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
 import {
-  type NoticedThisMinute,
   charactersAtSameLocation,
   resolvePerceivedLocation,
+  unnoticedCandidates,
 } from "../../state/perceivedLocation.js";
 import type {
   OwnActionState,
   PerceivedBundle,
+  PerceivedConcealedWay,
+  PerceivedOutOfViewItem,
   PerceivedSceneItem,
   ScenePresentCharacter,
 } from "./types.js";
@@ -30,9 +32,6 @@ export interface BuildBundleParams {
   occurrencesForNpc?: Occurrence[];
   dgsm: DynamicGameStateManager;
   engine: TickEngine;
-  /** What the viewer noticed this minute beyond plain view (concealment
-   *  design §5.3). Pass the same value to the citation scope. */
-  noticed?: NoticedThisMinute;
 }
 
 export function buildPerceivedBundle(
@@ -40,7 +39,7 @@ export function buildPerceivedBundle(
 ): PerceivedBundle {
   const { npcId, report, occurrencesForNpc, dgsm, engine } = params;
 
-  const scene = resolveScene(npcId, dgsm, params.noticed);
+  const scene = resolveScene(npcId, dgsm);
   const ownSpot = dgsm.getCharacterSpot(npcId);
   const ownConditions = dgsm.getNpcProfile(npcId)?.status?.conditions ?? [];
   const ownAction = resolveOwnAction(npcId, report, engine);
@@ -83,25 +82,24 @@ function resolveScenePresentCharacters(
 
 function resolveScene(
   npcId: string,
-  dgsm: DynamicGameStateManager,
-  noticed?: NoticedThisMinute
+  dgsm: DynamicGameStateManager
 ): PerceivedBundle["scene"] {
   // Roads are places too — a traveller mid-route perceives the
   // street they are on, not "an indistinct place".
-  // Same resolver AND same `noticed` as the trust boundary reads: a thing
-  // this character noticed is rendered for them and citable by them, and one
-  // they have not is neither.
+  // Same resolver as the trust boundary reads: what is in plain view is
+  // rendered and citable alike. What is out of view rides separately
+  // (`outOfView`) for the renderer to judge; it becomes citable only once a
+  // paragraph has written its tag.
   const location = resolvePerceivedLocation(
     dgsm.getCharacterPosition(npcId),
     dgsm,
-    npcId,
-    noticed
+    npcId
   );
   if (location) {
     return {
       id: location.id,
       name: location.name,
-      description: location.description,
+      setting: location.setting,
       activeConditions: location.conditions,
       // Already free of concealed passages this viewer did not notice:
       // `adjacentIds` filters them, so an unseen door never reaches here.
@@ -118,6 +116,8 @@ function resolveScene(
         if (item.description !== undefined) {
           entry.description = item.description;
         }
+        if (item.placement !== undefined) entry.placement = item.placement;
+        if (item.quantity !== undefined) entry.quantity = item.quantity;
         if (
           item.position !== undefined &&
           location.selfPosition !== undefined &&
@@ -130,17 +130,73 @@ function resolveScene(
         }
         return entry;
       }),
+      ...outOfViewAt(npcId, dgsm),
     };
   }
 
   return {
     id: "",
     name: "an indistinct place",
-    description: "",
+    setting: "",
     activeConditions: [],
     items: [],
     adjacentPlaces: [],
   };
+}
+
+/** What is here but out of plain view, for the renderer to judge: things
+ *  in, under or behind something (with that container's own description),
+ *  and concealed ways through (by the place they lead to). */
+function outOfViewAt(
+  npcId: string,
+  dgsm: DynamicGameStateManager
+): Pick<PerceivedBundle["scene"], "outOfView"> {
+  const position = dgsm.getCharacterPosition(npcId);
+  const hidden = unnoticedCandidates(position, dgsm);
+  if (hidden.items.length === 0 && hidden.connectionIds.length === 0) {
+    return {};
+  }
+  const placeId = position ? dgsm.resolveLocationId(position) : "";
+  const place = dgsm.getScene(placeId);
+  const placeItems = place?.items ?? [];
+  const items = hidden.items.map((item): PerceivedOutOfViewItem => {
+    const box =
+      item.container !== undefined
+        ? placeItems.find((i) => i.id === item.container)
+        : undefined;
+    return {
+      id: item.id,
+      name: item.name,
+      ...(item.description !== undefined
+        ? { description: item.description }
+        : {}),
+      ...(item.placement !== undefined ? { placement: item.placement } : {}),
+      ...(item.quantity !== undefined ? { quantity: item.quantity } : {}),
+      ...(box
+        ? {
+            container: {
+              id: box.id,
+              name: box.name,
+              ...(box.description !== undefined
+                ? { description: box.description }
+                : {}),
+            },
+          }
+        : {}),
+    };
+  });
+  const ways: PerceivedConcealedWay[] = [];
+  for (const connection of place?.connections ?? []) {
+    if (!hidden.connectionIds.includes(connection.id)) continue;
+    ways.push({
+      id: connection.targetId,
+      name: placeName(connection.targetId, dgsm),
+      ...(connection.description !== undefined
+        ? { description: connection.description }
+        : {}),
+    });
+  }
+  return { outOfView: { items, ways } };
 }
 
 /** A neighbouring place by the name a person standing here would use. */

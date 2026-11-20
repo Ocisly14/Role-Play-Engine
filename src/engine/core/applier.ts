@@ -255,12 +255,12 @@ export class Applier {
           return [
             { kind: "scene.removeCondition", sceneId, predicate: op.predicate },
           ];
-        case "setDescription":
+        case "setSetting":
           return [
             {
-              kind: "scene.setDescription",
+              kind: "scene.setSetting",
               sceneId,
-              description: op.description,
+              setting: op.setting,
             },
           ];
         case "connectionBlock":
@@ -317,11 +317,23 @@ export class Applier {
               ? { description: op.description }
               : {}),
             ...(typeof op.id === "string" ? { id: op.id } : {}),
+            ...whereOf(op),
+            ...(typeof op.quantity === "number"
+              ? { quantity: op.quantity }
+              : {}),
           },
         ];
       case "move":
         return itemId
-          ? [{ kind: "item.move", itemId, from: op.from, to: op.to }]
+          ? [
+              {
+                kind: "item.move",
+                itemId,
+                from: op.from,
+                to: op.to,
+                ...whereOf(op),
+              },
+            ]
           : [];
       case "set":
         return itemId
@@ -341,6 +353,20 @@ export class Applier {
                 ...(typeof op.lightLevel === "number"
                   ? { lightLevel: op.lightLevel }
                   : {}),
+                ...(typeof op.quantity === "number"
+                  ? { quantity: op.quantity }
+                  : {}),
+              },
+            ]
+          : [];
+      case "place":
+        return itemId
+          ? [
+              {
+                kind: "item.set",
+                itemId,
+                placement: op.placement,
+                container: op.container,
               },
             ]
           : [];
@@ -526,8 +552,8 @@ export class Applier {
             );
           }
           break;
-        case "scene.setDescription":
-          this.dgsm.setPlaceDescription(c.sceneId, c.description);
+        case "scene.setSetting":
+          this.dgsm.setPlaceSetting(c.sceneId, c.setting);
           break;
         case "connection.setBlock": {
           // One flag per edge, last writer wins. The validator refuses an
@@ -589,15 +615,24 @@ export class Applier {
               ? { isLightSource: c.isLightSource }
               : {}),
             ...(c.lightLevel !== undefined ? { lightLevel: c.lightLevel } : {}),
+            ...(c.quantity !== undefined ? { quantity: c.quantity } : {}),
+            ...whereOf(c),
           });
           break;
         }
         case "item.create": {
-          this.dgsm.createItem(c.name, c.location, c.description, c.id);
+          this.dgsm.createItem(
+            c.name,
+            c.location,
+            c.description,
+            c.id,
+            whereOf(c),
+            c.quantity
+          );
           break;
         }
         case "item.move": {
-          this.dgsm.moveItem(c.itemId, c.from, c.to);
+          this.dgsm.moveItem(c.itemId, c.from, c.to, whereOf(c));
           break;
         }
         case "item.destroy": {
@@ -699,4 +734,15 @@ export class Applier {
       died,
     };
   }
+}
+
+/** The placement/container pair, carried only when given. */
+function whereOf(op: { placement?: unknown; container?: unknown }): {
+  placement?: string;
+  container?: string;
+} {
+  return {
+    ...(typeof op.placement === "string" ? { placement: op.placement } : {}),
+    ...(typeof op.container === "string" ? { container: op.container } : {}),
+  };
 }

@@ -6,7 +6,7 @@
 
 理性派的定海针:病人的话只信一半,身体的话全信。周日下午跟自己下棋、听 KGRV 的歌剧转播。最近病例统计曲线开始爬坡,他不声张,只是把记录越写越细。说话是处方式短句("睡够,少烟,下周复查"),安慰人的方式是给出确定性,床边带点冷幽默。
 
-技能倾向:Medicine & Psychology 高;Science & Nature 高;Investigation 中高;Social 中。
+技能倾向:Medicine 高;Science & Nature 高;Investigation 中高;Social 中。
 
 驱动:找出失眠耳鸣潮的流行病学解释——环境毒物?水源?他还没往别处想,还没。
 

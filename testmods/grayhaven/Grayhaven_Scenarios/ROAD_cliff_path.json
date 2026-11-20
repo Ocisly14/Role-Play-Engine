@@ -1,8 +1,8 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "id": "ROAD_cliff_path",
   "name": "崖间小径",
-  "description": "沿海崖蜿蜒的小径,是码头与灯塔崖之间唯一的通路,单程半个钟头。北端起于码头 [SCN_dock];脚下是几代人踩出来的一条窄径 [item.cliff_path.trodden_track],硬土里压着碎贝壳,雨后留得住脚印。出码头没几步,路边岩壁上凿出一个小神龛 [item.cliff_path.wayside_shrine],里头的圣像被海风吹得没了颜色,底下常年有蜡烛头和贝壳;再走出没几分钟,一条岔路拐向海边那间独居的小屋,烟囱里常有若有若无的烟 [SCN_earl_cabin]。此后小径贴着崖缘一路爬升:先过一丛被风梳成一边倒的柏树 [item.cliff_path.wind_bent_cypress],然后是第三个弯——外侧的路肩塌了一角,土是酥的 [item.cliff_path.crumbling_edge],有人在最险的那几步打了铁桩,拉起一段旧缆绳当扶手 [item.cliff_path.rope_rail]。弯过去不远有一块被坐平的大石头 [item.cliff_path.rest_stone],正对海面,上下这条路上下了三十年的人都在这儿歇一口气。快到崖顶时,一排歪斜的旧线杆 [item.cliff_path.cable_posts] 从路边伸向塔基,瓷绝缘子还在,线早断了;南端止于灯塔崖顶 [SCN_lighthouse_cliff]。一侧始终是崖下的浪声,雾天走这条路,得用脚记住每一个弯。",
+  "setting": "沿海崖蜿蜒的小径,是码头与灯塔崖之间唯一的通路,单程半个钟头。北端起于码头 [SCN_dock];脚下是几代人踩出来的一条窄径 [item.cliff_path.trodden_track],硬土里压着碎贝壳,雨后留得住脚印。出码头没几步,路边岩壁上凿出一个小神龛 [item.cliff_path.wayside_shrine],里头的圣像被海风吹得没了颜色,底下常年有蜡烛头和贝壳;再走出没几分钟,一条岔路拐向海边那间独居的小屋,烟囱里常有若有若无的烟 [SCN_earl_cabin]。此后小径贴着崖缘一路爬升:先过一丛被风梳成一边倒的柏树 [item.cliff_path.wind_bent_cypress],然后是第三个弯——外侧的路肩塌了一角,土是酥的 [item.cliff_path.crumbling_edge],有人在最险的那几步打了铁桩,拉起一段旧缆绳当扶手 [item.cliff_path.rope_rail]。弯过去不远有一块被坐平的大石头 [item.cliff_path.rest_stone],正对海面,上下这条路上下了三十年的人都在这儿歇一口气。快到崖顶时,一排歪斜的旧线杆 [item.cliff_path.cable_posts] 从路边伸向塔基,瓷绝缘子还在,线早断了;南端止于灯塔崖顶 [SCN_lighthouse_cliff]。一侧始终是崖下的浪声,雾天走这条路,得用脚记住每一个弯。",
   "parentLocationId": "OUTDOOR",
   "travelTimeMinutes": 30,
   "references": {

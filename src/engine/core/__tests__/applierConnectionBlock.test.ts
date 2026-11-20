@@ -28,7 +28,7 @@ function makeFixture() {
   const scene: DynamicScene = {
     id: "S_HOME",
     name: "Home",
-    description: "A parlour.",
+    setting: "A parlour.",
     parentLocationId: "LOC_TOWN",
     items: [],
     conditions: [],
@@ -42,7 +42,7 @@ function makeFixture() {
   ): DynamicScene => ({
     id,
     name: id,
-    description: `${id} crossing`,
+    setting: `${id} crossing`,
     items: [],
     conditions: [],
     connections,
@@ -56,7 +56,7 @@ function makeFixture() {
   ): RoadNode => ({
     id,
     name: id,
-    description: `${id} road`,
+    setting: `${id} road`,
     parentLocationId: "OUTDOOR",
     connections: [
       { id: `connection.${id}.a`, targetId: a, role: "endpointA" },

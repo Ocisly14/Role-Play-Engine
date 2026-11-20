@@ -9,6 +9,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ActionTransition, EngineAction } from "../../engine/actions/types.js";
 import type { TickReport } from "../../engine/core/types.js";
+import type { AddMemoryParams } from "../../memory/types.js";
 import type { PlayerPending, PlayerState } from "../../player/playerState.js";
 import {
   PLAYER_STATE_KEY,
@@ -19,12 +20,13 @@ import {
   DynamicGameStateManager,
   initialDynamicGameState,
 } from "../../state/DynamicGameState.js";
+import { aliasFor } from "../../state/perceivableDirectory.js";
 import type { RoadNode, TownTopology } from "../../state/topologyTypes.js";
 import type { DynamicNPCProfile } from "../../state/types.js";
 import { SimulationRunner } from "../SimulationRunner.js";
 import type { SimulationEvent, SimulationState } from "../types.js";
 
-type ResolveInput = { kind: "continue" } | { kind: "steps" } | { kind: "advice" };
+type ResolveInput = { kind: "continue" } | { kind: "advice" };
 
 const h = vi.hoisted(() => ({
   /** What the stand-in controller does when a tick completes. */
@@ -34,8 +36,21 @@ const h = vi.hoisted(() => ({
   /** What the stand-in controller does when the player answers. */
   onResolve: null as
     | null
-    | ((deps: NpcActionControllerDeps, input: ResolveInput) => Promise<void> | void),
-  resolveCalls: [] as Array<{ input: ResolveInput; pendingAtCall: PlayerPending | null }>,
+    | ((
+        deps: NpcActionControllerDeps,
+        input: ResolveInput
+      ) => Promise<void> | void),
+  command: vi.fn(
+    async (
+      _args: Record<string, unknown>
+    ): Promise<
+      { ok: true; actionId: string } | { ok: false; reason: string }
+    > => ({ ok: true, actionId: "new-action" })
+  ),
+  resolveCalls: [] as Array<{
+    input: ResolveInput;
+    pendingAtCall: PlayerPending | null;
+  }>,
   /** The engine's actions, by everyone. */
   actions: [] as EngineAction[],
   /** This tick's transitions. */
@@ -94,6 +109,12 @@ vi.mock("../../roleSim/npcActionController.js", () => ({
       });
       await h.onResolve?.(this.deps, input);
     }
+    playerCitationScope() {
+      return undefined;
+    }
+    submitPlayerCommand(args: Record<string, unknown>) {
+      return h.command(args);
+    }
     restorePerceptionHistory(): void {}
   },
 }));
@@ -145,6 +166,7 @@ function makeDgsm(): DynamicGameStateManager {
   state.scenes.set("SCN_B", { id: "SCN_B", name: "B" } as never);
   const road = {
     id: "ROAD_AB",
+    name: "Main Road",
     endpointA: "SCN_A",
     endpointB: "SCN_B",
   } as RoadNode;
@@ -166,6 +188,10 @@ function makePrisma() {
     tick: number;
     gameState: Record<string, unknown>;
   }> = [];
+  const rows: AddMemoryParams[] = [];
+  const add = vi.fn(async (row: AddMemoryParams) => {
+    rows.push(row);
+  });
   const prisma = {
     simulationRuntime: {
       upsert: vi.fn(async (args: { update: (typeof saved)[number] }) => {
@@ -177,9 +203,14 @@ function makePrisma() {
       createMany: vi.fn(async () => ({ count: 0 })),
       findMany: vi.fn(async () => []),
     },
-    npcMemory: { deleteMany: vi.fn(async () => ({ count: 0 })) },
+    npcMemory: {
+      deleteMany: vi.fn(async () => ({ count: 0 })),
+      findMany: vi.fn(async () =>
+        rows.filter((row) => row.type === "relationship")
+      ),
+    },
   };
-  return { prisma, saved };
+  return { prisma, saved, add };
 }
 
 interface Harness {
@@ -187,6 +218,7 @@ interface Harness {
   dgsm: DynamicGameStateManager;
   saved: ReturnType<typeof makePrisma>["saved"];
   events: SimulationEvent[];
+  add: ReturnType<typeof makePrisma>["add"];
   autosaves: Array<{ info: { characterId: string; gameDateTime: string; sceneId: string }; lastSavedAt: string | undefined }>;
 }
 
@@ -197,14 +229,13 @@ interface RunnerOpts {
   /** Default one hour: long enough that no scheduled tick fires inside a
    *  test. Short only where a test needs the timer to fire. */
   tickIntervalMs?: number;
-  playerSplitter?: (text: string) => Promise<string[]>;
 }
 
 function makeRunner(
   opts: RunnerOpts & { dgsm?: DynamicGameStateManager } = {}
 ): Harness {
   const dgsm = opts.dgsm ?? makeDgsm();
-  const { prisma, saved } = makePrisma();
+  const { prisma, saved, add } = makePrisma();
   const autosaves: Harness["autosaves"] = [];
   const runner = new SimulationRunner({
     config: {
@@ -217,7 +248,7 @@ function makeRunner(
     dgsm,
     language: "en",
     prisma: prisma as never,
-    ...(opts.playerSplitter ? { playerSplitter: opts.playerSplitter } : {}),
+    memoryManager: { add } as never,
     onAutosaveRequested: async (info) => {
       autosaves.push({
         info,
@@ -228,7 +259,7 @@ function makeRunner(
   const events: SimulationEvent[] = [];
   runner.setBroadcastCallback((batch) => events.push(...batch));
   live.push(runner);
-  return { runner, dgsm, saved, events, autosaves };
+  return { runner, dgsm, saved, events, autosaves, add };
 }
 
 /** A runner whose session already has the player standing at SCN_A. */
@@ -275,6 +306,7 @@ beforeEach(() => {
   h.onTick = null;
   h.onResolve = null;
   h.resolveCalls = [];
+  h.command.mockClear();
   h.actions = [];
   h.transitions = [];
   h.log = [];
@@ -288,6 +320,192 @@ afterEach(async () => {
 // ── tests ─────────────────────────────────────────────────────────────────
 
 describe("SimulationRunner — the player", () => {
+  it("returns the exact line as a waiting exchange after accepting ordinary speech", async () => {
+    const { runner, saved } = withPlayer();
+    const speech = {
+      kind: "say",
+      to: [],
+      words: "  Could I get some coffee?  ",
+    } as const;
+    await expect(
+      runner.submitPlayerCommand({ ...speech, to: [] })
+    ).resolves.toMatchObject({ ok: true });
+    const turn = {
+      id: "new-action",
+      gameDateTime: START,
+      location: "SCN_A",
+      words: "Could I get some coffee?",
+      status: "waiting",
+      replies: [],
+    };
+    expect(runner.getPlayerView()?.state.dialogue).toEqual([turn]);
+    expect(saved.at(-1)?.gameState[PLAYER_STATE_KEY]).toMatchObject({
+      dialogue: [turn],
+    });
+    await expect(
+      runner.submitPlayerCommand({ kind: "sleep" })
+    ).resolves.toMatchObject({ ok: false });
+    expect(h.command).toHaveBeenCalledOnce();
+  });
+
+  it("lists adjacent exits and exposes strangers only by handle and description", () => {
+    const { runner, dgsm } = withPlayer();
+    const id = "npc_unknown_identity";
+    const name = "The Hidden Canonical Name";
+    dgsm.updateNpcs([
+      { ...profile(id), name, appearance: "person in a yellow coat" },
+    ]);
+    dgsm.setCharacterPosition(id, { type: "scene", sceneId: "SCN_A" });
+    dgsm.createItem("Key", PLAYER, undefined, "item_key");
+    dgsm.createItem("Distant object", "scene:SCN_B", undefined, "item_far", {
+      placement: "on the floor",
+    });
+
+    const view = runner.getPlayerView();
+    expect(view?.options.exits).toEqual([
+      { handle: "ROAD_AB", label: "Main Road", kind: "scene" },
+    ]);
+    expect(view?.options.mentions).toEqual([
+      {
+        handle: aliasFor(PLAYER, id),
+        label: "the person in a yellow coat",
+        kind: "character",
+      },
+      { handle: "item_key", label: "Key", kind: "item" },
+    ]);
+    expect(JSON.stringify(view)).not.toContain(id);
+    expect(JSON.stringify(view)).not.toContain(name);
+  });
+
+  it("keeps a refused command pending and resumes once a move is accepted", async () => {
+    const pending = decisionPause(START);
+    const { runner } = withPlayer({ pending });
+    const rejected = await runner.submitPlayerCommand({
+      kind: "act",
+      text: "I reach for @[item_unseen].",
+    });
+    expect(rejected).toEqual({
+      ok: false,
+      reason: "unknown handle: item_unseen",
+    });
+    expect(h.command).not.toHaveBeenCalled();
+    h.command.mockResolvedValueOnce({ ok: false, reason: "boundary refused" });
+    const move = { kind: "move", to: "ROAD_AB" } as const;
+    await expect(runner.submitPlayerCommand(move)).resolves.toEqual({
+      ok: false,
+      reason: "boundary refused",
+    });
+    expect(runner.getPlayerView()?.state.pending).toEqual(pending);
+    expect(runner.getStatus().state).toBe("paused");
+    expect(h.command).toHaveBeenCalledTimes(1);
+
+    await expect(runner.submitPlayerCommand(move)).resolves.toEqual({
+      ok: true,
+      unknownHandles: [],
+    });
+    expect(h.command).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        objectRefs: [{ id: "ROAD_AB" }],
+        proposedDurationTicks: 1,
+      })
+    );
+    expect(runner.getPlayerView()?.state.pending).toBeNull();
+    await flush();
+    expect(runner.getStatus().state).toBe("running");
+  });
+
+  it("accepts sleep only in manual mode", async () => {
+    const { runner } = withPlayer({ mode: "delegated" });
+    await expect(runner.submitPlayerCommand({ kind: "sleep" })).rejects.toThrow(
+      "commands are for manual mode"
+    );
+    expect(h.command).not.toHaveBeenCalled();
+    await runner.setPlayerMode("manual");
+    await runner.submitPlayerCommand({ kind: "sleep" });
+    expect(h.command).toHaveBeenCalledWith(
+      expect.objectContaining({ sleep: true })
+    );
+    expect(runner.getStatus().state).toBe("paused");
+  });
+
+  it("remembers first encounters, renames and private links without exposing stranger ids", async () => {
+    const { runner, dgsm, saved, events, add } = withPlayer();
+    const first = "npc_unknown_first";
+    const second = "npc_unknown_second";
+    const a = aliasFor(PLAYER, first);
+    const b = aliasFor(PLAYER, second);
+    for (const id of [first, second]) {
+      dgsm.updateNpcs([profile(id)]);
+      dgsm.setCharacterPosition(id, { type: "scene", sceneId: "SCN_A" });
+    }
+    h.onTick = (deps, report) => {
+      deps.onPerception?.({
+        npcId: PLAYER,
+        location: "SCN_A",
+        gameDateTime: report.gameDateTime,
+        narrative: `I see [${a}] and [${b}].`,
+      });
+    };
+    await runner.step(1);
+    const firstMet = dgsm.getGameDateTime();
+    await runner.step(1);
+    const oldBoard = await runner.getPlayerBoard();
+    expect(oldBoard?.people).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ handle: a, firstMet }),
+        expect.objectContaining({ handle: b, firstMet }),
+      ])
+    );
+
+    const { id } = await runner.linkPeople(a, b, "neighbors");
+    expect(await runner.linkPeople(b, a, "neighbors")).toEqual({ id });
+    const anonymous = {
+      board: await runner.getPlayerBoard(),
+      view: runner.getPlayerView(),
+      events: events.filter((event) => event.type.startsWith("player_")),
+    };
+    expect(anonymous.board?.links).toEqual([{ id, a, b, label: "neighbors" }]);
+    expect(JSON.stringify(anonymous)).not.toContain(first);
+    expect(JSON.stringify(anonymous)).not.toContain(second);
+    expect(add).not.toHaveBeenCalled();
+    await expect(
+      runner.namePerson(first, "An unseen identity")
+    ).rejects.toThrow("person not found");
+    await runner.namePerson(a, "Ada");
+    await runner.namePerson(first, "A. Smith");
+    expect(add).not.toHaveBeenCalled();
+    expect(runner.getPlayerView()?.options.mentions).toContainEqual({
+      handle: first,
+      label: "A. Smith",
+      kind: "character",
+    });
+    await runner.notePerson(first, "She waits by the gate.");
+    expect(dgsm.getRelationship(PLAYER, first)?.knownAs).toBe("A. Smith");
+    expect(add).toHaveBeenCalledTimes(1);
+    expect(add).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "relationship",
+        metadata: { targetId: first, targetName: "A. Smith" },
+      })
+    );
+    const board = await runner.getPlayerBoard();
+    expect(board?.people).toContainEqual({
+      handle: first,
+      label: "A. Smith",
+      knownAs: "A. Smith",
+      firstMet,
+      notes: ["She waits by the gate."],
+    });
+    expect(board?.links).toEqual([{ id, a: first, b, label: "neighbors" }]);
+    expect(saved.at(-1)?.gameState[PLAYER_STATE_KEY]).toMatchObject({
+      met: { [first]: firstMet, [second]: firstMet },
+      boardLinks: [{ id, a: first, b: second, label: "neighbors" }],
+    });
+    await runner.unlinkPeople(id);
+    expect((await runner.getPlayerBoard())?.links).toEqual([]);
+    expect(add).toHaveBeenCalledTimes(1);
+  });
+
   it("pending survives save/hydrate", async () => {
     const a = withPlayer({ mode: "delegated" });
     h.onTick = (deps, report) => {
@@ -403,18 +621,14 @@ describe("SimulationRunner — the player", () => {
       deps.player?.requestPause({
         kind: "decision",
         since: START,
-        reason: "rejected",
-        rejection: "player input translation is not implemented yet",
+        reason: "woken",
       });
     };
 
-    await runner.submitPlayerInput("walk to the diner");
+    await runner.continuePlayer();
     const pending = runner.getPlayerView()?.state.pending;
-    expect(pending).toMatchObject({ kind: "decision", reason: "rejected" });
+    expect(pending).toMatchObject({ kind: "decision", reason: "woken" });
     expect(runner.getStatus().state).toBe("paused");
-    expect(runner.getPlayerView()?.state.queue.map((q) => q.text)).toEqual([
-      "walk to the diner",
-    ]);
   });
 
   it("input during tick waits for tick end", async () => {
@@ -431,21 +645,19 @@ describe("SimulationRunner — the player", () => {
     const started = runner.start();
     await entered.promise;
 
-    const input = runner.submitPlayerInput("look around");
+    const input = runner.continuePlayer();
     await flush();
     expect(h.resolveCalls).toHaveLength(0);
 
     gate.resolve();
     await started;
     await input;
-    expect(h.log).toEqual(["tick:start", "tick:end", "resolve:steps"]);
+    expect(h.log).toEqual(["tick:start", "tick:end", "resolve:continue"]);
     expect(h.resolveCalls).toHaveLength(1);
   });
 
-  it("death clears queue and blocks input", async () => {
-    const { runner, dgsm, events } = withPlayer({
-      queue: [{ id: "s1", text: "walk north", status: "pending" }],
-    });
+  it("death blocks player operations", async () => {
+    const { runner, dgsm, events } = withPlayer();
     h.onTick = () => {
       const pc = dgsm.getNpcProfile(PLAYER);
       if (pc) pc.status.hp = 0;
@@ -455,13 +667,10 @@ describe("SimulationRunner — the player", () => {
 
     const view = runner.getPlayerView();
     expect(view?.state.pending?.kind).toBe("dead");
-    expect(view?.state.queue).toEqual([]);
     expect(view?.alive).toBe(false);
     expect(types(events)).toContain("player_died");
     expect(runner.getStatus().state).toBe("paused");
-    await expect(runner.submitPlayerInput("run")).rejects.toThrow(
-      "player is dead"
-    );
+    await expect(runner.continuePlayer()).rejects.toThrow("player is dead");
   });
 
   it("mode switch converts consult to decision", async () => {
@@ -692,14 +901,14 @@ describe("SimulationRunner — the player", () => {
     expect(runner.getStatus().state).toBe("running");
     expect(runner.getStatus().ticksExecuted).toBe(1);
 
-    // The player types while the world runs; the controller takes its time
+    // The player acts while the world runs; the controller takes its time
     // and then asks again.
     const gate = deferred();
     h.onResolve = async (deps) => {
       await gate.promise;
       deps.player?.requestPause(decisionPause(START));
     };
-    const input = runner.submitPlayerInput("knock on the door");
+    const input = runner.continuePlayer();
     // The scheduled tick comes due and waits behind the operation.
     await sleep(60);
     // Private, read only here: null means the timer fired and its cycle is
@@ -751,7 +960,7 @@ describe("SimulationRunner — the player", () => {
     h.onResolve = async () => {
       await gate.promise; // slow, and asks nothing
     };
-    const input = runner.submitPlayerInput("wait by the window");
+    const input = runner.continuePlayer();
     await sleep(60);
     const timer = (): unknown =>
       (runner as unknown as { intervalId: unknown }).intervalId;
@@ -800,39 +1009,66 @@ describe("SimulationRunner — the player", () => {
     expect(runner.getPlayerView()?.state.pending?.kind).toBe("decision");
   });
 
-  it("a splitter that yields no steps is an empty instruction", async () => {
-    const { runner } = withPlayer(
-      { queue: [{ id: "s1", text: "wait here", status: "pending" }] },
-      { playerSplitter: async () => [] }
-    );
-    await expect(runner.submitPlayerInput("hmm")).rejects.toThrow(
-      "empty instruction"
-    );
-    expect(h.resolveCalls).toHaveLength(0);
-    expect(runner.getPlayerView()?.state.queue.map((q) => q.text)).toEqual([
-      "wait here",
-    ]);
+  it("the view is a copy", async () => {
+    const { runner } = withPlayer({
+      mode: "delegated",
+      friendLog: [{ gameDateTime: START, answer: "Watch the door." }],
+    });
+    const view = runner.getPlayerView();
+    view?.state.friendLog.splice(0);
+    expect(runner.getPlayerView()?.state.friendLog).toHaveLength(1);
   });
 
-  it("replacing the queue keeps the running step and the view is a copy", async () => {
-    const { runner } = withPlayer({
-      queue: [
-        { id: "s0", text: "eat", status: "done", actionId: "a0" },
-        { id: "s1", text: "walk north", status: "running", actionId: "a1" },
-        { id: "s2", text: "knock", status: "pending" },
-      ],
-    });
-    await runner.replacePlayerQueue(["wait", " ", "listen"]);
+  it("sendAdvice while delegated with no question waiting leaves words for next tick", async () => {
+    const { runner } = withPlayer({ mode: "delegated" });
+    await runner.sendAdvice("  Watch the door.  ");
 
-    const view = runner.getPlayerView();
-    expect(view?.state.queue.map((q) => [q.text, q.status])).toEqual([
-      ["eat", "done"],
-      ["walk north", "running"],
-      ["wait", "pending"],
-      ["listen", "pending"],
+    const state = runner.getPlayerView()?.state;
+    expect(state?.friendLog).toEqual([
+      { gameDateTime: START, answer: "Watch the door." },
     ]);
-    view?.state.queue.splice(0);
-    expect(runner.getPlayerView()?.state.queue).toHaveLength(4);
+    expect(state?.forceWake).toBe(true);
+    // Nothing was answered: the controller was not asked to resolve, and the
+    // world was neither paused nor resumed for it.
+    expect(h.resolveCalls).toHaveLength(0);
+    expect(runner.getStatus().state).toBe("paused");
+  });
+
+  it("sendAdvice answers a waiting question and resumes", async () => {
+    const { runner } = withPlayer({
+      mode: "delegated",
+      pending: { kind: "consult", since: START, question: "Stay or go?" },
+    });
+    await runner.sendAdvice("Stay.");
+
+    expect(h.resolveCalls.map((c) => c.input.kind)).toEqual(["advice"]);
+    const state = runner.getPlayerView()?.state;
+    expect(state?.friendLog).toEqual([
+      { gameDateTime: START, question: "Stay or go?", answer: "Stay." },
+    ]);
+    expect(state?.pending).toBeNull();
+    expect(state?.forceWake).toBe(false);
+    expect(["initializing", "running"]).toContain(runner.getStatus().state);
+    await flush();
+    expect(runner.getStatus().state).toBe("running");
+  });
+
+  it("sendAdvice in manual mode throws", async () => {
+    const { runner } = withPlayer({ pending: decisionPause(START) });
+    await expect(runner.sendAdvice("go north")).rejects.toThrow(
+      "advice is for delegated mode"
+    );
+    const state = runner.getPlayerView()?.state;
+    expect(state?.friendLog).toEqual([]);
+    expect(state?.pending).toEqual(decisionPause(START));
+    expect(h.resolveCalls).toHaveLength(0);
+    expect(runner.getStatus().state).toBe("paused");
+  });
+
+  it("sendAdvice refuses empty text", async () => {
+    const { runner } = withPlayer({ mode: "delegated" });
+    await expect(runner.sendAdvice("   ")).rejects.toThrow("empty advice");
+    expect(runner.getPlayerView()?.state.friendLog).toEqual([]);
   });
 
   it("player operations are refused once the simulation has ended", async () => {

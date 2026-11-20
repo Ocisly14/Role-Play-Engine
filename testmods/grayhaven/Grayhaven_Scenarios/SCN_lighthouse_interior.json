@@ -1,8 +1,13 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "id": "SCN_lighthouse_interior",
   "name": "灯塔内部",
-  "description": "螺旋铁梯 [item.lighthouse_interior.spiral_stair] 绕着塔壁一圈圈盘上去,踏板是镂花铸铁,脚步声在塔筒里回响很久。塔顶的灯机 [item.lighthouse_interior.lamp_mechanism] 自顾自地转,菲涅尔透镜把光一圈一圈甩向海面,底下那只继电器箱每隔几秒咔哒一响——这座塔如今不需要人,可它曾经被人守了三十年:值班桌 [item.lighthouse_interior.duty_desk] 还在老位置,抽屉里是铅笔、黄铜分规和一本没写完的登记簿,桌下一张值班凳 [item.lighthouse_interior.duty_stool] 的凳面被三十年的坐痕磨出浅浅一个凹;桌角那只搪瓷缸 [item.lighthouse_interior.enamel_mug] 缸沿磕了口,里头却干净得反光。墙上钉着一张进港海图 [item.lighthouse_interior.approach_chart],镇南那片暗礁被红铅笔圈过好几遍;旁边一只黄铜气压计 [item.lighthouse_interior.barometer] 还准,表面的玻璃每天有人擦。档案柜里排着三十年的守塔日志 [item.lighthouse_interior.keeper_logs],从 1952 到 1982,一册不缺。墙上的工具架 [item.lighthouse_interior.maintenance_tools] 上,黄铜和钢的保养工具按尺寸挂得一丝不苟,擦过油——有人仍在照料它们;梯口挂着一盏备用煤油提灯 [item.lighthouse_interior.kerosene_lantern],油是满的。梯子尽头一扇小铁门 [item.lighthouse_interior.gallery_hatch] 通向塔顶外面的回廊,推开就是整片海和整个镇子。1982 年之后,楼梯和栏杆积起了薄薄一层灰 [cond.lighthouse_interior.dust],只有一条被脚步磨出的窄道是干净的。塔底的铁门 [SCN_lighthouse_cliff] 通向崖顶平台,门外侧挂着海岸警卫队换上的官方挂锁——照规矩,谁也进不来。",
+  "coordinates": {
+    "x": -192,
+    "y": -2344,
+    "z": 60
+  },
+  "setting": "螺旋铁梯 [item.lighthouse_interior.spiral_stair] 绕着塔壁一圈圈盘上去,踏板是镂花铸铁,脚步声在塔筒里回响很久。塔顶的灯机 [item.lighthouse_interior.lamp_mechanism] 自顾自地转,菲涅尔透镜把光一圈一圈甩向海面,底下那只继电器箱每隔几秒咔哒一响——这座塔如今不需要人,可它曾经被人守了三十年:值班桌 [item.lighthouse_interior.duty_desk] 还在老位置,抽屉里是铅笔、黄铜分规和一本没写完的登记簿,桌下一张值班凳 [item.lighthouse_interior.duty_stool] 的凳面被三十年的坐痕磨出浅浅一个凹;桌角那只搪瓷缸 [item.lighthouse_interior.enamel_mug] 缸沿磕了口,里头却干净得反光。墙上钉着一张进港海图 [item.lighthouse_interior.approach_chart],镇南那片暗礁被红铅笔圈过好几遍;旁边一只黄铜气压计 [item.lighthouse_interior.barometer] 还准,表面的玻璃每天有人擦。档案柜里排着三十年的守塔日志 [item.lighthouse_interior.keeper_logs],从 1952 到 1982,一册不缺。墙上的工具架 [item.lighthouse_interior.maintenance_tools] 上,黄铜和钢的保养工具按尺寸挂得一丝不苟,擦过油——有人仍在照料它们;梯口挂着一盏备用煤油提灯 [item.lighthouse_interior.kerosene_lantern],油是满的。梯子尽头一扇小铁门 [item.lighthouse_interior.gallery_hatch] 通向塔顶外面的回廊,推开就是整片海和整个镇子。1982 年之后,楼梯和栏杆积起了薄薄一层灰,只有一条被脚步磨出的窄道是干净的。塔底的铁门 [SCN_lighthouse_cliff] 通向崖顶平台,门外侧挂着海岸警卫队换上的官方挂锁——照规矩,谁也进不来。",
   "parentLocationId": "SCN_lighthouse_cliff",
   "indoor": true,
   "references": {
@@ -72,7 +77,8 @@
         "id": "connection.lighthouse_interior.tower_door",
         "targetId": "SCN_lighthouse_cliff",
         "name": "塔底铁门",
-        "description": "通向崖顶平台的铁门,外侧挂着海岸警卫队的官方挂锁。"
+        "description": "通向崖顶平台的铁门,外侧挂着海岸警卫队的官方挂锁。",
+        "blocked": "灯塔铁门锁着（海岸警卫队 1982 年换的锁）"
       }
     ],
     "conditions": [

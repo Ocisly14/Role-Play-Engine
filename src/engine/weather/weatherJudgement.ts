@@ -80,7 +80,8 @@ export function buildWeatherJudgementRequest(
       id,
       kind: isRoad ? "road" : "scene",
       name: place.name,
-      description: place.description ?? "",
+      // The place itself — where it is open to the sky, what shelters it.
+      description: place.setting ?? "",
     });
     for (const connection of place.connections ?? []) {
       const other = dgsm.getScene(connection.targetId);

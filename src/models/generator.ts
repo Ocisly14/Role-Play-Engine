@@ -449,9 +449,9 @@ export async function generateToolCalls(
       );
     }
 
-    // When parallel calls were not requested, keep only the first even if the
-    // provider ignored the flag: the history stays answerable either way.
-    const toolCalls = options.allowParallelCalls
+    // Gemini signs the whole model turn and requires a result for every
+    // returned call when it is replayed. Pass that turn through intact.
+    const toolCalls = options.allowParallelCalls || response.geminiParts
       ? response.toolCalls
       : response.toolCalls.slice(0, 1);
 
@@ -475,6 +475,7 @@ export async function generateToolCalls(
         role: "assistant" as const,
         toolCalls,
         ...(response.text ? { text: response.text } : {}),
+        ...(response.geminiParts ? { geminiParts: response.geminiParts } : {}),
       },
     };
   });

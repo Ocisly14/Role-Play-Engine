@@ -14,10 +14,15 @@
 //   gh-drive-truck    载具日常：上车（position→驾驶室）→ 说出路线 → Engine 标注
 //                     movement.vehicleId → 车按 driveTimeMinutes 走、人不动
 //   gh-sanity-check   恐怖揭示 → Engine 声明 sanityChecks → 代码掷骰并结算
+//   gh-locked-door    模组写死的锁（connection.blocked）：有钥匙 / 没钥匙
+//   gh-perception-walls 视觉/听觉分开评级：同屋、隔一扇门、隔半条街
+//
+// 布景与道具（grayhavenSetting.ts，蓝鸟餐馆 v3 demo）：
+//   玻璃点心柜里的蛋挞 / 收银机抽屉 / 后厨火柴与鱼刀 / 楼上床头与衣柜
 //
 // 技能层（grayhavenSkill*.ts，每域一景三人设：老手/无训练硬上/情境召唤）：
 //   荒野 Survival & Navigation / Watercraft Operation / Occult
-//   专业 Medicine & Psychology / Knowledge & Craft / Science & Nature
+//   专业 Medicine / Knowledge & Craft / Science & Nature
 //   暗面 Stealth & Security / Languages / Ranged Combat
 // 刻意缺席（cassandra 同款原则——没有舞台就不造舞台）：
 //   Melee Combat（日常小镇无自然打斗）、Swimming（冷雾海无正当下水理由）、
@@ -28,6 +33,7 @@
 // memories, the production path.
 
 import type { SimScenario } from "./types.js";
+import { GRAYHAVEN_SETTING } from "./grayhavenSetting.js";
 import { GRAYHAVEN_SKILL_PRO } from "./grayhavenSkillPro.js";
 import { GRAYHAVEN_SKILL_SHADOW } from "./grayhavenSkillShadow.js";
 import { GRAYHAVEN_SKILL_WILD } from "./grayhavenSkillWild.js";
@@ -36,7 +42,10 @@ import { GRAYHAVEN_SKILL_WILD } from "./grayhavenSkillWild.js";
 export const GRAYHAVEN_ROSTER: Array<{ id: string; note: string }> = [
   { id: "npc_dolores_medeiros", note: "58 女 · 蓝鸟餐馆老板娘 · 全镇消息中枢" },
   { id: "npc_marisol_reyes", note: "41 女 · 杂货店兼邮局店主 · 账目一丝不苟" },
-  { id: "npc_tommy_reyes", note: "12 男 · Marisol 的儿子 · 后仓帮工，好奇心重" },
+  {
+    id: "npc_tommy_reyes",
+    note: "12 男 · Marisol 的儿子 · 后仓帮工，好奇心重",
+  },
   { id: "npc_dev_batra", note: "45 男 · 电视维修铺老板 · 全镇唯一懂电子的人" },
   { id: "npc_anita_batra", note: "42 女 · Batra 家主妇 · 厨艺与账目双料好手" },
   { id: "npc_priya_batra", note: "13 女 · Batra 家女儿 · 爱拆收音机" },
@@ -234,6 +243,78 @@ export const GRAYHAVEN_SCENARIOS: SimScenario[] = [
       },
     ],
   },
+  {
+    id: "gh-locked-door",
+    group: "world",
+    title: "模组写死的锁：灯塔铁门，有钥匙的和没钥匙的",
+    targetDefs: [],
+    cases: [
+      {
+        // 铁门在模组里是 `blocked`（加载时进封锁表）。Earl 身上有私配的
+        // 钥匙（角色卡物品 + secret 记忆），goal 里不提钥匙也不提锁。
+        label: "Earl｜记完风向，想进塔里看一眼",
+        ticks: 8,
+        scene: "灯塔崖",
+        actors: [
+          {
+            npc: "npc_earl_pruitt",
+            goal: "今天的风向和能见度记完了。你想进塔里看一眼灯机，再翻翻值班桌上那本登记簿。",
+          },
+        ],
+      },
+      {
+        // 没有钥匙：走到门口应被封锁拦下并被告知原因，之后怎么办是他的事。
+        label: "Tommy｜一个人爬上灯塔崖，想进去看看",
+        ticks: 7,
+        scene: "灯塔崖",
+        actors: [
+          {
+            npc: "npc_tommy_reyes",
+            goal: "你一直想知道灯塔里面什么样。今天趁没人注意，你一个人爬上了灯塔崖，想进去看看。",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "gh-perception-walls",
+    group: "world",
+    title: "隔墙感知：诊室里出事，隔一扇门的护士台、半条街外的维修铺",
+    targetDefs: [],
+    cases: [
+      {
+        // 三个人三处地方：诊室（源头）、候诊室（隔一扇磨砂玻璃门）、
+        // 电视维修铺（隔着主街）。看 Decisions 给每个人的视觉/听觉两档，
+        // 以及结算上下文里的 Surroundings。开场事件只落在诊室；之后的
+        // 响动都来自 Weaver 自己的行动，走正式的感知者判定。
+        label: "Weaver｜消毒器烧干了；Susan 在护士台，Dev 在铺子里",
+        ticks: 6,
+        scene: "诊所·诊室",
+        actors: [
+          {
+            npc: "npc_doc_weaver",
+            goal: "你在诊室里收拾上一个病人用过的器械，Susan 在外面护士台。",
+          },
+          {
+            npc: "npc_susan_holt",
+            scene: "诊所·候诊室",
+            goal: "你在护士台核对这周的预约簿，Weaver 医生在诊室里。",
+          },
+          {
+            npc: "npc_dev_batra",
+            scene: "店堂工作台",
+            goal: "你在工作台上修一台雪花屏的电视，想在中午前查出毛病。",
+          },
+        ],
+        openingEvent: {
+          description:
+            "角落里的煮沸消毒器烧干了：壶底冒出焦烟，壶盖被顶得哐哐直跳，发出刺耳的嘶声。",
+          impact: 2,
+        },
+      },
+    ],
+  },
+  ...GRAYHAVEN_SETTING,
   ...GRAYHAVEN_SKILL_WILD,
   ...GRAYHAVEN_SKILL_PRO,
   ...GRAYHAVEN_SKILL_SHADOW,

@@ -107,7 +107,7 @@ function makeContext(opts: {
           id: "SCN_1",
           kind: "scene",
           name: "Study",
-          description: "",
+          setting: "",
           parentLocationId: "L1",
           conditions: [],
           itemIds: ["lock_1"],
@@ -132,7 +132,12 @@ function makeContext(opts: {
         },
       ],
       items: [
-        { id: "lock_1", name: "cabinet lock", holder: "scene:SCN_1" },
+        {
+          id: "lock_1",
+          name: "cabinet lock",
+          holder: "scene:SCN_1",
+          placement: "on the desk",
+        },
         { id: "pick_1", name: "lockpicks", holder: "npc_1" },
       ],
       itemHolders: { lock_1: "scene:SCN_1", pick_1: "npc_1" },
@@ -194,7 +199,7 @@ function occurrence(overrides: Partial<RawOccurrence> = {}): RawOccurrence {
   return {
     actionIds: ["action_live"],
     speech: false,
-    perceivers: [{ characterId: "npc_1", clarity: "full" }],
+    perceivers: [{ characterId: "npc_1", sight: "clear", hearing: "clear" }],
     content: "the latch gives",
     ...overrides,
   };
@@ -429,8 +434,8 @@ describe("validateRawResolution — outcome, talk and the bar", () => {
       speech: true,
       targetIds: ["npc_1"],
       perceivers: [
-        { characterId: "npc_1", clarity: "full" },
-        { characterId: "npc_2", clarity: "full" },
+        { characterId: "npc_1", sight: "clear", hearing: "clear" },
+        { characterId: "npc_2", sight: "clear", hearing: "clear" },
       ],
       content: undefined,
       ...overrides,
@@ -682,7 +687,9 @@ describe("validateRawResolution — outcome, talk and the bar", () => {
     const noBar = validateRawResolution(
       {
         starting: [
-          start({ opposedBy: [{ characterId: "npc_2", skillId: "Athletics" }] }),
+          start({
+            opposedBy: [{ characterId: "npc_2", skillId: "Athletics" }],
+          }),
         ],
       },
       makeContext({ newCommands: [skillCommand] })
@@ -751,7 +758,9 @@ describe("validateRawResolution — deltas and occurrences", () => {
             actionIds: [ACTION_ID],
             speech: false,
             targetIds: ["npc_nobody"],
-            perceivers: [{ characterId: "npc_ghost", clarity: "full" }],
+            perceivers: [
+              { characterId: "npc_ghost", sight: "clear", hearing: "clear" },
+            ],
             content: "I see the lock slip",
           },
         ],
@@ -838,7 +847,9 @@ describe("finalizeResolution", () => {
         {
           actionIds: [ACTION_ID],
           speech: false,
-          perceivers: [{ characterId: "npc_1", clarity: "full" }],
+          perceivers: [
+            { characterId: "npc_1", sight: "clear", hearing: "clear" },
+          ],
           content: "a question through the door",
         },
       ],
@@ -862,8 +873,8 @@ describe("finalizeResolution", () => {
           speech: true,
           targetIds: ["npc_1"],
           perceivers: [
-            { characterId: "npc_1", clarity: "full" },
-            { characterId: "npc_2", clarity: "full" },
+            { characterId: "npc_1", sight: "clear", hearing: "clear" },
+            { characterId: "npc_2", sight: "clear", hearing: "clear" },
           ],
           content: "he asks it lightly, grinning",
         }),
@@ -894,8 +905,8 @@ describe("finalizeResolution", () => {
           speech: true,
           targetIds: [],
           perceivers: [
-            { characterId: "npc_1", clarity: "full" },
-            { characterId: "npc_2", clarity: "full" },
+            { characterId: "npc_1", sight: "clear", hearing: "clear" },
+            { characterId: "npc_2", sight: "clear", hearing: "clear" },
           ],
           content: undefined,
         }),
@@ -929,8 +940,8 @@ describe("finalizeResolution", () => {
           speech: true,
           targetIds: ["npc_1"],
           perceivers: [
-            { characterId: "npc_1", clarity: "full" },
-            { characterId: "npc_2", clarity: "trace" },
+            { characterId: "npc_1", sight: "clear", hearing: "clear" },
+            { characterId: "npc_2", sight: "none", hearing: "faint" },
           ],
           content: undefined,
         }),
@@ -944,8 +955,8 @@ describe("finalizeResolution", () => {
     expect(only.facts[0].content).toBe(spoken);
     expect(only.sourceActionIds).toEqual(["action_live"]);
     expect(only.perceivers).toEqual([
-      { characterId: "npc_1", clarity: "full" },
-      { characterId: "npc_2", clarity: "trace" },
+      { characterId: "npc_1", sight: "clear", hearing: "clear" },
+      { characterId: "npc_2", sight: "none", hearing: "faint" },
     ]);
     expect(only.participants).toEqual([
       { characterId: "npc_2", role: "actor" },
@@ -984,8 +995,8 @@ describe("finalizeResolution", () => {
           actionIds: [ACTION_ID],
           speech: false,
           perceivers: [
-            { characterId: "npc_2", clarity: "limited" },
-            { characterId: "npc_1", clarity: "full" },
+            { characterId: "npc_2", sight: "partial", hearing: "muffled" },
+            { characterId: "npc_1", sight: "clear", hearing: "clear" },
           ],
           content: "metal scrapes inside the lock; the pick slips out",
         },
@@ -1009,13 +1020,13 @@ describe("finalizeResolution", () => {
     // Order and grade carried through as written: finalize dedupes nothing,
     // because the validator has already refused a repeated id.
     expect(occ.perceivers).toEqual([
-      { characterId: "npc_2", clarity: "limited" },
-      { characterId: "npc_1", clarity: "full" },
+      { characterId: "npc_2", sight: "partial", hearing: "muffled" },
+      { characterId: "npc_1", sight: "clear", hearing: "clear" },
     ]);
   });
 
   it("refuses a perceiver list that is missing, empty, ungraded or repeated", () => {
-    // One entry per character at the single clarity they actually reach.
+    // One entry per character with the sight and hearing they actually reach.
     // The old list was deduped silently at finalization; a repeated id is now
     // a contradiction the Engine has to settle, not a typo code tidies away.
     const at = (over: Record<string, unknown>): string =>
@@ -1037,31 +1048,40 @@ describe("finalizeResolution", () => {
       );
     expect(at({})).toContain("perceivers is required");
     expect(at({ perceivers: [] })).toContain("perceivers is required");
-    expect(at({ perceivers: [{ clarity: "full" }] })).toContain(
-      "perceivers[0]: characterId is required"
-    );
     expect(
-      at({ perceivers: [{ characterId: "npc_ghost", clarity: "full" }] })
-    ).toContain('perceivers[0]: character "npc_ghost" does not exist');
-    const loud = at({
-      perceivers: [{ characterId: "npc_1", clarity: "loud" }],
-    });
-    expect(loud).toContain('perceivers[0]: clarity "loud" is not one of');
-    expect(loud).toContain("full, limited, trace");
+      at({ perceivers: [{ sight: "clear", hearing: "clear" }] })
+    ).toContain("perceivers[0]: characterId is required");
     expect(
       at({
         perceivers: [
-          { characterId: "npc_1", clarity: "full" },
-          { characterId: "npc_2", clarity: "limited" },
-          { characterId: "npc_2", clarity: "trace" },
+          { characterId: "npc_ghost", sight: "clear", hearing: "clear" },
+        ],
+      })
+    ).toContain('perceivers[0]: character "npc_ghost" does not exist');
+    const loud = at({
+      perceivers: [{ characterId: "npc_1", sight: "loud", hearing: "clear" }],
+    });
+    expect(loud).toContain('perceivers[0]: sight "loud" is not one of');
+    expect(loud).toContain("clear, partial, glimpse, none");
+    expect(
+      at({
+        perceivers: [{ characterId: "npc_1", sight: "none", hearing: "none" }],
+      })
+    ).toContain("sight and hearing are both none");
+    expect(
+      at({
+        perceivers: [
+          { characterId: "npc_1", sight: "clear", hearing: "clear" },
+          { characterId: "npc_2", sight: "partial", hearing: "muffled" },
+          { characterId: "npc_2", sight: "none", hearing: "faint" },
         ],
       })
     ).toContain('character "npc_2" is listed twice');
     expect(
       at({
         perceivers: [
-          { characterId: "npc_1", clarity: "full" },
-          { characterId: "npc_2", clarity: "trace" },
+          { characterId: "npc_1", sight: "clear", hearing: "clear" },
+          { characterId: "npc_2", sight: "none", hearing: "faint" },
         ],
       })
     ).toBe("");
@@ -1279,8 +1299,10 @@ describe("prose coherence — a cited item cannot leave silently", () => {
   const proseContext = () => {
     const ctx = makeContext({});
     // The study's prose cites the lock: moving it out must rewrite the prose.
-    ctx.state.places[0].description =
+    ctx.state.places[0].setting =
       "A study. A cabinet lock gleams on the desk [lock_1].";
+    // Cited, so a fixture: it has no placement.
+    delete ctx.state.items[0].placement;
     return ctx;
   };
   const moveOut = {
@@ -1296,8 +1318,8 @@ describe("prose coherence — a cited item cannot leave silently", () => {
         proseContext()
       )
     );
-    expect(errors).toContain('cited in the description of "SCN_1"');
-    expect(errors).toContain("setDescription");
+    expect(errors).toContain('a fixture cited in the setting of "SCN_1"');
+    expect(errors).toContain("setSetting");
   });
 
   it("accepts the same move when the submission rewrites the prose", () => {
@@ -1311,8 +1333,8 @@ describe("prose coherence — a cited item cannot leave silently", () => {
               sourceActionId: ACTION_ID,
               sceneId: "SCN_1",
               operation: {
-                kind: "setDescription",
-                description: "A study. The desk is bare.",
+                kind: "setSetting",
+                setting: "A study. The desk is bare.",
               },
             },
           ],
@@ -1320,7 +1342,49 @@ describe("prose coherence — a cited item cannot leave silently", () => {
         proseContext()
       )
     );
-    expect(errors).not.toContain("cited in the description");
+    expect(errors).not.toContain("a fixture cited in the setting");
+  });
+
+  it("still flags the move when the rewritten setting keeps citing it", () => {
+    const errors = text(
+      validateRawResolution(
+        {
+          starting: [start()],
+          itemChanges: [moveOut],
+          sceneChanges: [
+            {
+              sourceActionId: ACTION_ID,
+              sceneId: "SCN_1",
+              operation: {
+                kind: "setSetting",
+                setting: "A study. The lock is still here [lock_1].",
+              },
+            },
+          ],
+        },
+        proseContext()
+      )
+    );
+    expect(errors).toContain('a fixture cited in the setting of "SCN_1"');
+  });
+
+  it("rejects a setSetting that drops a fixture which is given no placement", () => {
+    const errors = text(
+      validateRawResolution(
+        {
+          starting: [start()],
+          sceneChanges: [
+            {
+              sourceActionId: ACTION_ID,
+              sceneId: "SCN_1",
+              operation: { kind: "setSetting", setting: "A study, bare." },
+            },
+          ],
+        },
+        proseContext()
+      )
+    );
+    expect(errors).toContain("nobody could ever see it");
   });
 
   it("does not fire for an uncited item", () => {
@@ -1538,8 +1602,8 @@ describe("declared sanity checks", () => {
     actionIds: [ACTION_ID],
     speech: false,
     perceivers: [
-      { characterId: "npc_1", clarity: "full" },
-      { characterId: "npc_2", clarity: "full" },
+      { characterId: "npc_1", sight: "clear", hearing: "clear" },
+      { characterId: "npc_2", sight: "clear", hearing: "clear" },
     ],
     sanityChecks,
     content: "the body is in the water",
@@ -1576,31 +1640,37 @@ describe("declared sanity checks", () => {
       starting: [start()],
       occurrences: [
         occ([sane], {
-          perceivers: [{ characterId: "npc_2", clarity: "full" }],
+          perceivers: [
+            { characterId: "npc_2", sight: "clear", hearing: "clear" },
+          ],
         }) as never,
       ],
     });
     expect(errs).toContain("is not among this occurrence's perceivers");
   });
 
-  it("rejects a check on someone who perceives the occurrence only as a trace", () => {
-    // A trace has no source: a muffled impact cannot be a horror exposure.
-    // Limited is enough — the kind of thing and its result reached them.
-    const graded = (clarity: string): string =>
+  it("rejects a check on someone who only glimpses or faintly hears the occurrence", () => {
+    // No source, no exposure: a faint impact cannot be a horror exposure.
+    // Seen in part, or heard well enough to know what it was, is enough.
+    const graded = (sight: string, hearing: string): string =>
       check({
         starting: [start()],
         occurrences: [
           occ([sane], {
             perceivers: [
-              { characterId: "npc_1", clarity },
-              { characterId: "npc_2", clarity: "full" },
+              { characterId: "npc_1", sight, hearing },
+              { characterId: "npc_2", sight: "clear", hearing: "clear" },
             ],
           }) as never,
         ],
       });
-    expect(graded("trace")).toContain("only as a trace");
-    expect(graded("limited")).toBe("");
-    expect(graded("full")).toBe("");
+    expect(graded("glimpse", "faint")).toContain(
+      "only glimpses or faintly hears"
+    );
+    expect(graded("none", "faint")).toContain("only glimpses or faintly hears");
+    expect(graded("partial", "none")).toBe("");
+    expect(graded("none", "muffled")).toBe("");
+    expect(graded("clear", "clear")).toBe("");
   });
 
   it("rejects an unknown or dead character, and one with no sanity capacity", () => {
@@ -1723,7 +1793,9 @@ describe("declared sanity checks", () => {
         ...ended(
           {},
           {
-            perceivers: [{ characterId: "npc_2", clarity: "full" }],
+            perceivers: [
+              { characterId: "npc_2", sight: "clear", hearing: "clear" },
+            ],
             sanityChecks: [sane],
           }
         ),
@@ -1956,7 +2028,9 @@ describe("the validator is a total function over model output", () => {
           actionIds: [ACTION_ID],
           speech: false,
           content: "something moves in the dark",
-          perceivers: [{ characterId: "npc_1", clarity: "full" }],
+          perceivers: [
+            { characterId: "npc_1", sight: "clear", hearing: "clear" },
+          ],
           sanityChecks: [
             null,
             {

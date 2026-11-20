@@ -1,0 +1,131 @@
+{
+  "schemaVersion": 3,
+  "id": "SCN_bluebird_upstairs",
+  "name": "蓝鸟餐馆·楼上住处",
+  "coordinates": {
+    "x": 18,
+    "y": 461,
+    "z": 20
+  },
+  "setting": "楼上是一套小住处:一间小客厅连着里屋卧室,窗子朝着主街。窗前一张旧摇椅正对着窗[item.bluebird_upstairs.rocking_chair];客厅当中摆着一张圆桌。一整面墙挂满了相框[item.bluebird_upstairs.photo_wall],相框旁钉着一只小木架。靠墙是一口深色五斗柜[item.bluebird_upstairs.dresser],门后钉着一本挂历[item.bluebird_upstairs.calendar]。里屋一张铁架床[item.bluebird_upstairs.bed],床头一只小床头柜;床脚立着一口深色木衣柜[item.bluebird_upstairs.wardrobe]。楼板不厚,楼下后厨和堂座的动静在这里都听得见,店门的开合声也传得上来。楼梯下去就是后厨[SCN_bluebird_kitchen],炉灶和烤箱的气味会顺着楼梯爬上来。",
+  "parentLocationId": "bluebird_diner",
+  "indoor": true,
+  "references": {
+    "items": [
+      {
+        "id": "item.bluebird_upstairs.photo_wall",
+        "name": "相片墙",
+        "description": "一整面墙的相框:最老的几张是一间葡式咖啡馆的黑白照,往后是渔船、婚礼和几张毕业照。正中一张渔船照片擦得最亮。"
+      },
+      {
+        "id": "item.bluebird_upstairs.recipe_book",
+        "name": "手抄食谱",
+        "description": "一本葡语手抄食谱,牛皮纸封面,线装,纸页发脆,页边是好几种不同笔迹的批注。蛋挞那一页被翻得最旧。",
+        "placement": "五斗柜柜面上"
+      },
+      {
+        "id": "item.bluebird_upstairs.rocking_chair",
+        "name": "窗边摇椅",
+        "description": "一张旧摇椅,扶手漆面磨得露出木色,坐垫压出了一个人常坐的形状。"
+      },
+      {
+        "id": "item.bluebird_upstairs.tablecloth",
+        "name": "浆洗桌布",
+        "description": "浆得笔挺的白桌布,边角绣着细密的葡式花纹,洗得发白却没有一丝褶皱。",
+        "placement": "铺在客厅圆桌上"
+      },
+      {
+        "id": "item.bluebird_upstairs.dresser",
+        "name": "五斗柜",
+        "description": "一口深色老五斗柜,柜面铺一块钩针垫,抽屉沉得要两手拉。最底下一格上着锁。"
+      },
+      {
+        "id": "item.bluebird_upstairs.letters",
+        "name": "一叠来信",
+        "description": "一叠用橡皮筋捆好的信,信封上盖着内陆的邮戳,按日期码得整整齐齐。",
+        "placement": "五斗柜柜面上,食谱旁"
+      },
+      {
+        "id": "item.bluebird_upstairs.saint_statue",
+        "name": "圣母像",
+        "description": "一尊瓷面圣母像,底座磕掉一角,用胶粘过。",
+        "placement": "相片墙旁的小木架上"
+      },
+      {
+        "id": "item.bluebird_upstairs.calendar",
+        "name": "挂历",
+        "description": "邮局送的挂历,每月一张海岸风景照。九月那几页用红笔圈了记号,页边写着要备的炉数和几个人名。"
+      },
+      {
+        "id": "item.bluebird_upstairs.bed",
+        "name": "铁架床",
+        "description": "一张铁架床,白铁栏杆漆得发亮,被子拉得像旅馆客房,两只枕头都拍得松松的。"
+      },
+      {
+        "id": "item.bluebird_upstairs.bedside_lamp",
+        "name": "床头台灯",
+        "description": "一盏罩着流苏灯罩的台灯,拉线开关。",
+        "placement": "床头柜上",
+        "isLightSource": true,
+        "lightLevel": 2
+      },
+      {
+        "id": "item.bluebird_upstairs.wardrobe",
+        "name": "木衣柜",
+        "description": "一口深色木衣柜,两扇柜门合着,门轴一开就吱呀。"
+      },
+      {
+        "id": "item.bluebird_upstairs.sewing_basket",
+        "name": "针线笸箩",
+        "description": "一只柳条笸箩,纽扣、线轴和顶针按颜色分了格。",
+        "placement": "窗边,摇椅脚下"
+      },
+      {
+        "id": "item.bluebird_upstairs.reading_glasses",
+        "name": "老花镜",
+        "description": "一副玳瑁框老花镜,镜片上有几道细划痕。",
+        "placement": "床头柜上"
+      },
+      {
+        "id": "item.bluebird_upstairs.painkillers",
+        "name": "止痛片",
+        "description": "一小瓶止痛片,只剩小半瓶。",
+        "placement": "床头柜上,老花镜旁"
+      },
+      {
+        "id": "item.bluebird_upstairs.candlestick",
+        "name": "矮烛台",
+        "description": "一只黄铜矮烛台,插着半截白蜡烛,底下化了一小摊蜡。",
+        "placement": "小木架上,圣母像脚边"
+      },
+      {
+        "id": "item.bluebird_upstairs.writing_set",
+        "name": "信纸和钢笔",
+        "description": "一叠信纸、几张邮票和一支钢笔。",
+        "placement": "五斗柜柜面上,来信旁"
+      },
+      {
+        "id": "item.bluebird_upstairs.tailor_scissors",
+        "name": "裁缝剪",
+        "description": "一把沉甸甸的裁缝剪,刃口磨得雪亮。",
+        "placement": "针线笸箩里"
+      },
+      {
+        "id": "item.bluebird_upstairs.wardrobe_clothes",
+        "name": "衣柜里的衣服",
+        "description": "一排一模一样的浆白围裙,另半边是几件黑裙,最里侧一套深色正装。",
+        "placement": "木衣柜里挂着",
+        "container": "item.bluebird_upstairs.wardrobe"
+      }
+    ],
+    "connections": [
+      {
+        "id": "connection.bluebird_upstairs.stairs_down",
+        "targetId": "SCN_bluebird_kitchen",
+        "name": "楼梯",
+        "description": "陡楼梯,下去是后厨。"
+      }
+    ],
+    "conditions": []
+  }
+}

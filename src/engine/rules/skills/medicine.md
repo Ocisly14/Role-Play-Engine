@@ -1,25 +1,24 @@
 ---
-id: medicine_psychology
-title: "Medicine & Psychology"
-description: "Provide first aid, diagnose or treat illness, and understand or treat the mind."
+id: medicine
+title: "Medicine"
+description: "Provide first aid, and diagnose or treat injury and illness."
 durationGuidance:
   default: 10
   range: "1-60"
-  notes: "pressure on a wound or a bandage 1-5 min; stabilizing severe bleeding or reaching a proper diagnosis 15-30 min; surgery, prolonged treatment, or a full therapy session 45-60 min"
+  notes: "pressure on a wound or a bandage 1-5 min; stabilizing severe bleeding or reaching a proper diagnosis 15-30 min; surgery or prolonged treatment 45-60 min"
 ---
 
-# Medicine & Psychology guidance
+# Medicine guidance
 
-Use for keeping a body alive and for treating a mind: field first
-aid, diagnosis, sustained treatment, and psychotherapy. Supplies and setting
-bound what is achievable — name what is missing when it is.
+Use for keeping a body alive: field first aid, diagnosis and sustained
+treatment. Supplies and setting bound what is achievable — name what is
+missing when it is.
 
 ## Applicability
 
 - Accepted for stopping bleeding, stabilizing, splinting, diagnosing illness or
   injury, and administering treatment.
-- Talking someone down or reading their intent is interpersonal and needs no
-  check. Laboratory analysis of a substance uses Science & Nature.
+- Laboratory analysis of a substance uses Science & Nature.
 - Without supplies, first aid is improvised at a higher required level and its
   effect is smaller; surgery without instruments is a rejection.
 
@@ -42,8 +41,7 @@ bound what is achievable — name what is missing when it is.
   an entire medical kit to account for one dressing.
 - **Fumble** — Handled wrongly: a tourniquet too tight, a wound contaminated, a
   concrete harmful intervention. Record only proportionate bodily harm or an
-  independently verifiable major impairment with a supported cause. A difficult
-  conversation alone does not license infection, psychological injury or SAN loss.
+  independently verifiable major impairment with a supported cause.
 
 ## State surface
 
@@ -56,7 +54,7 @@ for what actually happened — a one-off descriptive result is occurrence
   not remove a fracture or its remaining functional limitations;
   `character.addCondition` when treatment goes wrong and adds an objective,
   major impairment such as infection, circulatory shock, loss of limb use, or
-  severe disorientation. Anxiety or feeling calmer is not a condition.
+  severe disorientation.
 - `item.set` / `item.destroy` — bandages, drugs, and supplies consumed
   only to the extent actually used, whether or not the treatment worked.
 - `character.setAppearance` — repair an existing claim of active bleeding or

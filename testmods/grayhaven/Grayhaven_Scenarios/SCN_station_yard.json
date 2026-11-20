@@ -1,8 +1,13 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "id": "SCN_station_yard",
   "name": "雷德利站场院",
-  "description": "铁丝网围出的一片水泥场院,属于山里的这座海军气象观测站。场院扫得很干净,却看不见一个人影,只有屋顶的天线阵在雾里发出轻微的嗡鸣 [item.station_yard.antenna_array]。场院一角立着一只标准的白色气象百叶箱 [item.station_yard.instrument_shelter],旁边的雨量计擦得锃亮;不远处一座半圆顶的铁皮小棚是放探空气球用的 [item.station_yard.sonde_shed],门开着一半,里头一排气瓶按高矮码着。旗杆上没有旗 [item.station_yard.flagpole],升降索在风里一下一下拍着杆身。主楼背风的一侧砌着一间发电机房 [item.station_yard.generator_house],外墙贴着的柴油罐液位计指着满格;墙根下一排空油桶 [item.station_yard.fuel_drums] 摆得比新桶还齐,等着谁带下山。卷帘门边的墙上挂着一块玻璃面的公告栏 [item.station_yard.notice_board],里头的表格空着,只有安全天数那一栏每天都在长。靠场院门的一侧划着四个停车位 [item.station_yard.parking_stalls],白漆新得刺眼,一辆车也没有。装卸区的卷帘门开在主楼一侧,门轴上了新油 [SCN_station_dock]。进出场院的只有一条路,通向山下的自动大门。",
+  "coordinates": {
+    "x": 1500,
+    "y": 13550,
+    "z": 470
+  },
+  "setting": "铁丝网围出的一片水泥场院,属于山里的这座海军气象观测站。场院扫得很干净,却看不见一个人影,只有屋顶的天线阵在雾里发出轻微的嗡鸣 [item.station_yard.antenna_array]。场院一角立着一只标准的白色气象百叶箱 [item.station_yard.instrument_shelter],旁边的雨量计擦得锃亮;不远处一座半圆顶的铁皮小棚是放探空气球用的 [item.station_yard.sonde_shed],门开着一半,里头一排气瓶按高矮码着。旗杆上没有旗 [item.station_yard.flagpole],升降索在风里一下一下拍着杆身。主楼背风的一侧砌着一间发电机房 [item.station_yard.generator_house],外墙贴着的柴油罐液位计指着满格;墙根下一排空油桶 [item.station_yard.fuel_drums] 摆得比新桶还齐,等着谁带下山。卷帘门边的墙上挂着一块玻璃面的公告栏 [item.station_yard.notice_board],里头的表格空着,只有安全天数那一栏每天都在长。靠场院门的一侧划着四个停车位 [item.station_yard.parking_stalls],白漆新得刺眼,一辆车也没有。装卸区的卷帘门开在主楼一侧,门轴上了新油 [SCN_station_dock]。进出场院的只有一条路,通向山下的自动大门。",
   "references": {
     "items": [
       {

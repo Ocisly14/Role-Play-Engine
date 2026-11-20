@@ -16,22 +16,22 @@ Every occurrence has:
 - `speech`: whether this row delivers an utterance whose action ends this
   tick; code copies the words verbatim from the command;
 - `perceivers`: one entry per character who received any evidence of this
-  row, each `{ characterId, clarity }` with `clarity` one of `full` (the event
-  and its relevant detail), `limited` (the kind of event and its immediate
-  result, no fine detail) or `trace` (only that something happened);
+  row, each `{ characterId, sight, hearing }`: sight `clear` / `partial` /
+  `glimpse` / `none`, hearing `clear` / `muffled` / `faint` / `none` (see
+  `perception.md`), never both `none`;
 - `content`: an objective third-person description, required when
   `speech:false` and optional when `speech:true`.
 
 It may also identify `targetIds` and `sanityChecks` where the schema calls for
-them. The actor and location are derived from the cited action. `clarity` is
-the one perception field. Do not output an actor, location, signals, fact
+them. The actor and location are derived from the cited action. `sight` and
+`hearing` are the perception fields. Do not output an actor, location, signals, fact
 arrays, fact types, reference-id arrays or affected-character arrays; those
 are not part of this occurrence shape.
 
 A `no_change` ending must not be cited by any occurrence. Its lifecycle
 transition already tells the actor the action ended. Observation or waiting
 creates no retrospective event: keep actual events on their original source
-actions, with each perceiver's clarity, and deliver them when they occur.
+actions, with each perceiver's grades, and deliver them when they occur.
 If there are no new perceptible facts, submit `[]`; do not manufacture an
 "observed nothing new" fact to fill the space.
 
@@ -42,21 +42,23 @@ once; keep any evidence-based analytical uncertainty explicit.
 ## One occurrence, one fact, graded audience
 
 One row states one objective fact. Write `content` at full detail regardless
-of who is listed — never at the lowest shared level. Each perceiver's `clarity`
+of who is listed — never at the lowest shared level. Each perceiver's grades
 says how much of that fact reached them; the Renderer degrades per grade. Never
-give a character a higher `clarity` than the evidence they received supports.
+give a character a higher grade than the evidence they received supports.
 
 Use separate occurrences citing the same action for distinct facts, including
 its delivered speech and its physical result, or events in different places
 with different audiences (a shove and a landing). Do not split copies of the
-same fact merely by clarity: those belong in one row, graded per perceiver.
+same fact merely by grade: those belong in one row, graded per perceiver.
 
 For example, a whisper produces ONE `speech:true` row carrying the original
 words, with `perceivers`:
 
-- the intended listener at `full`;
-- the onlookers who saw her lean close but caught nothing at `limited`;
-- someone through the wall who heard only an unplaceable voice at `trace`.
+- the intended listener at sight `clear`, hearing `clear`;
+- the onlookers who saw her lean close but caught nothing at sight `clear`,
+  hearing `faint`;
+- someone through the wall who heard only an unplaceable voice at sight
+  `none`, hearing `faint`.
 
 Choose perceivers by following `perception.md`. Do not automatically add the
 actor: unconsciousness, sensory loss or being moved without awareness can make
@@ -79,17 +81,17 @@ under `endingWithUtterance` this tick: its command carries the words and it
 ends now. Two people speaking are two rows, each with its own `targetIds` and
 `perceivers` — code places a row where its cited actor stands. A starting
 action's utterance is not delivered yet and takes no speech row; it is spoken
-when the action ends — after one minute for plain talk, after the attempt's
-own minutes for a command that also does something — and returns under
+when the action ends (Words alone take 1 minute; an action that also does something takes the minutes of what it does, whatever is said while doing it.) and returns under
 `endingWithUtterance` on that tick.
 
 - Code copies that utterance verbatim onto the occurrence. Never restate,
   summarize, translate or quote it in `content`.
 - `targetIds` is required for a speech row and states whom the actor addressed.
 - `perceivers` states who received the words or any evidence of them, and at
-  what grade: `full` for those who made out the words, `limited` for those who
-  know who spoke but not what was said, `trace` for an indistinct voice with
-  no placeable source. Target and perceiver are not interchangeable.
+  what grades: hearing `clear` for those who made out the words, `muffled` for
+  a voice and its tone without the words, `faint` for an indistinct voice with
+  no placeable source; sight as their view allows. Target and perceiver are
+  not interchangeable.
 - `content` is optional and, when present, describes only what lies outside the
   words: delivery, posture, accompanying gesture or another objective detail.
 - A pure speech action is answered entirely by its `speech:true` occurrence.
@@ -142,6 +144,7 @@ of its actor's attempt, not repetition of every clause or speculative reaction.
 
 When perceiving this occurrence warrants an involuntary SAN check, attach the
 declaration here and follow `sanity-check.md`. A checked character must appear
-in this occurrence's `perceivers` at `full` or `limited`; a `trace` perceiver
-cannot be checked, since a sound with no source is not exposure. Do not
+in this occurrence's `perceivers` with sight `clear` or `partial`, or hearing
+`clear` or `muffled`; someone who only glimpsed it or heard it faintly cannot
+be checked, since a movement or sound with no source is not exposure. Do not
 describe SAN loss or a subjective fear reaction in `content`.

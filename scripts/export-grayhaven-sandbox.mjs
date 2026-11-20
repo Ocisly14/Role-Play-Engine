@@ -19,7 +19,7 @@ const accessIds = new Set(roads.flatMap(r => r.access.map(a => a.id)));
 const locations = places.filter(p => nodeIds.has(p.id) || accessIds.has(p.id)).map(p => ({
   id: p.id, name: p.name, isNode: nodeIds.has(p.id),
   // Roadside interiors contribute names/references only to an exterior overview.
-  ...(nodeIds.has(p.id) ? { description: p.description.replace(/\s*\[[^\]]+\]/g, '') } : {}),
+  ...(nodeIds.has(p.id) ? { description: p.setting.replace(/\s*\[[^\]]+\]/g, '') } : {}),
 }));
 const setup = JSON.parse(fs.readFileSync(path.join(root, 'testmods/grayhaven/module_setup.json'), 'utf8'));
 const out = { source: 'testmods/grayhaven', date: setup.startDate, introduction: setup.introduction, locations, roads };

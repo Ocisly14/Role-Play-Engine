@@ -74,12 +74,14 @@ const restock: ScriptedEvent = {
       name: "本周的补货箱",
       id: "item.grocery_backroom.weekly_stock",
       skipIfExists: true,
+      placement: "后仓墙边",
     },
     {
       kind: "item.move",
       itemId: "item.freight_shed.crates",
       from: "scene:SCN_freight_shed",
       to: "scene:SCN_grocery_backroom",
+      placement: "后仓门内",
     },
   ],
 };
@@ -119,9 +121,12 @@ describe("recurring scripted events", () => {
     const changes = run(runner, dgsm, 121, "1985-07-08T02:01:00");
     expect(changes).toEqual([
       {
+        // The effect names a bare place id; the change carries the holder
+        // grammar the item store accepts, or the restock never appears.
         kind: "item.create",
         name: "本周的补货箱",
-        location: "SCN_grocery_backroom",
+        location: "scene:SCN_grocery_backroom",
+        placement: "后仓墙边",
         id: "item.grocery_backroom.weekly_stock",
       },
       {
@@ -129,6 +134,7 @@ describe("recurring scripted events", () => {
         itemId: "item.freight_shed.crates",
         from: "scene:SCN_freight_shed",
         to: "scene:SCN_grocery_backroom",
+        placement: "后仓门内",
       },
     ]);
     const state = dgsm.getScriptedEventState("evt_restock");
@@ -150,6 +156,7 @@ describe("recurring scripted events", () => {
         itemId: "item.freight_shed.crates",
         from: "scene:SCN_freight_shed",
         to: "scene:SCN_grocery_backroom",
+        placement: "后仓门内",
       },
     ]);
 

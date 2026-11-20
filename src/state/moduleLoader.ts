@@ -17,10 +17,15 @@ import { buildRelationshipMemory } from "../memory/relationshipMemory.js";
 import { canonicalMemoryType } from "../memory/types.js";
 import type { EmbeddingClient } from "../rag/embedding.js";
 import type { DynamicGameState } from "./DynamicGameState.js";
+import {
+  makeBlockedConnectionKey,
+  resolveBlockedConnectionNodeRef,
+} from "./blockedConnections.js";
 import { normalizeSpot } from "./characterSpot.js";
 import { ISO_DATE_RE, makeDateTime } from "./gameClock.js";
 import {
   ModuleSchemaError,
+  type PlaceFileV2,
   buildRoadV2,
   buildSceneV2,
   parsePlaceFileV2,
@@ -71,6 +76,10 @@ export interface ModuleData {
   npcInjectionPolicy: NpcInjectionPolicy | null;
   /** Loaded+validated scripted events (may be empty if module has no scripted-events/ dir). */
   scriptedEvents: ScriptedEvent[];
+  /** The passages authored as blocked when the session starts (a locked
+   *  door), keyed and reasoned exactly as `DynamicGameState.blockedConnections`.
+   *  Absent = none. */
+  initialBlockedConnections?: Map<string, string>;
 }
 
 /**
@@ -108,6 +117,7 @@ export async function loadModule(
   const roads = new Map<string, RoadNode>();
   let rawTransportEdges: unknown;
   const rawVehicles: Array<{ entryId: string; data: unknown }> = [];
+  const authoredBlocks: AuthoredBlock[] = [];
   let npcInjectionPolicy: NpcInjectionPolicy | null = null;
 
   for (const row of sceneRows) {
@@ -121,20 +131,25 @@ export async function loadModule(
     } else if (row.entryId === "__npc_injection_policy__") {
       npcInjectionPolicy = data as NpcInjectionPolicy;
     } else if (row.entryId.startsWith("ROAD_")) {
-      roads.set(row.entryId, buildRoadV2(parsePlaceFileV2(row.entryId, data)));
+      const file = parsePlaceFileV2(row.entryId, data);
+      authoredBlocks.push(...authoredBlocksOf(file));
+      roads.set(row.entryId, buildRoadV2(file));
     } else if (row.entryId.startsWith("VEH_")) {
       rawVehicles.push({ entryId: row.entryId, data });
     } else {
-      scenes.set(
-        row.entryId,
-        buildSceneV2(parsePlaceFileV2(row.entryId, data))
-      );
+      const file = parsePlaceFileV2(row.entryId, data);
+      authoredBlocks.push(...authoredBlocksOf(file));
+      scenes.set(row.entryId, buildSceneV2(file));
     }
   }
 
   // Cross-file checks over the fully parsed module: one id namespace, citation
   // completeness, connection targets. Throws ModuleSchemaError on violation.
   validateModuleReferences({ scenes, roads });
+  const initialBlockedConnections = seedAuthoredBlocks(authoredBlocks, {
+    scenes,
+    roads,
+  });
 
   const placeIds = new Set<string>([...scenes.keys(), ...roads.keys()]);
   const vehicles = rawVehicles.map(({ entryId, data }) =>
@@ -200,6 +215,7 @@ export async function loadModule(
     transportEdges,
     npcInjectionPolicy,
     scriptedEvents,
+    initialBlockedConnections,
   };
 }
 
@@ -600,12 +616,73 @@ export function initRuntime(params: {
     environmentReadings: {},
     npcInventories,
     npcRelationshipGraph,
-    blockedConnections: new Map(),
+    blockedConnections: new Map(moduleData.initialBlockedConnections ?? []),
     transportEdges: moduleData.transportEdges,
     topology,
     characterPositions,
     characterSpots,
   };
+}
+
+export interface AuthoredBlock {
+  entryId: string;
+  connectionId: string;
+  targetId: string;
+  reason: string;
+}
+
+export function authoredBlocksOf(file: PlaceFileV2): AuthoredBlock[] {
+  return file.references.connections.flatMap((c) =>
+    c.blocked === undefined
+      ? []
+      : [
+          {
+            entryId: file.id,
+            connectionId: c.id,
+            targetId: c.targetId,
+            reason: c.blocked,
+          },
+        ]
+  );
+}
+
+/**
+ * The runtime block map's starting contents. A block belongs to the passage
+ * BETWEEN two places (one flag per pair, the same in both directions), so it
+ * may be authored on either side's connection or on both — but two sides that
+ * give different reasons for one passage do not say which is true.
+ */
+export function seedAuthoredBlocks(
+  blocks: readonly AuthoredBlock[],
+  lookup: { scenes: Map<string, unknown>; roads: Map<string, unknown> }
+): Map<string, string> {
+  const out = new Map<string, string>();
+  const from = new Map<string, string>();
+  const problems: string[] = [];
+  for (const b of blocks) {
+    const a = resolveBlockedConnectionNodeRef(b.entryId, lookup);
+    const t = resolveBlockedConnectionNodeRef(b.targetId, lookup);
+    if (!a || !t) {
+      problems.push(
+        `${b.connectionId}: blocked passage leads to unknown place "${b.targetId}"`
+      );
+      continue;
+    }
+    const key = makeBlockedConnectionKey(a, t);
+    const earlier = out.get(key);
+    if (earlier !== undefined && earlier !== b.reason) {
+      problems.push(
+        `${b.connectionId}: blocked "${b.reason}" disagrees with ${from.get(key)} ("${earlier}") — one passage, one reason`
+      );
+      continue;
+    }
+    out.set(key, b.reason);
+    from.set(key, b.connectionId);
+  }
+  if (problems.length > 0) {
+    throw new ModuleSchemaError("__blocked_connections__", problems);
+  }
+  return out;
 }
 
 function validateModuleSetupStartDate(

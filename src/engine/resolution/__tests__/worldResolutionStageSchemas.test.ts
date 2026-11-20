@@ -8,6 +8,7 @@
 
 import { describe, expect, it } from "vitest";
 import type { ToolSpec } from "../../../models/providers/types.js";
+import { renderEndingModes } from "../../rules/ruleTerms.js";
 import {
   CHARACTER_CHANGES_LIST,
   CHARACTER_OPS,
@@ -246,7 +247,8 @@ describe("the endings phase is a decision, not a RawActionEnd", () => {
     // "One decision per id" is what makes an absent row correctable: without
     // it, "you left one out" and "it was pure speech" look the same on the wire.
     expect(description).toContain("every id the trigger lists under `ending`");
-    expect(description).toContain("`utterance`");
+    // The modes are the engine's one definition (ruleTerms), printed whole.
+    expect(description).toContain(renderEndingModes());
     const outcome = branches[0].properties.outcome;
     expect(outcome.description).toContain("third-person");
     expect(outcome.description).toContain("`diceRoll`");
@@ -288,7 +290,7 @@ describe("what the split bought", () => {
 
   it.each([
     ["characterChanges", CHARACTER_OPS, 7],
-    ["itemChanges", ITEM_OPS, 4],
+    ["itemChanges", ITEM_OPS, 5],
     ["sceneChanges", SCENE_OPS, 7],
   ] as Array<[ResolutionPhase, typeof CHARACTER_OPS, number]>)(
     "%s carries one branch per operation kind",
@@ -319,7 +321,7 @@ describe("what the split bought", () => {
     }
     expect(
       RESOLUTION_PHASES.map((p) => optionalsOf(schemaOf(p)).length)
-    ).toEqual([7, 0, 0, 7, 5, 4]);
+    ).toEqual([7, 0, 0, 9, 5, 4]);
   });
 
   it("stays inside the strict keyword subset", () => {

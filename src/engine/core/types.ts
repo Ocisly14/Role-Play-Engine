@@ -187,11 +187,11 @@ export type StateChange =
       concealed: boolean;
     }
   | {
-      /** Rewrite a place's whole prose (scene, junction or road — the same
-       *  three-way fallthrough every scene.* setter uses). */
-      kind: "scene.setDescription";
+      /** Rewrite a place's whole setting (scene or road — the same
+       *  fallthrough every scene.* setter uses). */
+      kind: "scene.setSetting";
       sceneId: string;
-      description: string;
+      setting: string;
     }
   | {
       kind: "feature.setState";
@@ -271,6 +271,10 @@ export type StateChange =
       appendDescription?: string;
       isLightSource?: boolean;
       lightLevel?: number;
+      placement?: string;
+      /** "" takes it out of its container. */
+      container?: string;
+      quantity?: number;
       /** Set when a subsystem emitted this rather than the resolver. */
       sourceFeatureId?: string;
     }
@@ -282,12 +286,17 @@ export type StateChange =
       /** Stable id to use verbatim when free (DGSM falls back to a generated
        *  one on conflict, with a warning). */
       id?: string;
+      placement?: string;
+      container?: string;
+      quantity?: number;
     }
   | {
       kind: "item.move";
       itemId: string;
       from: string;
       to: string;
+      placement?: string;
+      container?: string;
     }
   | {
       kind: "item.destroy";

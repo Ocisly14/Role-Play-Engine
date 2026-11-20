@@ -1,0 +1,133 @@
+{
+  "schemaVersion": 3,
+  "id": "SCN_bluebird_kitchen",
+  "name": "蓝鸟餐馆·后厨",
+  "coordinates": {
+    "x": 24,
+    "y": 464,
+    "z": 17
+  },
+  "setting": "后厨窄长,一条钢面备菜台从门口一直伸到墙角[item.bluebird_kitchen.prep_table]。靠墙是一台铸铁六头煤气灶[item.bluebird_kitchen.range],灶边那台老烤箱占了半面墙[item.bluebird_kitchen.old_oven],烤箱上方一整排木格香料架[item.bluebird_kitchen.spice_rack]。对面立着一台白漆立式冷柜[item.bluebird_kitchen.cooler],旁边是一组堆干货的敞口木架[item.bluebird_kitchen.pantry_shelf]。墙下一只老式三格水槽[item.bluebird_kitchen.dish_sink],水槽上方墙上钉着一具干粉灭火器[item.bluebird_kitchen.extinguisher]。通堂座的传菜窗口上方悬着一只铝制挂单转盘[item.bluebird_kitchen.order_wheel],窗口下是一道窄窗台。墙面和油烟罩里浸着经年的油烟和焦糖味。隔着弹簧门和传菜窗口,堂座里的说话声在这里听得清清楚楚。弹簧门通回堂座[SCN_bluebird_dining],门上的小圆窗正好望见柜台;角落一段陡楼梯通向楼上的住处[SCN_bluebird_upstairs],楼梯口的墙上钉着一颗挂东西的钉子。",
+  "parentLocationId": "bluebird_diner",
+  "indoor": true,
+  "references": {
+    "items": [
+      {
+        "id": "item.bluebird_kitchen.tart_tray",
+        "name": "蛋挞烤模",
+        "description": "成排的锡皮蛋挞烤模,用了不知多少年,烤出一层暗金色的旧光。",
+        "placement": "老烤箱旁的晾架上",
+        "quantity": 24
+      },
+      {
+        "id": "item.bluebird_kitchen.old_oven",
+        "name": "老烤箱",
+        "description": "占了半面墙的老式烤箱,搪瓷漆皮边角剥落,炉门把手被握得发亮。温控旋钮的刻度早就不准。"
+      },
+      {
+        "id": "item.bluebird_kitchen.apron",
+        "name": "浆过的围裙",
+        "description": "一条浆过的围裙,前襟沾着洗不掉的油渍和粉迹。",
+        "placement": "楼梯口的钉子上"
+      },
+      {
+        "id": "item.bluebird_kitchen.prep_table",
+        "name": "钢面备菜台",
+        "description": "一条不锈钢面的长备菜台,台面被刀口划得密密麻麻却擦得反光,底下一层敞架码着搪瓷盆、砧板和摞起来的白瓷盘。"
+      },
+      {
+        "id": "item.bluebird_kitchen.knife_block",
+        "name": "厨刀与刀座",
+        "description": "一只木刀座,插着片刀和剔骨刀,刃口都上过油。",
+        "placement": "备菜台台角"
+      },
+      {
+        "id": "item.bluebird_kitchen.range",
+        "name": "六头煤气灶",
+        "description": "铸铁六头煤气灶,一头的点火器坏了,得划火柴。灶面油渍擦得发白,上方是一具吸满油的抽油烟罩,风机一开,整个后厨说话都得喊。"
+      },
+      {
+        "id": "item.bluebird_kitchen.stew_pot",
+        "name": "铸铁汤锅",
+        "description": "一口大号铸铁锅,锅沿结着一圈陈年的琥珀色汤垢。",
+        "placement": "煤气灶最大的那个灶眼上"
+      },
+      {
+        "id": "item.bluebird_kitchen.spice_rack",
+        "name": "香料架",
+        "description": "一整排木格香料架,大小铁罐和玻璃瓶码得一格不乱,次序看不出规律,却显然是有人刻意排的。月桂、红椒粉挨着几罐叫不出名字的香料。"
+      },
+      {
+        "id": "item.bluebird_kitchen.cooler",
+        "name": "立式冷柜",
+        "description": "一台白漆立式冷柜,压缩机嗡嗡作响,门封条老化了,得用胯顶一下才关得严。白漆柜门不透光,此刻关着。"
+      },
+      {
+        "id": "item.bluebird_kitchen.pantry_shelf",
+        "name": "干货架",
+        "description": "一组敞口木架,砂糖、罐头、米袋、一麻袋咖啡豆和成摞的纸巾按用量排开。最下一层钉着一根铁钉。"
+      },
+      {
+        "id": "item.bluebird_kitchen.dish_sink",
+        "name": "三格水槽",
+        "description": "洗、涮、消毒各一格的老式三格水槽,龙头一直在滴水,底下的水泥地磨出一片浅坑。"
+      },
+      {
+        "id": "item.bluebird_kitchen.extinguisher",
+        "name": "灭火器",
+        "description": "一具干粉灭火器,红漆掉了角,标签上的年检日期糊了,压力表指针还在绿区。"
+      },
+      {
+        "id": "item.bluebird_kitchen.order_wheel",
+        "name": "挂单转盘",
+        "description": "一只铝制转盘,堂座的点单纸条夹上去,转半圈就到了灶前。"
+      },
+      {
+        "id": "item.bluebird_kitchen.kitchen_radio",
+        "name": "后厨收音机",
+        "description": "一台掉了旋钮的小台式收音机,调在 KGRV。开着的时候老串进一阵沙沙声,拍两下机壳就好,过一会儿又来。",
+        "placement": "传菜窗口的窄窗台上"
+      },
+      {
+        "id": "item.bluebird_kitchen.fish_knife",
+        "name": "老鱼刀",
+        "description": "一把磨得只剩半宽的老鱼刀,木柄被手汗浸成深褐色,刃口上过油。",
+        "placement": "备菜台台角的刀座里"
+      },
+      {
+        "id": "item.bluebird_kitchen.matches",
+        "name": "火柴",
+        "description": "一盒厨房用的大火柴,盒边的擦皮已经擦得发黑。",
+        "placement": "煤气灶边"
+      },
+      {
+        "id": "item.bluebird_kitchen.delivery_slips",
+        "name": "送货单",
+        "description": "一叠送货单,记着货品、数目和账期。",
+        "placement": "干货架最下一层,穿在铁钉上"
+      },
+      {
+        "id": "item.bluebird_kitchen.cooler_stock",
+        "name": "冷柜里的食材",
+        "description": "黄油、鸡蛋和用冰镇着的鱼。",
+        "placement": "立式冷柜里",
+        "container": "item.bluebird_kitchen.cooler"
+      }
+    ],
+    "connections": [
+      {
+        "id": "connection.bluebird_kitchen.dining_door",
+        "targetId": "SCN_bluebird_dining",
+        "name": "弹簧门",
+        "description": "带小圆窗的弹簧双开门,通回堂座。"
+      },
+      {
+        "id": "connection.bluebird_kitchen.stairs_up",
+        "targetId": "SCN_bluebird_upstairs",
+        "name": "后楼梯",
+        "description": "角落的陡楼梯,通向楼上的住处。"
+      }
+    ],
+    "conditions": []
+  }
+}

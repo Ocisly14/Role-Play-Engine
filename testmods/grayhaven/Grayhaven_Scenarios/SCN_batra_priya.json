@@ -1,8 +1,13 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "id": "SCN_batra_priya",
   "name": "Batra 家·Priya 的房间",
-  "description": "房间一半是床铺,一半是工作台,分界线泾渭分明——床上乱,台上齐:窄床[item.batra_priya.bed]的被子团在墙角,床沿搭着昨天的袜子;靠窗那张旧书桌[item.batra_priya.desk]却收拾得连一根线头都没有,桌角贴着一张用胶带补过的镇子简图。台面正中是一台改装过的收音机[item.batra_priya.modified_radio],旋钮换过、外壳打了新孔,天线用晾衣铁丝接长,直伸到窗框外。旁边的焊台[item.batra_priya.soldering_station]收拾得和她父亲的一样规矩,烙铁架上还留着松香的余味;焊台边摊着一台拆开的磁带录音机[item.batra_priya.recorder_project],机芯用零件盒垫着,还差一只压带轮就能接到收音机上去。台角摊着那册「证据登记簿」[item.batra_priya.evidence_notebook],条目按 A、B、C 三级分类,字迹精确得像仪表读数。一盏夹在桌沿的台灯[item.batra_priya.desk_lamp]压得很低,夜里守频段时只开这一盏,门缝里透出去的光不多。墙上钉着一张她手画的 KGRV 频段刻度表[item.batra_priya.band_chart],铅笔标着几个打问号的位置;底下的木箱上摞着一叠电子手册与旧杂志[item.batra_priya.tech_manuals],书脊都翻软了。房门通向起居厨房[SCN_batra_living]。",
+  "coordinates": {
+    "x": 24,
+    "y": -262,
+    "z": 17
+  },
+  "setting": "房间一半是床铺,一半是工作台,分界线泾渭分明——床上乱,台上齐:窄床[item.batra_priya.bed]的被子团在墙角,床沿搭着昨天的袜子;靠窗那张旧书桌[item.batra_priya.desk]却收拾得连一根线头都没有,桌角贴着一张用胶带补过的镇子简图。台面正中是一台改装过的收音机[item.batra_priya.modified_radio],旋钮换过、外壳打了新孔,天线用晾衣铁丝接长,直伸到窗框外。旁边的焊台[item.batra_priya.soldering_station]收拾得和她父亲的一样规矩,烙铁架上还留着松香的余味;焊台边摊着一台拆开的磁带录音机[item.batra_priya.recorder_project],机芯用零件盒垫着,还差一只压带轮就能接到收音机上去。台角摊着那册「证据登记簿」[item.batra_priya.evidence_notebook],条目按 A、B、C 三级分类,字迹精确得像仪表读数。一盏夹在桌沿的台灯[item.batra_priya.desk_lamp]压得很低,夜里守频段时只开这一盏,门缝里透出去的光不多。墙上钉着一张她手画的 KGRV 频段刻度表[item.batra_priya.band_chart],铅笔标着几个打问号的位置;底下的木箱上摞着一叠电子手册与旧杂志[item.batra_priya.tech_manuals],书脊都翻软了。房门通向起居厨房[SCN_batra_living]。",
   "parentLocationId": "batra_shop",
   "indoor": true,
   "references": {

@@ -1,8 +1,13 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "id": "SCN_motel_lobby",
   "name": "汽车旅馆前台",
-  "description": "1959 年的乐观主义在这间前台里慢慢褪色:临街窗上那管『VACANCY』的霓虹 [item.motel_lobby.vacancy_neon] 常年亮着,把柜台 [item.motel_lobby.front_desk] 的福米卡贴面照出一圈青白,台面边角磨出了白边;墙上那张加州公路地图 [item.motel_lobby.wall_map] 还印着改线前的旧路,图钉锈在了纸里。墙边一个旋转明信片架 [item.motel_lobby.postcard_rack] 上插着改线前的旧海岸公路风景照,边角卷了毛,少说二十年没人抽走过一张。柜台上摊着一本住客登记簿 [item.motel_lobby.guest_register],一页能翻过一个月,旁边一只按铃 [item.motel_lobby.desk_bell] 供没人在时招呼,再旁边是一部黑色转盘电话 [item.motel_lobby.desk_phone],线从柜台底下绕出去;柜台后的钉板 [item.motel_lobby.key_board] 上挂着一排黄铜房门钥匙,只有 4 号的挂钩是空的。后墙架子上一台小黑白电视 [item.motel_lobby.tv_set] 整天开着,音量拧到最小,画面时不时自己抖一下,也没人抬头看。临街的玻璃门 [SCN_motel] 出去是旧海岸公路旁的旅馆路口,门上的铃铛很久才响一次;侧面的木门 [SCN_motel_porch] 通向连着客房的外廊。",
+  "coordinates": {
+    "x": 290,
+    "y": 2252,
+    "z": 22
+  },
+  "setting": "1959 年的乐观主义在这间前台里慢慢褪色:临街窗上那管『VACANCY』的霓虹 [item.motel_lobby.vacancy_neon] 常年亮着,把柜台 [item.motel_lobby.front_desk] 的福米卡贴面照出一圈青白,台面边角磨出了白边;墙上那张加州公路地图 [item.motel_lobby.wall_map] 还印着改线前的旧路,图钉锈在了纸里。墙边一个旋转明信片架 [item.motel_lobby.postcard_rack] 上插着改线前的旧海岸公路风景照,边角卷了毛,少说二十年没人抽走过一张。柜台上摊着一本住客登记簿 [item.motel_lobby.guest_register],一页能翻过一个月,旁边一只按铃 [item.motel_lobby.desk_bell] 供没人在时招呼,再旁边是一部黑色转盘电话 [item.motel_lobby.desk_phone],线从柜台底下绕出去;柜台后的钉板 [item.motel_lobby.key_board] 上挂着一排黄铜房门钥匙,只有 4 号的挂钩是空的。后墙架子上一台小黑白电视 [item.motel_lobby.tv_set] 整天开着,音量拧到最小,画面时不时自己抖一下,也没人抬头看。临街的玻璃门 [SCN_motel] 出去是旧海岸公路旁的旅馆路口,门上的铃铛很久才响一次;侧面的木门 [SCN_motel_porch] 通向连着客房的外廊。",
   "parentLocationId": "motel",
   "indoor": true,
   "references": {

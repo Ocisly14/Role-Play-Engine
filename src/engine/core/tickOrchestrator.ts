@@ -504,7 +504,9 @@ export class TickOrchestrator {
         ],
         participants: [{ characterId: t.actorId, role: "actor" }],
         // Only the actor: a failure nobody else could see stays private.
-        perceivers: [{ characterId: t.actorId, clarity: "full" }],
+        perceivers: [
+          { characterId: t.actorId, sight: "clear", hearing: "clear" },
+        ],
         signals: [{ factIds: [`${occurrenceId}#f0`], channel: "direct" }],
       });
     }

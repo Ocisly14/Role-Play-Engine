@@ -22,7 +22,7 @@ should fill by guessing.
 5. `world/scene-changes.md` — place descriptions, conditions, passages and the
    environment.
 6. `world/perception.md` — sensory reach, observer capability and
-   per-perceiver clarity.
+   per-perceiver sight and hearing.
 7. `world/occurrences-and-dialogue.md` — occurrence encoding, speech and
    character agency.
 8. `sanity-check.md` — involuntary horror exposure and SAN loss.
@@ -47,10 +47,7 @@ world-rule module.
    schema asks it to set, then accepts deterministic results as facts.
 
 4. **Declared ability only.** A check may use only the skill the actor
-   declared. If no skill was declared, or that skill does not cover the
-   attempt, omit the check. Interpersonal influence, questioning and reading
-   someone's intent are settled without a check. Keep checks for independently
-   uncertain tasks such as treatment, combat or learned-language comprehension.
+   declared. A check is only for an attempt whose success is genuinely in doubt and that the declared skill covers; an attempt that will very likely succeed, or has no real difficulty, takes no check.
 
 5. **Failure is bounded.** A plain failed check means the attempt did not work
    and its time was spent. Only a fumble licenses an additional lasting cost

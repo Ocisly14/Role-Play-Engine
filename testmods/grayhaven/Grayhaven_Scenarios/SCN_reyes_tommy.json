@@ -1,8 +1,13 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "id": "SCN_reyes_tommy",
   "name": "Tommy 的房间",
-  "description": "十三岁男孩的房间该有的乱这里都有:床 [item.reyes_tommy.bed] 没铺,被子堆成一团;地板上散着一双沾着红土的球鞋 [item.reyes_tommy.sneakers] 和一副缠了红胶带的备用车把握把 [item.reyes_tommy.spare_grips]。墙上钉着从杂志撕下来的 BMX 特技页 [item.reyes_tommy.bmx_pinups],旁边压着一张铅笔画的林子路线图 [item.reyes_tommy.trail_map]:林道口、灰溪、锯木厂,再往北全是问号。靠墙一张掉漆的旧课桌 [item.reyes_tommy.school_desk],抽屉里塞着橡皮筋、电池和一只手电筒 [item.reyes_tommy.flashlight];床头夹着一盏台灯 [item.reyes_tommy.clip_lamp],夜里看漫画用,听见走廊的脚步一把就能摁灭。床底下拖出半箱翻烂的漫画 [item.reyes_tommy.comic_stack],封面卷了角,页边有铅笔画的雷德利站铁丝网;箱子边上还压着一把生了锈的渔用折刀 [item.reyes_tommy.fathers_knife],刀柄上刻的名字缩写不是他的,他也从不提起它。朝后巷的那扇窗 [item.reyes_tommy.window] 插销早松了,推的时候得托住上框才不响,窗外墙根就摞着那几只木条箱。房门 [SCN_reyes_living] 通向客厅,门内侧贴着一张手画的『禁止入内』告示,妈妈从来不理它。",
+  "coordinates": {
+    "x": 92,
+    "y": -340,
+    "z": 13
+  },
+  "setting": "十三岁男孩的房间该有的乱这里都有:床 [item.reyes_tommy.bed] 没铺,被子堆成一团;地板上散着一双沾着红土的球鞋 [item.reyes_tommy.sneakers] 和一副缠了红胶带的备用车把握把 [item.reyes_tommy.spare_grips]。墙上钉着从杂志撕下来的 BMX 特技页 [item.reyes_tommy.bmx_pinups],旁边压着一张铅笔画的林子路线图 [item.reyes_tommy.trail_map]:林道口、灰溪、锯木厂,再往北全是问号。靠墙一张掉漆的旧课桌 [item.reyes_tommy.school_desk],抽屉里塞着橡皮筋、电池和一只手电筒 [item.reyes_tommy.flashlight];床头夹着一盏台灯 [item.reyes_tommy.clip_lamp],夜里看漫画用,听见走廊的脚步一把就能摁灭。床底下拖出半箱翻烂的漫画 [item.reyes_tommy.comic_stack],封面卷了角,页边有铅笔画的雷德利站铁丝网;箱子边上还压着一把生了锈的渔用折刀 [item.reyes_tommy.fathers_knife],刀柄上刻的名字缩写不是他的,他也从不提起它。朝后巷的那扇窗 [item.reyes_tommy.window] 插销早松了,推的时候得托住上框才不响,窗外墙根就摞着那几只木条箱。房门 [SCN_reyes_living] 通向客厅,门内侧贴着一张手画的『禁止入内』告示,妈妈从来不理它。",
   "parentLocationId": "reyes_house",
   "indoor": true,
   "references": {

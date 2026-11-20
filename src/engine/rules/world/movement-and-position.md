@@ -5,10 +5,9 @@ and a character's position within a place.
 
 ## Actor-owned routes
 
-`movement.route` grounds the route the actor stated into place ids. It is an
-ordered list of waypoints and its last entry is the stated destination.
+`movement.route`: The route is the way the actor's own words state, as ordered place ids — never a leg they did not state. Its last entry is the stated destination.
 
-- Never invent an unstated leg or replace the actor's route with a better one.
+- Never replace the actor's route with a better one.
 - Every deliberate traversal along the world's connected ways requires
   `movement`, including one step into an adjacent room. One adjacent waypoint
   is a complete route. Forced or discontinuous displacement follows the rules
@@ -28,11 +27,12 @@ character's hands on an entity their applied position cannot reach.
 
 ## Blocked passages
 
-A blocked passage is a world fact with a reason. Three writers set and clear
-it: the weather engine closes passages the weather makes impassable, a
-scripted event floods a ford, and you close a door someone barricades. One
-flag per passage; the last write wins, and any writer may clear what another
-set.
+A blocked passage is a world fact with a reason. A passage may be blocked
+from the start (a door the module authored locked). Three writers set and
+clear it: the weather engine closes passages the weather makes impassable, a
+scripted event floods a ford, and you close a door someone barricades — or
+open one someone unlocks. One flag per passage; the last write wins, and any
+writer may clear what another set.
 
 Code stops a walker at a blocked passage the moment their route reaches it
 and hands you the interruption. Never pre-judge a stated route against the

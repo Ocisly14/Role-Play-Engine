@@ -228,7 +228,7 @@ describe("buildPerceivedBundle", () => {
         { id: "occ_1#f0", type: "sound", content: "a crash", entityRefs: [] },
       ],
       participants: [],
-      perceivers: [{ characterId: "npc_1", clarity: "full" }],
+      perceivers: [{ characterId: "npc_1", sight: "clear", hearing: "clear" }],
       signals: [{ factIds: ["occ_1#f0"], channel: "sound" }],
     };
     const bundle = buildPerceivedBundle({
@@ -289,7 +289,7 @@ describe("the ways out", () => {
     const study = {
       id: "SCN_1",
       name: "Study",
-      description: "a dim study",
+      setting: "a dim study",
       conditions: [],
       items: [],
       connections: [
@@ -303,7 +303,7 @@ describe("the ways out", () => {
     const hall = {
       id: "SCN_HALL",
       name: "The Hall",
-      description: "a hall",
+      setting: "a hall",
       conditions: [],
       items: [],
       connections: [],
@@ -329,6 +329,53 @@ describe("the ways out", () => {
       }),
     } as unknown as DynamicGameStateManager;
   }
+
+  it("carries the setting and a loose thing's placement; a contained thing is offered as out of view", () => {
+    const dgsm = studyWithDoor(false);
+    const study = dgsm.getScene("SCN_1") as unknown as {
+      items: Array<Record<string, unknown>>;
+    };
+    study.items.push(
+      { id: "item.study.lamp", name: "lamp", placement: "on the desk" },
+      {
+        id: "item.study.pens",
+        name: "pens",
+        placement: "in a mug",
+        quantity: 3,
+      },
+      {
+        id: "item.study.key",
+        name: "key",
+        placement: "in the desk drawer",
+        container: "item.study.lamp",
+      }
+    );
+    const bundle = buildPerceivedBundle({
+      npcId: "npc_1",
+      dgsm,
+      engine: makeEngine([]),
+    });
+    expect(bundle.scene.setting).toBe("a dim study");
+    expect(bundle.scene.items).toEqual([
+      { id: "item.study.lamp", name: "lamp", placement: "on the desk" },
+      {
+        id: "item.study.pens",
+        name: "pens",
+        placement: "in a mug",
+        quantity: 3,
+      },
+    ]);
+    // The key in the drawer is out of plain view: offered to the renderer
+    // with what it sits in, never among the items in view.
+    expect(bundle.scene.outOfView?.items).toEqual([
+      {
+        id: "item.study.key",
+        name: "key",
+        placement: "in the desk drawer",
+        container: { id: "item.study.lamp", name: "lamp" },
+      },
+    ]);
+  });
 
   it("carries the place this one leads to, by name", () => {
     const bundle = buildPerceivedBundle({
@@ -356,16 +403,19 @@ describe("the ways out", () => {
     );
   });
 
-  it("carries a concealed passage the character noticed this minute", () => {
+  it("hands a concealed passage to the renderer as out of view, not as a way out", () => {
+    // The renderer decides whether anything gives it away this minute; a
+    // paragraph that writes its tag is what makes it known.
     const bundle = buildPerceivedBundle({
       npcId: "npc_1",
       dgsm: studyWithDoor(true),
       engine: makeEngine([]),
-      noticed: { connectionIds: new Set(["connection.study.door"]) },
     });
-    expect(bundle.scene.adjacentPlaces).toContainEqual({
-      id: "SCN_HALL",
-      name: "The Hall",
-    });
+    expect(bundle.scene.adjacentPlaces.map((e) => e.id)).not.toContain(
+      "SCN_HALL"
+    );
+    expect(bundle.scene.outOfView?.ways).toEqual([
+      { id: "SCN_HALL", name: "The Hall" },
+    ]);
   });
 });

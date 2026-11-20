@@ -42,7 +42,7 @@ const bundle = {
   scene: {
     id: "SCN_1",
     name: "Platform",
-    description: "A platform.",
+    setting: "A platform.",
     activeConditions: [],
     items: [],
     adjacentPlaces: [],

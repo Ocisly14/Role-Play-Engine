@@ -344,24 +344,31 @@ function prepareCase(
     .filter((id) => !base.presentNpcs.has(id));
 
   // Scene: explicit name hint, else the protagonist's own scene.
-  let sceneId = base.homeScene.get(protagonist) ?? "";
-  let sceneNote = "";
-  if (kase.scene) {
-    const hint = kase.scene.toLowerCase();
+  const notes: string[] = [];
+  const resolveHint = (hintText: string): string | undefined => {
+    const hint = hintText.toLowerCase();
     const hits = [...base.sceneName.entries()].filter(([, name]) =>
       name.toLowerCase().includes(hint)
     );
     if (hits.length === 0) {
       // Falling back to the protagonist's home scene would stage the case in
       // the wrong room and still report green.
-      sceneNote = `scene hint "${kase.scene}" matched nothing`;
-    } else {
-      sceneId = hits[0][0];
-      if (hits.length > 1) {
-        sceneNote = `scene hint "${kase.scene}" matched ${hits.length} scenes, used ${hits[0][0]}`;
-      }
+      notes.push(`scene hint "${hintText}" matched nothing`);
+      return undefined;
     }
-  }
+    if (hits.length > 1) {
+      notes.push(
+        `scene hint "${hintText}" matched ${hits.length} scenes, used ${hits[0][0]}`
+      );
+    }
+    return hits[0][0];
+  };
+  let sceneId = base.homeScene.get(protagonist) ?? "";
+  if (kase.scene) sceneId = resolveHint(kase.scene) ?? sceneId;
+  const actorScenes = kase.actors.map((a) =>
+    a.scene ? resolveHint(a.scene) : undefined
+  );
+  const sceneNote = notes.join("; ");
 
   // Destination: a building other than the one they are standing in.
   const parent = base.sceneParent.get(sceneId);
@@ -390,8 +397,9 @@ function prepareCase(
     sceneItems: (kase.sceneItems ?? []).map((k) =>
       propItem(k, seed, propSlot++)
     ),
-    actors: kase.actors.map((a) => ({
+    actors: kase.actors.map((a, i) => ({
       npcId: a.npc,
+      ...(actorScenes[i] ? { sceneId: actorScenes[i] } : {}),
       goal: a.goal ? subst(a.goal) : undefined,
       hp: a.hp,
       san: a.san,
@@ -951,7 +959,7 @@ async function main(): Promise<void> {
           `${o.facts[0]?.content.replace(/\s+/g, " ").slice(0, 50) ?? ""} ` +
           `→ 感知者 [${
             o.perceivers
-              .map((p) => `${p.characterId}:${p.clarity}`)
+              .map((p) => `${p.characterId}:${p.sight}/${p.hearing}`)
               .join(",") || "无"
           }]`
       );
@@ -974,7 +982,7 @@ async function main(): Promise<void> {
     }
     for (const c of result.sceneChanges) {
       lines.push(
-        `      场景 : t${c.tick} ${c.kind} ${c.description.replace(/\s+/g, " ").slice(0, 80)}`
+        `      场景 : t${c.tick} ${c.kind} ${c.description.replace(/\s+/g, " ").slice(0, c.kind.startsWith("item.") ? 200 : 80)}`
       );
     }
     for (const w of result.memoryWrites) {

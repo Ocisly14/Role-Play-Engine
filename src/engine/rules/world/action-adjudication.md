@@ -17,16 +17,7 @@ judge is the attempt behind them.
 - A command that also attempts something is an action. Clock the attempt, not
   the sentence; check it where the declared skill covers it. The `utterance`
   rides along and lands when the action ends.
-- Persuasion, questioning, deception, intimidation, negotiation, stalling
-  through conversation, and reading a person's intent use neither `check` nor
-  `opposedBy`, regardless of the declared skill. A spoken line alone takes
-  one minute. When the actor also does something observable, assess its time
-  and settle that conduct. An independent task, such as treating a wound,
-  fighting, or translating a learned language, may still need its own check.
-- The same holds for every other declared skill: treating a wound, forcing a
-  lock, edging into a doorway unnoticed, reading a room. If success is in any
-  doubt, it is checked; if the declared skill does not cover the attempt, it is
-  not, and no substitute is named.
+- A check is only for an attempt whose success is genuinely in doubt and that the declared skill covers; an attempt that will very likely succeed, or has no real difficulty, takes no check. No substitute skill is named.
 
 ## Starting an action
 
@@ -48,14 +39,11 @@ in the same judgement.
 
 - Always write `actionId`.
 - For a non-movement action, write `resolvedDurationTicks` as a whole number of
-  minutes, at least 1. The actor's proposal is advisory. Talk — a command that
-  is nothing but its words — takes 1. A command that also attempts something
-  takes the attempt's minutes, whatever it says while doing it.
+  minutes, at least 1. The actor's proposal is advisory. Words alone take 1 minute; an action that also does something takes the minutes of what it does, whatever is said while doing it.
 - For movement, provide `movement` as described in
   `movement-and-position.md`; code derives its duration from the route.
-- When the declared skill covers the attempt and success is in doubt, write a
-  `check` with `requiredLevel`: `regular`, `hard` or `extreme`, subject to the
-  interpersonal rule above.
+- Where a check is needed (see above), write a `check` with `requiredLevel`:
+  `regular`, `hard` or `extreme`.
 - When supplied conduct or standing defenses establish active resistance
   to an attempt — including concealment, evasion or guarding — list them in `opposedBy` with the skill they
   use to defend. `opposedBy` requires a `check`. Code rolls and compares both
@@ -75,15 +63,12 @@ its speech row is written on that later tick.
 When an action is due or interrupted, decide whether it has a new objective
 result to settle. Closing an action's clock does not itself create a world event.
 
-- `mode: "outcome"` carries `actionId` and the new objective `outcome`: what
+- `mode: "outcome"` — the action leaves a new objective result; a checked attempt always ends this way. It carries `actionId` and the objective `outcome`: what
   this attempt changed, exposed or failed to accomplish. State world facts,
-  not a personal account of what the actor saw, heard, learned or concluded.
-  A checked attempt always needs its objective result, consistent with the roll.
-- `mode: "pure_speech"` carries no outcome. It is only for an unchecked action
-  consisting entirely of its utterance, delivered by its `speech:true` occurrence.
-- `mode: "no_change"` carries only `actionId` and `mode`. Use it when no new
-  result, check or utterance needs settling, including routine observation,
-  listening and waiting. It sources no state changes and no occurrences.
+  not a personal account of what the actor saw, heard, learned or concluded,
+  consistent with the roll when there was one.
+- `mode: "pure_speech"` — an unchecked action that is only its words; code delivers the words verbatim. It carries no outcome; the words arrive in its `speech:true` occurrence.
+- `mode: "no_change"` — an unchecked action without words that leaves no new objective result. It carries only `actionId` and `mode`, and sources no state changes and no occurrences.
 - Every `outcome` decision needs a non-speech occurrence for the perceptible
   result. Words, if present, get a separate speech occurrence.
 - Do not emit duration, difficulty, progress or status at ending time. Code
@@ -91,7 +76,7 @@ result to settle. Closing an action's clock does not itself create a world event
 
 Ordinary perception is continuous event delivery, not a task whose ending
 needs a retrospective summary. An event is recorded under its own source action,
-with its actual perceivers and clarity, when it occurs. The Renderer supplies
+with its actual perceivers and their grades, when it occurs. The Renderer supplies
 the personal perspective; the character owns interpretation and memory.
 Do not collect those events again into an observer's outcome, and do not invent
 "no new information", silence or a negative finding just because the clock ended.

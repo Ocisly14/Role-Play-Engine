@@ -1,6 +1,8 @@
 // src/simulation/types.ts
 
 import type { PlayerState } from "../player/playerState.js";
+import type { BoardLink } from "../player/playerBoard.js";
+import type { MentionLabel } from "../player/playerCommands.js";
 
 export type SimulationEventType =
   | "action_executed"
@@ -34,7 +36,7 @@ export type SimulationEventType =
   /** The world is waiting on the player: `data.pending` is the decision or
    *  the question they must answer. */
   | "player_pending"
-  /** The player's state changed (queue, mode, pending, friend log, map). */
+  /** The player's public state or relationship board changed. */
   | "player_state"
   /** The player reached a place or walked a road for the first time. */
   | "player_map_updated"
@@ -126,8 +128,27 @@ export const SIMULATION_EVENT_TYPES: readonly SimulationEventType[] = [
  *  it. `dead`: the player's character died. */
 export type PauseReason = "player" | "manual" | "dead";
 
+export type PublicPlayerState = Omit<PlayerState, "met" | "boardLinks">;
+
+export interface PlayerOptions {
+  exits: MentionLabel[];
+  mentions: MentionLabel[];
+}
+
+export interface PlayerBoardView {
+  people: Array<{
+    handle: string;
+    label: string;
+    knownAs?: string;
+    notes: string[];
+    firstMet: string | null;
+  }>;
+  /** The endpoints of a public link are player-facing handles. */
+  links: BoardLink[];
+}
+
 export interface PlayerView {
-  state: PlayerState;
+  state: PublicPlayerState;
   alive: boolean;
   currentAction: {
     description: string;
@@ -142,6 +163,9 @@ export interface PlayerView {
     narrative: string;
   }>;
   paused: boolean;
+  options: PlayerOptions;
+  learnedLanguages: string[];
+  skillValues: Record<string, number>;
 }
 
 export interface PlaybackStatus {

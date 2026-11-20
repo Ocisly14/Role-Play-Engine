@@ -32,28 +32,27 @@ import { fastPathMode, recordShadow } from "../engine/shared/fastPath.js";
 import { findAffectedCharacters } from "../engine/shared/impactPropagation.js";
 import type { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
 import { decide as askDecisions } from "../models/decisions.js";
-import type { PlayerPort, PlayerStepTranslator } from "../player/playerPort.js";
 import {
-  type PlayerPending,
-  type PlayerState,
-  type QueueStep,
-  dropRunning,
-  markDone,
-  markRunning,
-  nextPendingStep,
-  runningStep,
+  deliveredPlayerSpeech,
+  immediateListeners,
+  withoutPlayerSpeech,
+} from "../player/dialogue.js";
+import { strangerLabel } from "../player/playerCommands.js";
+import type { PlayerPort } from "../player/playerPort.js";
+import type {
+  PlayerDialogue,
+  PlayerDialogueReply,
+  PlayerPending,
 } from "../player/playerState.js";
-import {
-  ENDED_IN_FAILURE,
-  classifyManualWake,
-} from "../player/wakeClassifier.js";
+import { classifyManualWake } from "../player/wakeClassifier.js";
 import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
-import { type CitationScope, tagsIn } from "../state/perceivableDirectory.js";
 import {
-  type NoticedThisMinute,
-  unnoticedCandidates,
-} from "../state/perceivedLocation.js";
-import type { SceneConnection } from "../state/types.js";
+  type CitationScope,
+  aliasFor,
+  knownAs,
+  tagsIn,
+} from "../state/perceivableDirectory.js";
+import { charactersAtSameLocation } from "../state/perceivedLocation.js";
 import type { RoleSimAgent, RoleSimContext, RoleSimDecision } from "./agent.js";
 import {
   consolidateMemories,
@@ -61,16 +60,15 @@ import {
 } from "./memoryConsolidator.js";
 import { compactPerceptions, needsCompaction } from "./perceptionCompactor.js";
 import { buildPerceivedBundle, render } from "./renderer/index.js";
+import type { PerceivedBundle } from "./renderer/types.js";
 import { idsCarriedBy } from "./renderer/llmRenderer.js";
 import { buildUserPromptSegments } from "./userPromptBuilder.js";
 import {
   ACT_QUESTION,
-  type NoticeCandidate,
   PendingDelivery,
   buildGateRequest,
   gateSaysSkip,
   hardWakeReason,
-  noticedFrom,
 } from "./wakeGate.js";
 
 export interface NpcActionControllerDeps {
@@ -95,6 +93,7 @@ export interface NpcActionControllerDeps {
     gameDateTime: string;
     location: string;
     narrative: string;
+    dialogueOnly?: boolean;
   }) => void;
   /** Called when a character has condensed their own stream. The summary
    *  speaks for every paragraph up to and including
@@ -111,9 +110,6 @@ export interface NpcActionControllerDeps {
   /** The player's state, when this session has a player character. Absent,
    *  every character is an NPC and nothing below changes. */
   player?: PlayerPort;
-  /** Manual mode: turns the player's next queued step into a decision.
-   *  Absent, a step that comes up pauses for the player with a rejection. */
-  playerTranslator?: PlayerStepTranslator;
 }
 
 interface DecideOpts {
@@ -124,9 +120,7 @@ interface DecideOpts {
   /** This character's own action transitions this tick. Only the player's
    *  branch reads them. */
   transitions?: ActionTransition[];
-  /** What the character noticed this minute beyond plain view (concealment
-   *  design §5.3). Set by the noticing judgement before the render. */
-  noticed?: NoticedThisMinute;
+  manualReply?: { words: string; speak: (reply: string) => void };
 }
 
 const TERMINAL = new Set(["completed", "failed", "interrupted", "cancelled"]);
@@ -142,14 +136,6 @@ type SubmitOutcome =
   | { kind: "failed"; reason: string };
 
 type DecisionReason = Extract<PlayerPending, { kind: "decision" }>["reason"];
-
-const TRANSLATION_MISSING = "player input translation is not implemented yet";
-const STEP_NOT_AN_ACTION = "this step did not turn into an action";
-const WORLD_REFUSED = "the world could not take this action right now";
-
-function withoutStep(s: PlayerState, stepId: string): PlayerState {
-  return { ...s, queue: s.queue.filter((q) => q.id !== stepId) };
-}
 
 /** Max NPC pipelines deciding concurrently. Overridable for tuning. */
 const DEFAULT_DECIDE_CONCURRENCY = (() => {
@@ -208,7 +194,6 @@ export class NpcActionController {
   private readonly onPerception?: NpcActionControllerDeps["onPerception"];
   private readonly onPerceptionCompacted?: NpcActionControllerDeps["onPerceptionCompacted"];
   private readonly player?: PlayerPort;
-  private readonly playerTranslator?: PlayerStepTranslator;
   /** Occurrences held for characters the wake gate let sleep; delivered
    *  whole on their next wake (design §6.1). Saved with the runtime. */
   private readonly pending = new PendingDelivery();
@@ -230,7 +215,6 @@ export class NpcActionController {
     this.onPerception = deps.onPerception;
     this.onPerceptionCompacted = deps.onPerceptionCompacted;
     this.player = deps.player;
-    this.playerTranslator = deps.playerTranslator;
     this.language = deps.language ?? "en";
     this.decideConcurrency =
       deps.decideConcurrency !== undefined &&
@@ -256,11 +240,27 @@ export class NpcActionController {
   }
 
   private async processTickReport(report: TickReport): Promise<void> {
+    const playerId = this.player?.playerId();
+    const latest = playerId ? this.player?.get().dialogue.at(-1) : undefined;
+    const exchange = latest?.status === "waiting" ? latest : undefined;
+    const speech =
+      exchange && playerId
+        ? deliveredPlayerSpeech(report.occurrences, exchange, playerId)
+        : [];
+    const speechIds = new Set(speech.map((occurrence) => occurrence.id));
+    const listeners =
+      playerId && speech.length > 0
+        ? immediateListeners(
+            speech,
+            new Set(charactersAtSameLocation(playerId, this.dgsm))
+          )
+        : new Set<string>();
+    const replies = new Map<string, string>();
     // 1. Route occurrences by the Engine's perceiver lists (plan Phase 9).
     //    The Engine already decided WHO perceives each occurrence and HOW
-    //    CLEARLY (the per-perceiver `clarity`); the same row object goes to
-    //    every listed character, and the renderer downstream degrades its
-    //    facts to that viewer's grade.
+    //    CLEARLY (the per-perceiver sight and hearing grades); the same row
+    //    object goes to every listed character, and the renderer downstream
+    //    degrades its facts to that viewer's grades.
     const occByNpc = new Map<string, Occurrence[]>();
     const route = (npcId: string, occ: Occurrence): void => {
       const list = occByNpc.get(npcId) ?? [];
@@ -289,10 +289,11 @@ export class NpcActionController {
       // neighbourhood, 5 global), so at impact 5 everyone — the person in the
       // room included — reads 5. The value is "widest ring admitting them",
       // not distance, and cannot grade anyone. So: ask once capped at ring 2
-      // (targeted or co-located = `full`), once at the event's own impact
-      // (everyone it reaches), and anyone in the second set but not the first
-      // is `trace`. The shim never emits `limited`; that grade is the World
-      // Action Engine's judgement and this path has none to offer.
+      // (targeted or co-located = seen and heard clearly), once at the event's
+      // own impact (everyone it reaches), and anyone in the second set but not
+      // the first hears it only faintly. The shim never emits the middle
+      // grades; those are the World Action Engine's judgement and this path
+      // has none to offer.
       const near = findAffectedCharacters(
         action,
         Math.min(event.impact, 2),
@@ -301,7 +302,9 @@ export class NpcActionController {
       const all = findAffectedCharacters(action, event.impact, this.dgsm);
       const perceivers: OccurrencePerceiver[] = [...all.keys()].map((id) => ({
         characterId: id,
-        clarity: near.has(id) ? "full" : "trace",
+        ...(near.has(id)
+          ? { sight: "clear" as const, hearing: "clear" as const }
+          : { sight: "none" as const, hearing: "faint" as const }),
       }));
       if (perceivers.length === 0) continue;
       const occ = this.featureEventToOccurrence(
@@ -326,8 +329,8 @@ export class NpcActionController {
         .map((t) => t.actorId)
     );
 
-    // 2b. Each character's own transitions, for the player's branch: it
-    //     settles the queue and the wake classifier from them.
+    // 2b. Each character's own transitions, for the player's branch: the
+    //     wake classifier reads them.
     const transitionsByActor = new Map<string, ActionTransition[]>();
     for (const t of report.transitions) {
       const list = transitionsByActor.get(t.actorId) ?? [];
@@ -359,18 +362,128 @@ export class NpcActionController {
     const targets = [...allTargets].filter((npcId) =>
       this.dgsm.isNpcAlive(npcId)
     );
-    await runWithConcurrency(targets, this.decideConcurrency, async (npcId) => {
-      if (!this.dgsm.isNpcAlive(npcId)) return;
-      const occurrencesForNpc = occByNpc.get(npcId);
-      const transitions = transitionsByActor.get(npcId);
-      await this.decide(npcId, {
-        report,
-        occurrencesForNpc:
-          occurrencesForNpc && occurrencesForNpc.length > 0
-            ? occurrencesForNpc
-            : undefined,
-        ...(transitions ? { transitions } : {}),
-      });
+    try {
+      await runWithConcurrency(
+        targets,
+        this.decideConcurrency,
+        async (npcId) => {
+          if (!this.dgsm.isNpcAlive(npcId)) return;
+          const routed = occByNpc.get(npcId) ?? [];
+          const occurrencesForNpc =
+            playerId === npcId
+              ? routed.flatMap((occurrence) =>
+                  exchange && speechIds.has(occurrence.id)
+                    ? withoutPlayerSpeech(occurrence, npcId, exchange.words)
+                    : [occurrence]
+                )
+              : routed;
+          const transitions = transitionsByActor.get(npcId);
+          await this.decide(npcId, {
+            report,
+            occurrencesForNpc:
+              occurrencesForNpc.length > 0 ? occurrencesForNpc : undefined,
+            ...(transitions ? { transitions } : {}),
+            ...(exchange && listeners.has(npcId)
+              ? {
+                  manualReply: {
+                    words: exchange.words,
+                    speak: (reply: string) => {
+                      replies.set(npcId, reply);
+                    },
+                  },
+                }
+              : {}),
+          });
+        }
+      );
+    } finally {
+      if (
+        exchange &&
+        playerId &&
+        (speech.length > 0 ||
+          report.transitions.some(
+            (transition) =>
+              transition.actionId === exchange.id && TERMINAL.has(transition.to)
+          ))
+      ) {
+        this.finishDialogue(
+          playerId,
+          exchange,
+          report.gameDateTime,
+          listeners,
+          replies,
+          speech.length > 0
+        );
+      }
+    }
+  }
+
+  private finishDialogue(
+    playerId: string,
+    exchange: PlayerDialogue,
+    gameDateTime: string,
+    listeners: ReadonlySet<string>,
+    replies: ReadonlyMap<string, string>,
+    delivered: boolean
+  ): void {
+    const port = this.player;
+    if (!port) return;
+    const state = port.get();
+    if (state.dialogue.at(-1)?.id !== exchange.id) return;
+    const visibleReplies: PlayerDialogueReply[] = [];
+    const quote = (words: string) =>
+      `“${words.replaceAll("[", "［").replaceAll("]", "］")}”`;
+    const zh = this.language.startsWith("zh");
+    if (delivered) {
+      this.recordPerception(
+        playerId,
+        gameDateTime,
+        exchange.location,
+        zh
+          ? `我说：${quote(exchange.words)}`
+          : `I said: ${quote(exchange.words)}`,
+        true
+      );
+    }
+    // Use listener order, so concurrent model completion cannot reorder the
+    // dialogue. Keep the spoken lines in the actors' histories for later turns.
+    for (const speakerId of listeners) {
+      const words = replies.get(speakerId);
+      const profile = this.dgsm.getNpcProfile(speakerId);
+      if (!words || !profile) continue;
+      for (const viewerId of [playerId, ...listeners]) {
+        const name = knownAs(this.dgsm, viewerId, speakerId);
+        const handle =
+          name === undefined ? aliasFor(viewerId, speakerId) : speakerId;
+        const label = name ?? strangerLabel(profile, zh ? "zh" : "en");
+        if (viewerId === playerId)
+          visibleReplies.push({ handle, label, words });
+        const speaker =
+          viewerId === speakerId ? (zh ? "我" : "I") : `${label} [${handle}]`;
+        this.recordPerception(
+          viewerId,
+          gameDateTime,
+          exchange.location,
+          zh
+            ? `${speaker}答道：${quote(words)}`
+            : `${speaker} replied: ${quote(words)}`,
+          true
+        );
+      }
+    }
+    // Perception callbacks may have just added a speaker to the board.
+    const current = port.get();
+    port.set({
+      ...current,
+      dialogue: [
+        ...current.dialogue.slice(0, -1),
+        {
+          ...exchange,
+          ...(delivered ? { spokenAt: gameDateTime } : {}),
+          status: delivered ? "complete" : "unspoken",
+          replies: visibleReplies,
+        },
+      ],
     });
   }
 
@@ -455,11 +568,21 @@ export class NpcActionController {
     const ctx = await this.buildContext(npcId, {
       ...opts,
       occurrencesForNpc: occurrences.length > 0 ? occurrences : undefined,
-      ...(gate.noticed ? { noticed: gate.noticed } : {}),
     });
     if (!ctx) return;
 
-    const decision = await this.agent.decideNext(ctx);
+    const decision = await this.agent.decideNext(
+      opts?.manualReply ? { ...ctx, manualSpeech: opts.manualReply.words } : ctx
+    );
+    const reply =
+      opts?.manualReply && "replyNow" in decision
+        ? decision.replyNow?.trim()
+        : undefined;
+    if (reply && reply.length <= 320) opts?.manualReply?.speak(reply);
+    const deferOnly = (candidate: RoleSimDecision): RoleSimDecision =>
+      candidate.tool === "act" && reply && candidate.utterance?.trim() === reply
+        ? { ...candidate, utterance: undefined }
+        : candidate;
     const wouldSkip = this.gateShadow.get(npcId);
     if (wouldSkip !== undefined) {
       this.gateShadow.delete(npcId);
@@ -472,26 +595,32 @@ export class NpcActionController {
         agree: wouldSkip === !acted,
       });
     }
-    await this.submitDecision(npcId, ctx, decision, (retryCtx) =>
-      this.agent.decideNext(retryCtx)
+    await this.submitDecision(
+      npcId,
+      ctx,
+      deferOnly(decision),
+      async (retryCtx) => deferOnly(await this.agent.decideNext(retryCtx))
     );
   }
 
   /**
-   * DECISIONS_WAKE_GATE / DECISIONS_NOTICING. Hard-wake cases are never asked
-   * (their action ended, they were addressed, no history yet, a full buffer). The gate request is the character's own
-   * decision prompt minus this minute's paragraph, plus the structured
-   * perception; notice questions ride along. A failed request wakes them and
-   * notices nothing.
+   * DECISIONS_WAKE_GATE. Hard-wake cases are never asked (their action ended,
+   * they were addressed, no history yet, a full buffer). The gate request is
+   * the character's own decision prompt minus this minute's paragraph, plus
+   * the structured perception. A failed request wakes them.
+   *
+   * Whether anyone perceives a thing out of plain view is not asked here: the
+   * renderer decides it with the whole minute in front of it (setting design
+   * §5.3). A separate per-thing question answered from the character's
+   * memories took knowing a drawer holds money for seeing the money.
    */
   private async consultGate(
     npcId: string,
     opts: DecideOpts | undefined,
     occurrences: Occurrence[]
-  ): Promise<{ skip: boolean; noticed?: NoticedThisMinute }> {
+  ): Promise<{ skip: boolean }> {
     const gateMode = fastPathMode("DECISIONS_WAKE_GATE");
-    const noticeMode = fastPathMode("DECISIONS_NOTICING");
-    if (gateMode === "off" && noticeMode === "off") return { skip: false };
+    if (gateMode === "off") return { skip: false };
     const profile = this.dgsm.getNpcProfile(npcId);
     if (!profile) return { skip: false };
 
@@ -505,37 +634,10 @@ export class NpcActionController {
         occurrences,
         hasHistory: history.length > 0,
       }) ?? (this.pending.isFull(npcId) ? "pending buffer full" : null);
-    const askAct = gateMode !== "off" && reason === null;
+    if (reason !== null) return { skip: false };
 
     const memories = await this.loadAllMemories(npcId);
-    const known = tagsIn([
-      ...history.map((h) => h.narrative),
-      ...memories.map((m) => m.content),
-    ]);
     const position = this.dgsm.getCharacterPosition(npcId);
-    const unseen =
-      noticeMode === "off"
-        ? { items: [], connectionIds: [] }
-        : unnoticedCandidates(position, this.dgsm);
-    const candidates: NoticeCandidate[] =
-      noticeMode === "off"
-        ? []
-        : [
-            ...unseen.items
-              .filter((i) => !known.has(i.id))
-              .map((i) => ({
-                kind: "item" as const,
-                id: i.id,
-                description: `${i.name}${i.description ? `: ${i.description}` : ""}`,
-              })),
-            ...unseen.connectionIds.map((id) => ({
-              kind: "connection" as const,
-              id,
-              description: this.connectionDescription(id),
-            })),
-          ];
-    if (!askAct && candidates.length === 0) return { skip: false };
-
     const currentScene = position ? this.dgsm.resolveLocationId(position) : "";
     const gateCtx: RoleSimContext = {
       npcId,
@@ -561,46 +663,17 @@ export class NpcActionController {
           dgsm: this.dgsm,
           engine: this.engine,
         }),
-        ask: { act: askAct, notice: candidates },
       })
     );
     const answers = result.ok ? result.answers : null;
 
     let skip = false;
-    if (askAct && answers?.has(ACT_QUESTION)) {
+    if (answers?.has(ACT_QUESTION)) {
       const wouldSkip = gateSaysSkip(answers);
       if (gateMode === "on") skip = wouldSkip;
       else this.gateShadow.set(npcId, wouldSkip);
     }
-    let noticed: NoticedThisMinute | undefined;
-    if (candidates.length > 0) {
-      const found = noticedFrom(answers, candidates);
-      if (noticeMode === "on") {
-        noticed = found;
-      } else {
-        recordShadow("DECISIONS_NOTICING", {
-          tick: gateCtx.currentTime,
-          npcId,
-          candidates: candidates.map((c) => c.id),
-          noticed: [...found.itemIds, ...found.connectionIds],
-        });
-      }
-    }
-    return { skip, ...(noticed ? { noticed } : {}) };
-  }
-
-  /** What a concealed passage looks like, for the noticing question. */
-  private connectionDescription(connectionId: string): string {
-    for (const place of [
-      ...this.dgsm.getState().scenes.values(),
-      ...(this.dgsm.getTopology()?.roads?.values() ?? []),
-    ]) {
-      const c = (place.connections as SceneConnection[] | undefined)?.find(
-        (x) => x.id === connectionId
-      );
-      if (c) return c.description ?? c.name ?? `a way to ${c.targetId}`;
-    }
-    return connectionId;
+    return { skip };
   }
 
   /** The pending buffer, for the runtime snapshot. */
@@ -719,6 +792,51 @@ export class NpcActionController {
 
   // ==================== The player's character ====================
 
+  playerCitationScope(): CitationScope | undefined {
+    const playerId = this.player?.playerId();
+    return playerId ? this.citationScopes.get(playerId) : undefined;
+  }
+
+  /** Player operations run between ticks. Submit once and let the caller
+   *  display any refusal while keeping the current action and pause. */
+  async submitPlayerCommand(
+    rawArgs: Record<string, unknown>,
+    citationScope: CitationScope = this.playerCitationScope() ?? {
+      knownIds: new Set(),
+    }
+  ): Promise<{ ok: true; actionId: string } | { ok: false; reason: string }> {
+    const playerId = this.player?.playerId();
+    if (!playerId || !this.dgsm.isNpcAlive(playerId)) {
+      return { ok: false, reason: "no living player character" };
+    }
+    const actions = this.engine.getActorActions(playerId);
+    // The inbox judges all queued starts together. Keep one pending start
+    // until the engine can accept replacements for it as a live action.
+    if (actions.some((action) => action.status === "queued")) {
+      return { ok: false, reason: "your previous command is waiting to start" };
+    }
+    const live = actions.find((action) => action.status === "active");
+    const built = buildActionCommand(playerId, rawArgs, {
+      dgsm: this.dgsm,
+      ...(live ? { replacesActionId: live.id } : {}),
+      citationScope,
+    });
+    if (!built.ok) return { ok: false, reason: built.reason };
+
+    try {
+      const receipt = await this.engine.submitCommand(built.command);
+      return receipt.accepted
+        ? {
+            ok: true,
+            actionId: receipt.actionId ?? `action_${built.command.commandId}`,
+          }
+        : { ok: false, reason: receipt.reason ?? "command rejected" };
+    } catch (error) {
+      console.warn("[NpcActionController] player submitCommand failed:", error);
+      return { ok: false, reason: "could not submit your command" };
+    }
+  }
+
   /** The player's branch of `decide()`. Same render, same skip rule as an
    *  NPC; what follows the render depends on the mode. */
   private async decidePlayer(
@@ -730,10 +848,6 @@ export class NpcActionController {
     const transitions = (opts?.transitions ?? []).filter(
       (t) => t.actorId === playerId
     );
-
-    // Queue bookkeeping first: it rests only on what the engine reported,
-    // not on whether the render below succeeds.
-    this.settlePlayerQueue(transitions);
 
     // The NPC skip rule — busy and perceived nothing — holds for the player
     // too, except that a delegated player whose friend spoke unprompted is
@@ -774,16 +888,12 @@ export class NpcActionController {
         ...own.map((a) => a.id),
       ]),
       hasLiveAction: this.npcHasActiveStep(playerId),
-      hasPendingStep: nextPendingStep(port.get()) !== undefined,
     });
     switch (verdict.kind) {
       case "none":
         return;
       case "pause":
         this.requestPlayerDecision(ctx, verdict.reason);
-        return;
-      case "advanceQueue":
-        await this.advancePlayerQueue(playerId, this.asManual(ctx));
         return;
     }
   }
@@ -796,8 +906,6 @@ export class NpcActionController {
   async resolvePlayer(
     input:
       | { kind: "continue" }
-      // The queue was already replaced through PlayerPort.set.
-      | { kind: "steps" }
       // Delegated: friendLog already appended.
       | { kind: "advice" }
   ): Promise<void> {
@@ -814,39 +922,8 @@ export class NpcActionController {
       return;
     }
 
-    if (mode !== "manual") return;
-    // "Continue" while busy lets the current action run on; idle, it takes
-    // the queue's next step. New steps go in at once, replacing whatever is
-    // running (the engine interrupts it, D4).
-    if (input.kind === "continue" && this.npcHasActiveStep(playerId)) return;
-    if (!nextPendingStep(port.get())) return;
-    const ctx = await this.buildContextFromHistory(playerId);
-    if (!ctx) return;
-    await this.advancePlayerQueue(playerId, this.asManual(ctx));
-  }
-
-  /** A completed step is done; the running step whose action failed, was
-   *  interrupted or cancelled is dropped. */
-  private settlePlayerQueue(
-    transitions: ReadonlyArray<ActionTransition>
-  ): void {
-    const port = this.player;
-    if (!port || transitions.length === 0) return;
-    const before = port.get();
-    let next = before;
-    for (const t of transitions) {
-      if (t.to === "completed") next = markDone(next, t.actionId);
-    }
-    const running = runningStep(next);
-    if (
-      running?.actionId !== undefined &&
-      transitions.some(
-        (t) => ENDED_IN_FAILURE.has(t.to) && t.actionId === running.actionId
-      )
-    ) {
-      next = dropRunning(next);
-    }
-    if (next !== before) port.set(next);
+    // "Continue": the current action, if any, runs on. Nothing is
+    // submitted — a manual player's commands come in on their own.
   }
 
   /** Delegated: the agent decides as an NPC would, with the friend's words
@@ -885,61 +962,6 @@ export class NpcActionController {
     });
   }
 
-  /** Manual: submit the queue's next step (`submitPlayerStep` pauses
-   *  instead when no translator is wired). */
-  private async advancePlayerQueue(
-    playerId: string,
-    ctx: RoleSimContext
-  ): Promise<void> {
-    const port = this.player;
-    if (!port) return;
-    const step = nextPendingStep(port.get());
-    if (!step) return;
-    await this.submitPlayerStep(playerId, ctx, step);
-  }
-
-  private async submitPlayerStep(
-    playerId: string,
-    ctx: RoleSimContext,
-    step: QueueStep
-  ): Promise<void> {
-    const port = this.player;
-    if (!port) return;
-    const translator = this.playerTranslator;
-    if (!translator) {
-      this.requestPlayerDecision(ctx, "rejected", TRANSLATION_MISSING);
-      return;
-    }
-
-    const decision = await translator.translateStep(ctx, step);
-    const outcome = await this.submitDecision(
-      playerId,
-      ctx,
-      decision,
-      (retryCtx) => translator.translateStep(retryCtx, step)
-    );
-    switch (outcome.kind) {
-      case "submitted":
-        port.set(markRunning(port.get(), step.id, outcome.actionId));
-        return;
-      case "rejected":
-        // The player sees why, instead of the step vanishing silently.
-        port.set(withoutStep(port.get(), step.id));
-        this.requestPlayerDecision(ctx, "rejected", outcome.reason);
-        return;
-      case "declined":
-        port.set(withoutStep(port.get(), step.id));
-        this.requestPlayerDecision(ctx, "rejected", STEP_NOT_AN_ACTION);
-        return;
-      case "failed":
-        // Not the step's fault: it stays queued for the next "continue".
-        // The real error is already in the log (submitDecision warns it);
-        // the player reads a sentence, not a stack message.
-        this.requestPlayerDecision(ctx, "rejected", WORLD_REFUSED);
-        return;
-    }
-  }
-
   private requestPlayerDecision(
     _ctx: RoleSimContext,
     reason: DecisionReason,
@@ -951,10 +973,6 @@ export class NpcActionController {
       reason,
       ...(rejection !== undefined ? { rejection } : {}),
     });
-  }
-
-  private asManual(ctx: RoleSimContext): RoleSimContext {
-    return { ...ctx, player: { mode: "manual" } };
   }
 
   /** The NPC's single live (active preferred, else queued) EngineAction. */
@@ -991,7 +1009,6 @@ export class NpcActionController {
       occurrencesForNpc: opts?.occurrencesForNpc,
       dgsm: this.dgsm,
       engine: this.engine,
-      ...(opts?.noticed ? { noticed: opts.noticed } : {}),
     });
 
     // Snapshot BEFORE this tick's paragraph is recorded: the renderer is being
@@ -1000,15 +1017,15 @@ export class NpcActionController {
     const priorPerceptions = this.perceptionHistory.get(npcId)?.slice() ?? [];
 
     // What they may point at: what they were shown before (every tag in their
-    // stream and memories) and what they noticed this minute. The renderer
-    // adds what this minute's occurrences carry; the boundary below gets the
-    // same scope plus the paragraph itself.
+    // stream and memories). The renderer adds what this minute's occurrences
+    // carry and what is out of plain view here (which it may or may not
+    // perceive); the boundary below gets the same scope plus the paragraph
+    // itself — so a hidden thing is citable exactly when the paragraph wrote it.
     const renderScope: CitationScope = {
       knownIds: tagsIn([
         ...priorPerceptions.map((p) => p.narrative),
         ...memories.map((m) => m.content),
       ]),
-      ...(opts?.noticed ? { noticed: opts.noticed } : {}),
     };
 
     const rendered = await render({
@@ -1041,6 +1058,7 @@ export class NpcActionController {
       currentScene,
       memories,
       currentAction,
+      ...justEndedFrom(bundle.ownAction),
       perception: { narrative: rendered.narrative, location: currentScene },
       recentPerceptions: priorPerceptions,
     };
@@ -1090,7 +1108,6 @@ export class NpcActionController {
         ...tagsIn([rendered.narrative, ...memories.map((m) => m.content)]),
       ]),
       shownIds: idsCarriedBy(bundle, npcId),
-      ...(opts?.noticed ? { noticed: opts.noticed } : {}),
     });
 
     return { ...baseCtx, recentPerceptions };
@@ -1188,12 +1205,19 @@ export class NpcActionController {
     npcId: string,
     gameDateTime: string,
     location: string,
-    narrative: string
+    narrative: string,
+    dialogueOnly?: boolean
   ): void {
     const buf = this.perceptionHistory.get(npcId) ?? [];
     buf.push({ gameDateTime, location, narrative });
     this.perceptionHistory.set(npcId, buf);
-    this.onPerception?.({ npcId, gameDateTime, location, narrative });
+    this.onPerception?.({
+      npcId,
+      gameDateTime,
+      location,
+      narrative,
+      ...(dialogueOnly ? { dialogueOnly: true } : {}),
+    });
   }
 
   /** Seed the stream from storage when a session resumes. Replaces whatever is
@@ -1255,4 +1279,18 @@ export class NpcActionController {
         : {}),
     }));
   }
+}
+
+/** The action that ended this minute, as the character is told it. */
+function justEndedFrom(
+  own: PerceivedBundle["ownAction"] | undefined
+): Pick<RoleSimContext, "justEnded"> {
+  if (own?.kind !== "ended") return {};
+  return {
+    justEnded: {
+      description: own.description,
+      status: own.status,
+      ...(own.reason ? { reason: own.reason } : {}),
+    },
+  };
 }

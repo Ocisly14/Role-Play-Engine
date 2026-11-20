@@ -22,7 +22,7 @@ or heat. Terrain, season and equipment set the required level.
   movement runtime already owns; use the supplied graph and route,
   never call nonexistent pathfinding or movement-time tools.
 - Rejected for tracking a person or animal (Investigation) and for treating
-  the injuries exposure causes (Medicine & Psychology).
+  the injuries exposure causes (Medicine).
 
 ## Success levels
 

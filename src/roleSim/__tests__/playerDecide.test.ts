@@ -1,7 +1,7 @@
 // The controller's player branch: manual mode pauses when the wake classifier
-// says the player is needed and advances the queue through the translator
-// otherwise; delegated mode decides like an NPC and pauses only on
-// `askFriend`. NPCs are untouched (occurrenceRouting / decideConcurrency
+// says the player is needed and otherwise lets the current action run on —
+// it never decides or submits for the player; delegated mode decides like an
+// NPC and pauses only on `askFriend`. NPCs are untouched (occurrenceRouting / decideConcurrency
 // cover them unmodified).
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -14,14 +14,10 @@ import type {
   OccurrencePerceiver,
 } from "../../engine/actions/types.js";
 import type { TickReport } from "../../engine/core/types.js";
-import type {
-  PlayerPort,
-  PlayerStepTranslator,
-} from "../../player/playerPort.js";
+import type { PlayerPort } from "../../player/playerPort.js";
 import {
   type PlayerPending,
   type PlayerState,
-  type QueueStep,
   createPlayerState,
 } from "../../player/playerState.js";
 import type { RoleSimContext, RoleSimDecision } from "../agent.js";
@@ -101,15 +97,6 @@ function transition(
   return { actionId, actorId, from: "active", to, progressDeltaMinutes: 1 };
 }
 
-function step(
-  id: string,
-  text: string,
-  status: QueueStep["status"],
-  actionId?: string
-): QueueStep {
-  return { id, text, status, ...(actionId ? { actionId } : {}) };
-}
-
 const ACT: Extract<RoleSimDecision, { tool: "act" }> = {
   tool: "act",
   description: "walk to the library",
@@ -120,8 +107,6 @@ const ACT: Extract<RoleSimDecision, { tool: "act" }> = {
 function harness(opts: {
   state: Partial<PlayerState>;
   actions?: EngineAction[];
-  /** null: no translator wired. */
-  translate?: ((ctx: RoleSimContext, s: QueueStep) => RoleSimDecision) | null;
   playerDecision?: (ctx: RoleSimContext) => RoleSimDecision;
   npcDecision?: (ctx: RoleSimContext) => RoleSimDecision;
 }) {
@@ -164,6 +149,7 @@ function harness(opts: {
     getCharacterPosition: () => ({ type: "scene", sceneId: "SCN_1" }),
     resolveLocationId: (pos: { sceneId: string }) => pos.sceneId,
     getScene: (id: string) => ({ id, name: id }),
+    getTopology: () => undefined,
     getRoad: () => null,
     getRelationship: () => undefined,
   };
@@ -180,12 +166,6 @@ function harness(opts: {
       pauses.push(pending);
     },
   };
-
-  const translateStep = vi.fn(
-    async (ctx: RoleSimContext, s: QueueStep): Promise<RoleSimDecision> =>
-      opts.translate ? opts.translate(ctx, s) : ACT
-  );
-  const translator: PlayerStepTranslator = { translateStep };
 
   const agent = {
     decideNext: vi.fn(async (ctx: RoleSimContext) =>
@@ -207,7 +187,6 @@ function harness(opts: {
     decideConcurrency: 2,
     onPerception,
     player: port,
-    ...(opts.translate === null ? {} : { playerTranslator: translator }),
   });
 
   const agentCallsFor = (id: string) =>
@@ -228,7 +207,6 @@ function harness(opts: {
     pauses,
     submitted,
     submittedBy: (id: string) => submitted.filter((c) => c.actorId === id),
-    translateStep,
     agentCallsFor,
     onPerception,
   };
@@ -241,64 +219,169 @@ beforeEach(() => {
 });
 
 describe("manual mode", () => {
-  it("a completed step with a next step queued advances without pausing", async () => {
+  it("shows a spoken reply in the speech minute while submitting physical work separately", async () => {
+    const speech = occurrence(
+      ["action_say"],
+      [
+        { characterId: "p1", sight: "clear", hearing: "clear" },
+        { characterId: "npc_1", sight: "clear", hearing: "clear" },
+      ]
+    );
+    const words = "Could I get ten tarts?";
+    speech.facts[0] = {
+      id: "occ_1#f0",
+      type: "utterance",
+      content: words,
+      entityRefs: [{ kind: "character", id: "p1" }],
+    };
+    speech.participants = [
+      { characterId: "p1", role: "actor" },
+      { characterId: "npc_1", role: "target" },
+    ];
+    const heard = "Of course. Give me a moment.";
     const h = harness({
       state: {
-        queue: [
-          step("s1", "go to the library", "running", "action_old"),
-          step("s2", "read the old papers", "pending"),
+        dialogue: [
+          {
+            id: "action_say",
+            gameDateTime: NOW,
+            location: "SCN_1",
+            words,
+            status: "waiting",
+            replies: [],
+          },
         ],
       },
+      actions: [action("action_say", "p1", "completed")],
+      npcDecision: () => ({
+        ...ACT,
+        description: "I count ten tarts into a paper box.",
+        replyNow: heard,
+        utterance: heard,
+      }),
+    });
+
+    await h.fire(
+      makeReport({
+        occurrences: [speech],
+        transitions: [transition("action_say", "completed")],
+      })
+    );
+
+    expect(h.agentCallsFor("npc_1")[0]?.manualSpeech).toBe(words);
+    expect(h.state().dialogue).toEqual([
+      expect.objectContaining({
+        status: "complete",
+        spokenAt: NOW,
+        replies: [expect.objectContaining({ words: heard })],
+      }),
+    ]);
+    expect(h.submittedBy("npc_1")).toEqual([
+      expect.objectContaining({
+        description: "I count ten tarts into a paper box.",
+        proposedDurationTicks: 5,
+      }),
+    ]);
+    expect(h.submittedBy("npc_1")[0]?.utterance).toBeUndefined();
+    expect(buildPerceivedBundle).toHaveBeenCalledWith(
+      expect.objectContaining({ npcId: "p1", occurrencesForNpc: undefined })
+    );
+    expect(h.onPerception).toHaveBeenCalledWith(
+      expect.objectContaining({
+        npcId: "p1",
+        dialogueOnly: true,
+        narrative: expect.stringContaining(heard),
+      })
+    );
+    expect(h.pauses).toEqual([
+      { kind: "decision", since: NOW, reason: "idle" },
+    ]);
+  });
+
+  it("marks a failed opening line as unspoken and does not ask for a reply", async () => {
+    const h = harness({
+      state: {
+        dialogue: [
+          {
+            id: "action_say",
+            gameDateTime: NOW,
+            location: "SCN_1",
+            words: "Hello.",
+            status: "waiting",
+            replies: [],
+          },
+        ],
+      },
+      actions: [action("action_say", "p1", "failed")],
+    });
+    await h.fire(
+      makeReport({ transitions: [transition("action_say", "failed")] })
+    );
+    expect(h.agentCallsFor("npc_1")[0]?.manualSpeech).toBeUndefined();
+    expect(h.state().dialogue.at(-1)?.status).toBe("unspoken");
+  });
+
+  it("submits a sleep as the replacement for a live action and keeps only one queued start", async () => {
+    const h = harness({
+      state: {},
+      actions: [action("action_old", "p1", "active")],
+    });
+    const raw = {
+      description: "I lie down to sleep.",
+      objectRefs: [],
+      proposedDurationTicks: 1,
+      sleep: true,
+    };
+    await expect(h.controller.submitPlayerCommand(raw)).resolves.toMatchObject({
+      ok: true,
+    });
+    expect(h.submittedBy("p1")).toEqual([
+      expect.objectContaining({ replacesActionId: "action_old", sleep: true }),
+    ]);
+    await expect(h.controller.submitPlayerCommand(raw)).resolves.toEqual({
+      ok: false,
+      reason: "your previous command is waiting to start",
+    });
+    expect(h.submittedBy("p1")).toHaveLength(1);
+    expect(h.agentCallsFor("p1")).toEqual([]);
+  });
+
+  it("returns a rejection from the shared command boundary without asking an agent", async () => {
+    const h = harness({ state: {} });
+    await expect(
+      h.controller.submitPlayerCommand({
+        description: "I try the handle.",
+        objectRefs: [],
+        proposedDurationTicks: 1,
+        skillId: "unavailable-fake-skill",
+      })
+    ).resolves.toEqual({
+      ok: false,
+      reason: expect.stringContaining("not an available skill"),
+    });
+    expect(h.submittedBy("p1")).toEqual([]);
+    expect(h.agentCallsFor("p1")).toEqual([]);
+  });
+
+  it("an own action completed with nothing from others pauses (idle) and submits nothing", async () => {
+    const h = harness({
+      state: {},
       actions: [action("action_old", "p1", "completed")],
     });
     await h.fire(
       makeReport({ transitions: [transition("action_old", "completed")] })
     );
 
-    expect(h.pauses).toEqual([]);
+    expect(h.pauses).toEqual([
+      { kind: "decision", since: NOW, reason: "idle" },
+    ]);
     expect(h.agentCallsFor("p1")).toEqual([]);
-    expect(h.translateStep).toHaveBeenCalledTimes(1);
-    const [ctx, s] = h.translateStep.mock.calls[0];
-    expect(ctx.player).toEqual({ mode: "manual" });
-    expect(s.text).toBe("read the old papers");
-
-    const commands = h.submittedBy("p1");
-    expect(commands).toHaveLength(1);
-    expect(commands[0].description).toBe("walk to the library");
-
-    const queue = h.state().queue;
-    expect(queue[0]).toMatchObject({ id: "s1", status: "done" });
-    expect(queue[1]).toMatchObject({
-      id: "s2",
-      status: "running",
-      actionId: `action_${commands[0].commandId}`,
-    });
+    expect(h.submittedBy("p1")).toEqual([]);
   });
 
   it("a clearly perceived occurrence caused by someone else pauses (woken)", async () => {
     const h = harness({
-      state: { queue: [step("s1", "x", "running", "action_p1")] },
-      actions: [
-        action("action_p1", "p1", "active"),
-        action("action_npc_1", "npc_1", "active"),
-      ],
-    });
-    await h.fire(
-      makeReport({
-        occurrences: [
-          occurrence(["action_npc_1"], [{ characterId: "p1", clarity: "full" }]),
-        ],
-      })
-    );
-
-    expect(h.pauses).toEqual([{ kind: "decision", since: NOW, reason: "woken" }]);
-    expect(h.agentCallsFor("p1")).toEqual([]);
-    expect(h.translateStep).not.toHaveBeenCalled();
-  });
-
-  it("a trace-only occurrence while busy is recorded but does not pause", async () => {
-    const h = harness({
-      state: { queue: [step("s1", "x", "running", "action_p1")] },
+      state: {},
       actions: [
         action("action_p1", "p1", "active"),
         action("action_npc_1", "npc_1", "active"),
@@ -309,7 +392,33 @@ describe("manual mode", () => {
         occurrences: [
           occurrence(
             ["action_npc_1"],
-            [{ characterId: "p1", clarity: "trace" }]
+            [{ characterId: "p1", sight: "clear", hearing: "clear" }]
+          ),
+        ],
+      })
+    );
+
+    expect(h.pauses).toEqual([
+      { kind: "decision", since: NOW, reason: "woken" },
+    ]);
+    expect(h.agentCallsFor("p1")).toEqual([]);
+    expect(h.submittedBy("p1")).toEqual([]);
+  });
+
+  it("a trace-only occurrence while busy is recorded but does not pause", async () => {
+    const h = harness({
+      state: {},
+      actions: [
+        action("action_p1", "p1", "active"),
+        action("action_npc_1", "npc_1", "active"),
+      ],
+    });
+    await h.fire(
+      makeReport({
+        occurrences: [
+          occurrence(
+            ["action_npc_1"],
+            [{ characterId: "p1", sight: "none", hearing: "faint" }]
           ),
         ],
       })
@@ -317,99 +426,40 @@ describe("manual mode", () => {
 
     expect(h.pauses).toEqual([]);
     expect(h.agentCallsFor("p1")).toEqual([]);
-    expect(h.translateStep).not.toHaveBeenCalled();
+    expect(h.submittedBy("p1")).toEqual([]);
     const forPlayer = h.onPerception.mock.calls.filter(
       (c) => (c[0] as { npcId: string }).npcId === "p1"
     );
     expect(forPlayer).toHaveLength(1);
   });
 
-  it("a step rejected by the boundary twice pauses with the reason and is dropped", async () => {
-    const h = harness({
-      state: {
-        queue: [
-          step("s0", "earlier", "done", "action_0"),
-          step("s1", "wait forever", "pending"),
-        ],
-      },
-      // Out of the boundary's duration bounds, both times.
-      translate: () => ({ ...ACT, proposedDurationTicks: 0 }),
-    });
-    await h.fire(makeReport());
-
-    expect(h.translateStep).toHaveBeenCalledTimes(2);
-    expect(h.submittedBy("p1")).toEqual([]);
-    expect(h.pauses).toHaveLength(1);
-    const pause = h.pauses[0];
-    expect(pause).toMatchObject({ kind: "decision", reason: "rejected" });
-    const rejection = pause.kind === "decision" ? pause.rejection : undefined;
-    expect(rejection).toContain("proposedDurationTicks");
-    // The retry was told why.
-    expect(h.translateStep.mock.calls[1][0].rejectionFeedback).toBe(rejection);
-    // The step is gone; nothing is left running.
-    expect(h.state().queue.map((q) => q.id)).toEqual(["s0"]);
-  });
-
-  it("a step that translates to `continue` pauses as rejected", async () => {
-    const h = harness({
-      state: { queue: [step("s1", "think", "pending")] },
-      translate: () => ({ tool: "continue" }),
-    });
-    await h.fire(makeReport());
-
-    expect(h.submittedBy("p1")).toEqual([]);
-    expect(h.pauses).toHaveLength(1);
-    expect(h.pauses[0]).toMatchObject({ kind: "decision", reason: "rejected" });
-  });
-
-  it("without a translator, a step that comes up pauses as not implemented", async () => {
-    const h = harness({
-      state: { queue: [step("s1", "go home", "pending")] },
-      translate: null,
-    });
-    await h.fire(makeReport());
-
-    expect(h.submittedBy("p1")).toEqual([]);
-    expect(h.pauses).toEqual([
-      {
-        kind: "decision",
-        since: NOW,
-        reason: "rejected",
-        rejection: "player input translation is not implemented yet",
-      },
-    ]);
-    // The step is not the problem: it stays queued.
-    expect(h.state().queue).toEqual([step("s1", "go home", "pending")]);
-  });
-
-  it("idle with an empty queue pauses (idle)", async () => {
+  it("idle with nothing running pauses (idle)", async () => {
     const h = harness({ state: {} });
     await h.fire(makeReport());
-    expect(h.pauses).toEqual([{ kind: "decision", since: NOW, reason: "idle" }]);
+    expect(h.pauses).toEqual([
+      { kind: "decision", since: NOW, reason: "idle" },
+    ]);
+    expect(h.submittedBy("p1")).toEqual([]);
   });
 
-  it("the running step's action failing drops it and pauses (failed)", async () => {
+  it("the player's action failing pauses (failed)", async () => {
     const h = harness({
-      state: {
-        queue: [
-          step("s1", "pick the lock", "running", "action_p1"),
-          step("s2", "go in", "pending"),
-        ],
-      },
+      state: {},
       actions: [action("action_p1", "p1", "failed")],
     });
-    await h.fire(makeReport({ transitions: [transition("action_p1", "failed")] }));
+    await h.fire(
+      makeReport({ transitions: [transition("action_p1", "failed")] })
+    );
 
-    expect(h.state().queue.map((q) => q.id)).toEqual(["s2"]);
     expect(h.pauses).toEqual([
       { kind: "decision", since: NOW, reason: "failed" },
     ]);
-    expect(h.translateStep).not.toHaveBeenCalled();
+    expect(h.submittedBy("p1")).toEqual([]);
   });
 
   it("the player's own replacement interrupting their old action is not a failure", async () => {
     const h = harness({
-      state: { queue: [step("s2", "new plan", "running", "action_new")] },
+      state: {},
       actions: [
         action("action_old", "p1", "interrupted"),
         action("action_new", "p1", "active", "action_old"),
@@ -419,20 +469,23 @@ describe("manual mode", () => {
       makeReport({
         transitions: [transition("action_old", "interrupted")],
         occurrences: [
-          occurrence(["action_old"], [{ characterId: "p1", clarity: "full" }]),
+          occurrence(
+            ["action_old"],
+            [{ characterId: "p1", sight: "clear", hearing: "clear" }]
+          ),
         ],
       })
     );
 
     expect(h.pauses).toEqual([]);
-    expect(h.state().queue).toEqual([
-      step("s2", "new plan", "running", "action_new"),
-    ]);
+    expect(h.submittedBy("p1")).toEqual([]);
   });
 });
 
 describe("delegated mode", () => {
-  const friendLog = [{ gameDateTime: "1923-04-02T09:00:00", answer: "Watch the door." }];
+  const friendLog = [
+    { gameDateTime: "1923-04-02T09:00:00", answer: "Watch the door." },
+  ];
 
   it("askFriend pauses for a consult and submits nothing", async () => {
     const h = harness({
@@ -514,35 +567,22 @@ describe("resolvePlayer", () => {
     },
   ];
 
-  it("steps: submits the first new step from the last rendered paragraph, without rendering", async () => {
-    const h = harness({
-      state: { queue: [step("s1", "go to the docks", "pending")] },
-    });
-    h.controller.restorePerceptionHistory(history);
-    await h.controller.resolvePlayer({ kind: "steps" });
+  it.each([
+    ["busy", [action("action_p1", "p1", "active")]],
+    ["idle", []],
+  ] as Array<[string, EngineAction[]]>)(
+    "manual continue while %s submits nothing and renders nothing",
+    async (_label, actions) => {
+      const h = harness({ state: {}, actions });
+      h.controller.restorePerceptionHistory(history);
+      await h.controller.resolvePlayer({ kind: "continue" });
 
-    expect(render).not.toHaveBeenCalled();
-    const [ctx] = h.translateStep.mock.calls[0];
-    expect(ctx.perception?.narrative).toBe("second");
-    expect(ctx.recentPerceptions?.map((p) => p.narrative)).toEqual(["first"]);
-    const [command] = h.submittedBy("p1");
-    expect(h.state().queue[0]).toMatchObject({
-      status: "running",
-      actionId: `action_${command.commandId}`,
-    });
-  });
-
-  it("continue while busy lets the current action run on", async () => {
-    const h = harness({
-      state: { queue: [step("s1", "next", "pending")] },
-      actions: [action("action_p1", "p1", "active")],
-    });
-    h.controller.restorePerceptionHistory(history);
-    await h.controller.resolvePlayer({ kind: "continue" });
-
-    expect(h.translateStep).not.toHaveBeenCalled();
-    expect(h.submittedBy("p1")).toEqual([]);
-  });
+      expect(render).not.toHaveBeenCalled();
+      expect(h.agentCallsFor("p1")).toEqual([]);
+      expect(h.submittedBy("p1")).toEqual([]);
+      expect(h.pauses).toEqual([]);
+    }
+  );
 
   it("advice: the delegated agent decides again with the friend's words, without rendering", async () => {
     const friendLog = [

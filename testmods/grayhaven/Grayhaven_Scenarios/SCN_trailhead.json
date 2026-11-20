@@ -1,8 +1,13 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "id": "SCN_trailhead",
   "name": "林道口",
-  "description": "主街北口尽头的步道口,全镇人人知道的进山入口。路边一片压实的碎石地是唯一停得下车的地方 [item.trailhead.gravel_turnout],轮胎印和一小摊陈年机油说明夏天偶尔还有人开车上来。一块褪色的州立公园木牌 [item.trailhead.park_sign] 歪在草里,玻璃框里的地图早被撕走,只剩几个晒白的图钉印;旁边另立着一块防火警示铁牌 [item.trailhead.fire_danger_sign],可转的指针卡在「高」上,已经卡了整个夏天。牌子脚下一截老树桩上倒钉着一只马蹄铁 [item.trailhead.boot_scraper],进山出山的人习惯在这儿蹭掉靴底的泥;再过去一只半锈的油桶用铁丝拴在木桩上当垃圾筒 [item.trailhead.trash_barrel],桶盖不知去向,黄蜂绕着桶口打转。林道从这里扎进红杉的阴影,气温立刻低了几度。霍尔特家后院的树篱上有一道豁口,正好在林道起点旁汇入 [SCN_holt_backyard]。再往里,林径分向灰溪和旧铁路路基两个方向,岔口没有任何路标,只有一棵早年被雷劈开树顶的老雪松杵在中间 [item.trailhead.split_cedar],和路边一只掉漆的木头登记箱 [item.trailhead.log_box],箱里拴着一支啃出牙印的铅笔和一叠被雨水泡皱的登记表,多半没人认真填。",
+  "coordinates": {
+    "x": 680,
+    "y": 880,
+    "z": 30
+  },
+  "setting": "主街北口尽头的步道口,全镇人人知道的进山入口。路边一片压实的碎石地是唯一停得下车的地方 [item.trailhead.gravel_turnout],轮胎印和一小摊陈年机油说明夏天偶尔还有人开车上来。一块褪色的州立公园木牌 [item.trailhead.park_sign] 歪在草里,玻璃框里的地图早被撕走,只剩几个晒白的图钉印;旁边另立着一块防火警示铁牌 [item.trailhead.fire_danger_sign],可转的指针卡在「高」上,已经卡了整个夏天。牌子脚下一截老树桩上倒钉着一只马蹄铁 [item.trailhead.boot_scraper],进山出山的人习惯在这儿蹭掉靴底的泥;再过去一只半锈的油桶用铁丝拴在木桩上当垃圾筒 [item.trailhead.trash_barrel],桶盖不知去向,黄蜂绕着桶口打转。林道从这里扎进红杉的阴影,气温立刻低了几度。霍尔特家后院的树篱上有一道豁口,正好在林道起点旁汇入 [SCN_holt_backyard]。再往里,林径分向灰溪和旧铁路路基两个方向,岔口没有任何路标,只有一棵早年被雷劈开树顶的老雪松杵在中间 [item.trailhead.split_cedar],和路边一只掉漆的木头登记箱 [item.trailhead.log_box],箱里拴着一支啃出牙印的铅笔和一叠被雨水泡皱的登记表,多半没人认真填。",
   "references": {
     "items": [
       {

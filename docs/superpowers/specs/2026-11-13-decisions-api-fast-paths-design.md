@@ -87,7 +87,7 @@
 - 无论 `MODEL_PROVIDER` 配的是谁，都需要 `OPENAI_API_KEY`。
 - 用量记进 `tokenUsage`，operation 名：`decisions:wake-gate`、`decisions:starts`、`decisions:endings`、`decisions:phase-plan`、`decisions:perceivers`；`LLM_TRACE_DIR` 照样落盘。
 - 短超时（如 3s）。超时或报错一律视为「拿不准」，走 6.5 的退回路径，不让 tick 失败。
-- 稳定内容放在 `input` 前部以命中缓存（前缀 ≥1024 token），按 NPC 或引擎设 `prompt_cache_key`。引擎侧可复用 `renderContextSegments` 的稳定段，判断依据与 LLM 一致。
+- 稳定内容放在 `input` 前部以命中缓存（前缀 ≥1024 token），按 NPC 或引擎设 `prompt_cache_key`。~~引擎侧可复用 `renderContextSegments` 的稳定段，判断依据与 LLM 一致。~~ 已改：引擎侧每个请求只放回答其问题所需的内容，见 6.7。
 - 题目说明（`instructions`）用英文，与引擎现有的英文规则一致；状态内容照常是中文。中文判断质量由影子模式的一致率来看。
 - 速率限制未公开：Decisions 请求单独限流（`DECISIONS_CONCURRENCY`）；被限流（429）视同拿不准，单独记日志，影子模式统计比例。
 
@@ -198,7 +198,7 @@ Decisions 的答案组装成 `RawActionStart` 行，走同一套 `validatePhase(
 - 说话行的 `content` 丢失。
 - 跳过 occurrences 的分钟里，LLM 不会顺带写进行中行动的可感知迹象（撬锁的声响）。没有任何行动结束的 tick 本来也不写，行为与之一致。
 
-**第 5 步，感知者与清晰度（Decisions 请求三）**：
+**第 5 步，感知者与清晰度（Decisions 请求三）**（下面第 2、3 条已被 6.7.3 取代：行为者不再默认 full，一档改为视觉、听觉两档）：
 1. 候选（已定）：事件数 × 角色数不超过一次请求的 400 题上限时，**所有活着的角色都是候选**，代码不划范围，远近完全由 Decisions 按感知规则判断（城那头的枪声也能被判到）。超过上限时退回按两跳划候选。
 2. 代码规则：被引用行动的 actor → full。
 3. Decisions 一次请求：每条事件 × 每个其余候选人一道 choice（没感知到 / trace / limited / full）。
@@ -228,7 +228,7 @@ Decisions 的答案组装成 `RawActionStart` 行，走同一套 `validatePhase(
 | 开始判定字段 / 路线 | 该命令交回 LLM 走 ① |
 | 结束方式 | 跑 LLM endings 阶段 |
 | 变更阶段计划 | 照常跑该阶段 |
-| 感知者 | 不退回：取概率最高的一档，向更清楚的方向偏——前两档相邻且差距 < δ 时取更清楚的；最高档是「没感知到」但概率 < τ 时记为 trace |
+| 感知者 | 不退回：取概率最高的一档，不偏向。（原有两条偏向「感知到」的规则：最高档是「没感知到」但概率 < τ 时记为 trace；前两档相邻且差距 < δ 时取更清楚的。2026-11-18 都删除：120 m 外的人因此被记成隐约听到门口的一句问话） |
 | 客户端超时 / 报错 | 视同拿不准 |
 
 阈值都由环境变量配置。初始值（已定，之后用影子数据调）：
@@ -236,9 +236,10 @@ Decisions 的答案组装成 `RawActionStart` 行，走同一套 `validatePhase(
 | 环节 | 初始值 |
 |---|---|
 | 闸门跳过 | P(会行动) ≤ 0.1 |
-| 开始判定各字段 | 最高选项概率 ≥ 0.8，否则退回 LLM |
+| 开始判定：时长、是否移动、路线、车辆、对抗方 | 直接取最高选项（2026-11-14 改：实测最高项与 LLM 一致或差一档，0.8 门槛让多数命令退回 LLM）；路线选「都不是」仍退回 LLM |
+| 开始判定：检定难度 | 取最高选项，不再退回 LLM；前两名相差 < 0.1（`DECISIONS_CHECK_NEAR_GAP`）时偏向掷骰：「不检定」与某个难度接近 → 按该难度检定，两个难度接近 → 取较低的（`leanedCheckLevel`）。演变：0.8 → 2026-11-17 降到 0.6（0.52–0.66 的 5 次退回 LLM 后都与最高选项相同）→ 2026-11-18 取消阈值（加上技能值后再测，前两名拉开时 LLM 都选最高项；none 0.39 / regular 0.31 这种接近的，LLM 选了检定） |
 | 跳过阶段 | P(不会改变) ≥ 0.9 |
-| 感知者 | 前两档差 < 0.15 取更清楚的；「没感知到」需 ≥ 0.7，否则记 trace |
+| 感知者 | 取最高一档，无阈值（`PERCEIVER_NEAR_GAP`、`PERCEIVER_NONE_MIN` 已删） |
 | 注意到（隐藏机制设计 5.3） | P(注意到) ≥ 0.6 才算注意到 |
 
 ### 6.6 开关与影子模式（已定）
@@ -265,6 +266,85 @@ shadow：Decisions / 代码规则照算并记录，实际用的仍是 LLM 结果
 
 数据达标后逐项切到 `on`。影子模式要跑真实模拟，会花模型调用的钱，什么时候跑由人决定。
 
+### 6.7 Decisions 的输入与感知判定（2026-11-13 讨论，已定；2026-11-14 已实现，未实跑）
+
+实现说明：
+- 6.7.3 第 1 条：`engine/resolution/decisionsInputs.ts`（`startsInput` / `settlementInput` / `perceiversInput`）。
+- 第 2 条：`contextBuilder.ts` 的 `buildSurroundings`，只在结算上下文里有；`state.surroundings` 同时渲染进 LLM 结算的上下文。
+- 第 3 条：视觉定为四档 `clear | partial | glimpse | none`（比讨论时多了 glimpse，与听觉对称，承接旧的 trace 里「一闪」的情况），听觉 `clear | muffled | faint | none`。感知者 schema 连同 LLM 的完整 occurrences 工具一起改，不保留旧的 `clarity`（已定：不考虑兼容）。两档都是 none 的不列出。理智检定与 `idsCarriedBy`：「看到至少 partial 或听到至少 muffled」才算感知到来源（`perceivesSource`）；渲染器把人写出来的条件是「看到至少 partial 或听清」（`namesSource`）。
+- 第 4 条：`renderWorldGraph` 与 `WorldGraph.places` 去掉描写。
+- 档位定义只在引擎里写一份：`engine/actions/types.ts` 的 `SIGHT_GRADE_MEANING` / `HEARING_GRADE_MEANING`（只说这一档的人得到什么，不说什么情况选它）。LLM 的 schema 描述、Decisions 请求（`## Grading` 一节，每次只出现一次）和渲染器规则都由它生成；`perception.md` 是散文，由 `gradeScale.test.ts` 钉住用同样的措辞。Decisions 的感知题只剩一句（「Row i: what does X get by seeing it?」），不再写视线、声音怎么传的提示——那正是要它自己判断的。
+- 同样收成唯一一份（`engine/rules/ruleTerms.ts`）：结束方式三种的含义（`ENDING_MODE_MEANING`）、纯说话的时长规则（`TALK_DURATION_RULE`）、路线只走说出的路（`STATED_ROUTE_RULE`）。schema 描述、阶段指令、Trigger 说明、校验器反馈和 Decisions 题都由它生成；`action-adjudication.md`、`occurrences-and-dialogue.md`、`movement-and-position.md` 由 `ruleTerms.test.ts` 钉住同样的措辞。Decisions 题里替它判断的例子（「比如摆出证据」「观察不算新结果」）已删。
+- 「社交行为不检定」的所有说法都删了（规则文档、技能文档、schema、阶段指令、Decisions 检定题）：检定只看所声明的技能是否覆盖这次尝试，技能文档的适用范围就是唯一依据，不再单独强调。和对话相关的技能内容也删了：`Medicine & Psychology` 改名为 `Medicine`（`skills/medicine.md`），只留急救、诊断、治疗身体；Languages 去掉「说服靠话语」和「从措辞读出说话人」，Stealth & Security 去掉「靠说辞过关不检定」。grayhaven、tlou2、data/Mods 的角色技能同步改名；旧名按规矩不做兼容映射（会被当作不存在的技能）。
+- 什么时候检定也收成唯一一份（`CHECK_NEED_RULE`）：只有成败确实有悬念、且所声明的技能覆盖这次尝试时才检定；大概率会成功、或者没什么难度的事不检定。schema、阶段指令、Decisions 检定题和 `action-adjudication.md`、`world-action-resolution.md` 都用这一句。
+- 开始判定的输入给每条声明了技能的命令加上 `declaredSkillValue`（行动者这一项的技能值，未受训取目录基础值），并写明 d100 的成功阶梯。「大概率会成功」取决于谁来做——实跑里 Weaver（Medicine 85）听诊和 Earl（15）自己包扎，Decisions 都在 regular / none 之间对半，因为它看不到技能值。只加这一项，人物的其他属性仍不放。
+- **严格 schema 变了，打开 `DECISIONS_PERCEIVERS` 或跑结算之前要先跑 `scripts/probe-strict-schema.ts`。**
+
+#### 6.7.1 起因：输入的大头是用不上的地图
+
+实测（grayhaven 四个用例，全开关，29 次 Decisions 请求）：引擎侧四种调用（starts / endings / phase-plan / perceivers）都整份重发 LLM 结算的世界上下文，每次约 2.1 万 token，题目本身只占 2–8%。只有 3 次命中缓存（都是紧跟在 endings 之后的 phase-plan）。
+
+以一次 endings 请求为例（3.6 万字符）：
+
+| 段 | 占比 | Decisions 用得到吗 |
+|---|---|---|
+| World Graph | 68% | 不用 |
+| Trigger（主要是写给 LLM 各阶段的长说明） | 6% | 只需要其中的 id 列表 |
+| World Invariants | 3% | 不用 |
+| Blocked Connections / Vehicles | 2–3% | 不用：堵路由代码查，车辆已写在题目里 |
+| Detailed Places / Items / Characters / Active Actions | 15–30% | 按调用取一部分 |
+
+World Graph 大，是因为 v2 模组以文字为主：骨架的 35 个节点（16 个室外场景、19 条路）每个都带着完整场景描写，约 2.1 万字；真正的连接只有 2.7 千字。涉及到的地点在 Detailed Places 里还会再出现一次全文。
+
+规则里唯一明确要求读 World Graph 的是感知（`world/perception.md`）：它要的是相邻、距离、阻隔，而不是远处地点的文字。反过来，感知真正需要的东西现在又没有：Detailed Places 只包含涉及到的地点和它自己的连接（往外一步），骨架又不含室内连接，所以隔壁房间是什么、再隔一间是什么，都看不到。
+
+#### 6.7.2 原则
+
+感知由三样决定：**源头**（这件事发出了什么，属于语义判断）、**途径**（距离和中间隔着什么，代码可以算）、**接收者**（那边的噪音、光照，这个人在做什么，代码可以读）。代码只提供途径和接收者的事实，判断交给 Decisions。**每个请求只放回答其问题所需的内容**；没有任何问题用得到的段，不进请求。
+
+#### 6.7.3 定下来的改动
+
+1. **Decisions 按调用取材**
+   - starts：新命令；行动者所在地点及其物品；同处的人；所声明技能的适用范围、时长、成功等级三段（Failure、State surface 是写结果用的，不放）。
+   - endings / phase-plan：要结束的行动；行动者所在地点；相关物品和人物。
+   - perceivers：各行的内容；Characters（只取 id、位置、正在做的事、状态）；Surroundings（下一条）；发生地的 Detailed Places。
+   - 都不放：World Graph、World Invariants、Trigger 的长说明、Blocked Connections、Vehicles。
+   - 预计每次从约 2.1 万 token 降到 3–5 千。
+
+2. **Surroundings：接收者那一端的事实**
+   - 门和窗都是物体，靠描写表达，不加结构字段、不把窗改成连接。v2 的描写已经写出了门窗的状态和隔着它们能感知到什么，例如灯塔崖「同一年换的锁至今锁着塔身那扇铁门 [item…iron_door]，门后是…塔内 [SCN_lighthouse_interior]」；Marisol 的卧室「夜里巷子里过一辆自行车，她躺着都听得出来是谁的车」；Denny 的房间「窗闩早松了，夜里躺着能听见柴堆那边的动静」。描写也用 `[SCN_*]` 标出通往的地点，所以「隔壁是哪里、隔着什么」从描写读得出。
+   - 所以不逐段计算路径。每个候选人给三样：
+     1. 他所在地点的描写（按地点去重；发生地本来就在 Detailed Places 里）。窗户常常写在接收者那一端（巷子里有动静，「她听得出是谁的车」写在卧室里），所以接收者这一端不能省。
+     2. 他的位置、正在做什么、身上的状态。
+     3. 一个数：从发生地到他那里大约几分钟，或「不连通」。直接用现有的 `findTopologyPath`（`engine/shared/pathfinding.ts`）的总分钟数，不新写路径代码；它把室内归到所在建筑，同一栋楼里的两间房得 0 分钟，具体怎么相通由描写说明。
+     - **2026-11-18 改为直线距离**：实跑（gh-perception-walls）发现 `findTopologyPath` 只在路的端点之间搜，诊室到隔壁候诊室算成 27 分钟，比半条街外的维修铺（25）还远，Decisions 因此判 Weaver 听不到隔门的电话、Dev 看清了半条街外的人。改法：模组给每个 `SCN_*` 加可选 `coordinates`（米，x 东、y 北、z 海拔），Surroundings 给 `meters`（两处之间的直线距离，穿墙穿楼板）；某处没有坐标时才给 `walkMinutes`（`engine/shared/placeDistance.ts` 的 `WalkGraph`：每道门 1 分钟，同一条路上按位置差算，最短路；null = 不相通）。路的点在两端点连线上插值；车内取车的位置。定义写在 `ruleTerms.ts` 的 `SURROUNDINGS_MEANING`，`perception.md` 按同一句话，由测试钉住。灰港 50 个场景已补坐标（两辆车的车厢除外，路不带坐标）。
+   - 为什么还要这个数：描写说不出远近。锯木厂和蓝鸟餐厅从描写里只看得出两个地名；隔两步时中间那处没人，它的描写也不在请求里。没有距离，Decisions 对远处的人拿不准，按 6.5 的偏向（「没感知到」要 ≥ 0.7，否则记 trace），镇上一有动静全镇都会收到 trace。
+   - 不输出「几步」：一步只是一道场景边界，大堂到厨房是一步，渡口到锯木厂也是一步（90 分钟）。
+   - 同一场景内不算距离：场景内的远近由 Decisions 结合事件内容和场景描写判断，具体怎么写交给渲染器。
+   - 代码不划范围、不替任何人判「没感知到」：每个候选人都有，城那头的雾号这类情况照样由 Decisions 判断（发生地自己的描写在 Detailed Places 里）。
+   - 已知风险：分钟数可能和描写对不上——Tommy 的房间到后巷算出来要绕客厅、门口再走一段巷子，描写却说窗外就是后巷；描写写的是「后巷」而不是 `[ROAD_backstreet]`，要靠名字对应。Decisions 应以描写为准，shadow 对比时专门看这类情况。
+   - LLM 的 occurrences 阶段（含 Decisions 失败时退回的完整工具）也放这一段，`perception.md`、`session-protocol.md` 里「读 World Graph」的说法改为指向它。
+
+3. **感知者：视觉、听觉各一档**
+   - 判定单位不变：仍是 LLM 写出的每一行（一个客观事实），顺序不变（LLM 写行 → Decisions 判感知者）。
+   - 每个（行, 候选人）问两题：
+     - 视觉：清楚（细节、表情）/ 模糊（轮廓、动作种类）/ 无
+     - 听觉：听清字句 / 听得出人声和语气 / 只有响动 / 无
+   - ~~行为者本人也是候选人~~ 已改回（2026-11-17，实跑后）：行为者自己说的话、做的事不判——能行动就是清醒的。代码把该行引用的所有行动的行为者直接列为视觉、听觉都 `clear`，只问其他人。实跑里去掉提示后，Decisions 把说话的人听自己的话判成了 faint。
+   - `content` 仍是一段客观描写，不拆分感官，代码不裁剪。渲染器拿到每个人的两档，自己按档位写；原话照常交给渲染器，听不到字句的人不写出原话，由渲染器的规则保证，代码不拦截（已定）。
+   - 理智检定的过滤由「必须是 full / limited」改为「视觉至少模糊」或「听觉至少人声」，具体条件实现时按 `sanity-check.md` 定。
+   - 6.5 的偏向规则沿用到两档：两档各取概率最高的一档（原有的两条偏向规则已于 2026-11-18 删除）。
+   - 嗅觉、触觉暂不单列：触觉只发生在直接涉及的人身上，已有「直接涉及」标记；嗅觉等用到再加。
+
+4. **给 LLM 的 World Graph 只保留拓扑**：每个节点只写 `id (名字)`，加上连接（connectionId、分钟、暗门），全镇约 3–4 千字符（现在 2.4 万）。LLM 仍要用它认路、找 connectionId；涉及地点的全文在 Detailed Places 里。
+
+#### 6.7.4 待定
+
+- ~~**开始判定穿过上锁的门**~~ 已定并实现（按数据修）：根源不在 Decisions。「能不能过」只有一个结构化事实——堵住标记，而模组原来写不了初始堵住，锁只能写在描写里；规则又要求不按描写预判路线，开始判定也没有「去不了」的输出，所以 LLM 和 Decisions 都会让人走进上锁的门。改为：连接可写 `blocked: "<原因>"`，加载器（`seedAuthoredBlocks`）用它初始化堵住表，连接本身不保留这个字段；两侧都写时原因必须一致。之后走现有机制：走到门口停下、得知原因，下一条命令开锁、撬门由结算判（一次性通过许可，或解除堵住）。grayhaven 只有灯塔铁门两侧需要（Earl 有私配钥匙）。旧存档里没有这个初始堵住。
+- **规模**：全镇几十人、分散在二十多处时，候选人所在地点全附描写会接近现在的体量。那时再按分钟数划界：一定分钟以内附描写，再远只给分钟数。现在约 10 个 NPC，全附约三四千 token。
+- ~~**感知者的 schema**~~ 已定：连同 LLM 的完整工具一起改。
+- **验证**：Surroundings 的组装写单元测试（免费）。Decisions 分感官判档的效果未验证，先 shadow 对比，再跑一次 grayhaven（花钱，时间由人定）。
+
 ## 7. 预期效果（未测）
 
 以 10 个 NPC、某一分钟 2 人行动结束（1 人纯步行到达、1 人说完一句话）、2 人提交新命令、3 人空闲、其余在忙为例：
@@ -290,7 +370,7 @@ shadow：Decisions / 代码规则照算并记录，实际用的仍是 LLM 结果
 
 ## 9. 待讨论
 
-- 暂无设计上的待定项。实现前要实测的见 6.6；实现时要确认的：Decisions 的上下文上限、choice 题的选项数上限（6.2）。
+- 实现前要实测的见 6.6；实现时要确认的：Decisions 的上下文上限、choice 题的选项数上限（6.2）。
 
 ## 9.1 实现状态（2026-11-13）
 

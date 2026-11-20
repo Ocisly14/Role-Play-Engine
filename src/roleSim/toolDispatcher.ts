@@ -10,13 +10,10 @@
 // agent loop lets these calls ride along in the same turn as a terminal one.
 
 import type { NpcMemoryManager } from "../memory/NpcMemoryManager.js";
+import { writeRelationship } from "../memory/relationshipWrite.js";
 import type { NpcMemoryType } from "../memory/types.js";
 import type { DynamicGameStateManager } from "../state/DynamicGameState.js";
-import {
-  aliasFor,
-  descriptionIdentifier,
-  knownAs,
-} from "../state/perceivableDirectory.js";
+import { aliasFor } from "../state/perceivableDirectory.js";
 
 /** Tools that consume a tick — calling one ends the agent loop. Decision 17.
  *  `askFriend` is offered only to a delegated player character; the agent
@@ -125,7 +122,6 @@ async function dispatchWriteMemory(
 
   // A relationship memory without a subject cannot be retrieved as "what do
   // I know about X" — reject rather than silently degrade it to general.
-  let metadata: Record<string, unknown> | undefined;
   if (input.type === "relationship") {
     const targetId = input.targetId?.trim();
     if (!targetId) {
@@ -142,49 +138,27 @@ async function dispatchWriteMemory(
       .getState()
       .npcCharacters.map((npc) => npc.id)
       .find((id) => id === targetId || aliasFor(deps.npcId, id) === targetId);
-    const profile = realId ? deps.dgsm.getNpcProfile(realId) : undefined;
-    if (!realId || !profile) {
+    if (!realId || !deps.dgsm.getNpcProfile(realId)) {
       return {
         result: `Error: targetId "${targetId}" is nobody in this world. Copy the tag shown beside them in what you perceive.`,
       };
     }
-    // Store the REAL id. It never reaches the character — the handler renders
-    // `targetName`, and nothing puts `targetId` in a prompt — so there is no
-    // leak, and the key stays joinable. `targetName` is how THEY refer to this person, "the tall pale
-    // man" until the day they learn better.
-    metadata = {
-      targetId: realId,
-      targetName:
-        knownAs(deps.dgsm, deps.npcId, realId) ??
-        descriptionIdentifier(profile),
-    };
-
-    // The relationship graph is the same fact as this memory, indexed for
-    // lookup — so the character writes both, and nothing writes either on
-    // their behalf. The Engine used to keep the graph, deciding for a
-    // character what they now thought of someone; that operation is gone.
-    //
-    // One direction only. That the shopkeeper has taken a view of the customer
-    // says nothing about what he makes of her.
-    deps.dgsm.updateRelationship(
-      deps.npcId,
-      realId,
-      0,
-      content.trim(),
-      input.knownAs?.trim() || undefined
-    );
+    await writeRelationship(deps, {
+      targetRealId: realId,
+      content,
+      knownAs: input.knownAs,
+    });
+  } else {
+    await deps.memory.add({
+      npcId: deps.npcId,
+      sessionId: deps.sessionId,
+      moduleId: deps.moduleId,
+      type: input.type,
+      content,
+      gameDateTime: deps.gameDateTime,
+      ...(deps.location ? { location: deps.location } : {}),
+    });
   }
-
-  await deps.memory.add({
-    npcId: deps.npcId,
-    sessionId: deps.sessionId,
-    moduleId: deps.moduleId,
-    type: input.type,
-    content,
-    gameDateTime: deps.gameDateTime,
-    ...(deps.location ? { location: deps.location } : {}),
-    ...(metadata ? { metadata } : {}),
-  });
 
   return {
     result: `Remembered (${input.type}): "${truncate(content, 80)}"`,

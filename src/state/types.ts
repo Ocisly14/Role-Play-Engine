@@ -281,10 +281,27 @@ export interface SceneConnection {
   concealed?: boolean;
 }
 
+/** A place's point in the world, in meters: `x` east, `y` north, `z` its
+ *  floor's elevation above sea level. Straight-line distance between two
+ *  places is computed from these (perception — sound and sight do not walk
+ *  the roads). */
+export interface PlaceCoordinates {
+  x: number;
+  y: number;
+  z: number;
+}
+
 export interface DynamicScene {
   id: string;
   name: string;
-  description: string;
+  /** The place itself (schema v3): size, layout, materials, fixtures, ways
+   *  out — true at 3 a.m., empty, in any weather. It cites only fixtures and
+   *  the places it leads to. People, light, weather and loose things are not
+   *  in it; they come from live state. */
+  setting: string;
+  /** Absent on a module that has not placed its map, and always on a
+   *  vehicle's interior (it is wherever the vehicle is). */
+  coordinates?: PlaceCoordinates;
   /** The containing macro location (outline id) or node scene. Absent on a
    *  TOP-LEVEL scene — a geography node: street stretch, crossroads, yard. */
   parentLocationId?: string;
@@ -331,6 +348,26 @@ export interface Item {
    *  is ambient — visible anywhere along the length. Invalid on scenes:
    *  a scene has no interior distance. */
   position?: number;
+  /** Where the thing is within its place, as a short phrase ("收银机旁",
+   *  "收银机抽屉里"). Every item at a place that its setting does not cite
+   *  has one; a fixture has none; an item on a person has none. */
+  placement?: string;
+  /** The id of the item at the same place this one sits inside, under or
+   *  behind, when that item can hide it (a drawer, a closed cabinet, a
+   *  suitcase, a mattress). Whether it can be seen is the container's own
+   *  description — open or shut, clear or solid — judged per viewer by the
+   *  noticing step. Absent = loose, in plain view. */
+  container?: string;
+  /** How many identical things this one item stands for — a case of 18
+   *  tarts, four newspapers. Absent = one. Code reads it (taking some is a
+   *  count going down, not prose being rewritten), so it is a field. */
+  quantity?: number;
+}
+
+/** Where an item lands at a place: its position, and the item it sits in. */
+export interface ItemWhere {
+  placement?: string;
+  container?: string;
 }
 
 export interface SceneImage {

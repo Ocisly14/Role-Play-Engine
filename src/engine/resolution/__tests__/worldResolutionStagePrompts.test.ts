@@ -10,6 +10,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import type { ActionCommand } from "../../actions/types.js";
+import { CHECK_NEED_RULE } from "../../rules/ruleTerms.js";
 import type { EngineResolutionContext, ResolutionError } from "../types.js";
 import {
   renderContext,
@@ -91,7 +92,7 @@ function makeContext(): EngineResolutionContext {
           id: "SCN_1",
           kind: "scene",
           name: "Reading room",
-          description: "Shelves and a long table.",
+          setting: "Shelves and a long table.",
           parentLocationId: "OUTDOOR",
           conditions: [],
           itemIds: [],
@@ -464,14 +465,15 @@ describe("renderPhaseInstruction — the accepted draft is read-only", () => {
       {
         ...cmd,
         utterance: "Hold still.",
-        declaredSkillId: "Medicine & Psychology",
+        declaredSkillId: "Medicine",
       },
     ];
     const text = renderPhaseInstruction("starts", ctx, {});
     expect(text).toContain('"hasUtterance": true');
-    expect(text).toContain('"declaredSkillId": "Medicine & Psychology"');
+    expect(text).toContain('"declaredSkillId": "Medicine"');
     expect(text).toContain("Judge the attempt, not the sentence");
-    expect(text).toContain("A skill was declared: expect a check");
+    // When a check is needed is the one engine definition (ruleTerms).
+    expect(text).toContain(`A skill was declared. ${CHECK_NEED_RULE}`);
     expect(text).not.toContain("must be 1");
     const system = renderPhaseSystemPrompt("starts", BUDGET);
     expect(system).toContain("### Action before speech");
@@ -557,7 +559,7 @@ describe("phase rejections", () => {
       actionIds: ["action_x"],
       speech: true,
       targetIds: ["npc_1"],
-      perceivers: [{ characterId: "npc_1", clarity: "full" }],
+      perceivers: [{ characterId: "npc_1", sight: "clear", hearing: "clear" }],
     };
     const refused = { ...kept, speech: false, content: "placeholder" };
     const text = renderPhaseRejection("occurrences", errors, {

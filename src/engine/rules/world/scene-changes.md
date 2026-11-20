@@ -7,7 +7,7 @@ Each entry names the causing `sourceActionId` and its `sceneId`.
 
 - `addCondition {condition:{description, featureId?}}`
 - `removeCondition {predicate:{id?, featureId?}}`
-- `setDescription {description}`
+- `setSetting {setting}`
 - `connectionBlock {connectionId, blocked, reason}`
 - `connectionConcealed {connectionId, concealed}`
 - `environmentContribute {quantity, value}`, where quantity is `temperature`,
@@ -26,26 +26,25 @@ Conditions produced and expired by deterministic subsystems remain owned by
 those subsystems. Do not imitate their mechanical fields or remove them without
 an action-supported cause.
 
-## Whole-description replacement
+## Whole-setting replacement
 
-`setDescription` replaces the complete place prose. Preserve everything still
-true, including every valid `[reference-id]`, and remove references to things
-that are no longer visibly present. It changes description, not topology or
-item ownership; pair it with the structural operation that caused the rewrite.
+A place's `setting` is the place itself: size, layout, materials, fixtures and
+ways out — what is true of it at 3 a.m., empty, in any weather. It cites only
+fixtures and the places it leads to. Who is here, what they are doing, the
+light, the weather, loose things and conditions are not in it: those live in
+their own state and are rendered from it.
 
-Before submitting, compare CURRENT place prose with accepted outcomes AND
-accepted character and item changes. Check stated placement, posture, visible
-presence and physical condition, including claims with no bracketed reference.
-An object's holder or description being corrected does not correct the scene's
-sentences about it. If a map was folded and taken off a table, remove the claim
-that it is spread there; preserve the table and all other still-true details.
-If a person changes position, repair any existing scene sentence that places
-them in the old position, without adding a roster of everyone present.
+`setSetting` replaces the whole setting, and only the place itself changing
+calls for it: a window smashed, a wall scorched, a fixture torn out or put
+in, a concealed passage laid open. Preserve everything still true, including
+every valid `[reference-id]`, and drop the citation of a fixture that is
+gone. It changes the setting, not topology or item ownership; pair it with
+the structural operation that caused it.
 
-No topology, environment or condition change does NOT mean no description
-change. Conversely, do not rewrite a scene whose prose already matches the
-accepted facts. Submit `[]` only after checking for obsolete descriptive claims
-as well as structural changes. Never invent an event to make old prose true.
+Never rewrite a setting because someone moved, sat down, left, or because a
+loose thing was picked up or set down — positions, people and loose things
+are not in it. Never write the hour, the crowd, the weather or what someone
+is doing into it. Submit `[]` when the place itself did not physically change.
 
 ## Passages
 
@@ -62,7 +61,7 @@ A connection id identifies one exact passage, not a whole place.
   and `blocked:false` beside it says the obstacle is gone when it is not.
 - `connectionConcealed {concealed:false}` lays a concealed passage open for
   everyone, as when a wall is broken or the bookshelf is left pushed aside;
-  rewrite the place's description to cite where it leads.
+  rewrite the place's setting (`setSetting`) to cite where it leads.
 - `connectionConcealed {concealed:true}` covers a passage again only when an
   action truly restores or creates concealment.
 

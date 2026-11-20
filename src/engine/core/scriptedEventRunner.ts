@@ -470,10 +470,16 @@ export class ScriptedEventRunner {
           break;
         }
         case "item.create": {
+          // The effect names a bare place id; the holder grammar is
+          // "scene:<placeId>" — a bare id is refused by the item store, which
+          // is how restocks used to vanish.
+          const placeId = effect.location.startsWith("scene:")
+            ? effect.location.slice("scene:".length)
+            : effect.location;
           if (effect.skipIfExists && effect.id !== undefined) {
             // Restock guard, location-scoped: an id still on the shelf
             // blocks the refill; the same id carried elsewhere does not.
-            const place = ctx.dgsm.getScene(effect.location);
+            const place = ctx.dgsm.getScene(placeId);
             const already = (place?.items ?? []).some(
               (i) => i.id === effect.id
             );
@@ -482,7 +488,14 @@ export class ScriptedEventRunner {
           out.push({
             kind: "item.create",
             name: effect.name,
-            location: effect.location,
+            location: `scene:${placeId}`,
+            placement: effect.placement,
+            ...(effect.container !== undefined
+              ? { container: effect.container }
+              : {}),
+            ...(effect.quantity !== undefined
+              ? { quantity: effect.quantity }
+              : {}),
             ...(effect.description !== undefined
               ? { description: effect.description }
               : {}),
@@ -496,6 +509,12 @@ export class ScriptedEventRunner {
             itemId: effect.itemId,
             from: effect.from,
             to: effect.to,
+            ...(effect.placement !== undefined
+              ? { placement: effect.placement }
+              : {}),
+            ...(effect.container !== undefined
+              ? { container: effect.container }
+              : {}),
           });
           break;
         }

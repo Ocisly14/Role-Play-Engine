@@ -1,8 +1,8 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "id": "ROAD_fog_railbed",
   "name": "灌木穿径",
-  "description": "雾谷通往旧路基的两小时,几乎全程在齐肩的灌木里钻。谷侧的入口 [SCN_fog_hollow] 与路基侧的出口 [SCN_railbed] 之间没有一段舒展的路:树枝抽脸,方向感在灌木里被磨得一点不剩。头顶偶尔能瞥见一根锈成褐色的旧电话线,从一棵树牵到另一棵树,当年是伐木队接到路基上去的,中间断了好几处,可只要还找得着它,就还知道自己朝着哪边 [item.fog_railbed.phone_wire]。三分之一处横着一棵连根拔起的树,根盘立起来比人高,底下的坑积着水 [item.fog_railbed.deadfall]。再往前,一片荆棘上挂着一小块褪色的布,边缘是被硬扯下来的 [item.fog_railbed.snagged_cloth]。灌木里有一处稍微开阔的岔口,地上垒的石头已经被踢散了一半 [item.fog_railbed.fork_cairn]。最后一段脚下开始硌人,土里翻出一截锈成一块的废钢轨头 [item.fog_railbed.rail_offcut]——再往前,那条笔直的路基就突然出现在脚下了。",
+  "setting": "雾谷通往旧路基的两小时,几乎全程在齐肩的灌木里钻。谷侧的入口 [SCN_fog_hollow] 与路基侧的出口 [SCN_railbed] 之间没有一段舒展的路:树枝抽脸,方向感在灌木里被磨得一点不剩。头顶偶尔能瞥见一根锈成褐色的旧电话线,从一棵树牵到另一棵树,当年是伐木队接到路基上去的,中间断了好几处,可只要还找得着它,就还知道自己朝着哪边 [item.fog_railbed.phone_wire]。三分之一处横着一棵连根拔起的树,根盘立起来比人高,底下的坑积着水 [item.fog_railbed.deadfall]。再往前,一片荆棘上挂着一小块褪色的布,边缘是被硬扯下来的 [item.fog_railbed.snagged_cloth]。灌木里有一处稍微开阔的岔口,地上垒的石头已经被踢散了一半 [item.fog_railbed.fork_cairn]。最后一段脚下开始硌人,土里翻出一截锈成一块的废钢轨头 [item.fog_railbed.rail_offcut]——再往前,那条笔直的路基就突然出现在脚下了。",
   "parentLocationId": "OUTDOOR",
   "travelTimeMinutes": 120,
   "references": {

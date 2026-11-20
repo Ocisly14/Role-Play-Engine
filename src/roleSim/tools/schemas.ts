@@ -164,6 +164,21 @@ export const writeMemoryTool: ToolSpec = {
  *  reordering would invalidate the cached prefix on every call. */
 export const AGENT_TOOLS: ToolSpec[] = [actTool, continueTool, writeMemoryTool];
 
+const replyField = {
+  type: "string",
+  maxLength: 320,
+  description:
+    "Optional exact words you say NOW in reply to the player you just heard. One brief spoken reply only. Omit for silence. Keep future speech and physical actions in their ordinary fields.",
+};
+
+export const MANUAL_DIALOGUE_TOOLS: ToolSpec[] = AGENT_TOOLS.map((tool) => {
+  if (tool.name !== "act" && tool.name !== "continue") return tool;
+  const copy = structuredClone(tool);
+  (copy.inputSchema.properties as Record<string, unknown>).replyNow =
+    replyField;
+  return copy;
+});
+
 /** The player character's `act`: the same tool, still named "act", plus one
  *  optional `sleep` flag. A deep copy, so `actTool` — and with it every NPC
  *  request — stays byte-identical. */

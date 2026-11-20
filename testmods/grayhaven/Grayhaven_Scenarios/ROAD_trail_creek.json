@@ -1,8 +1,8 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "id": "ROAD_trail_creek",
   "name": "灰溪林径",
-  "description": "林道口进山后偏西的一条林径,顺着地势缓缓下行,单程一小时十分钟。起点在林道口 [SCN_trailhead],尽头是灰溪的渡口 [SCN_creek_ford]。蕨丛没过小腿,路面只剩一道被踩瘪的浅痕 [item.trail_creek.fern_choked_tread],一不留神就跟丢了;沿途的树枝上隔一段系着一条褪色的红胶带 [item.trail_creek.tape_blazes],有的还在,有的掉进了蕨丛里。进山不久,一棵大树上砍出的方形老刻痕还在 [item.trail_creek.survey_blaze],痕上钉着一枚锈成褐色的金属牌,号码认不出来了。走到一半,一根倒木横断整条路 [item.trail_creek.blowdown],树皮被历年翻过去的人磨得发亮。倒木过后偏出路侧几步,蕨丛里陷着一台废弃的蒸汽集材机 [item.trail_creek.donkey_engine],滚筒上还缠着锈成一坨的钢缆。快到溪谷时,一道细流从坡上淌下来横过路面 [item.trail_creek.trickle_crossing],泥里全是靴印和鹿蹄印——听见水声,渡口就不远了。相似的树干一根接一根向后退,走到一半就很难说清自己究竟走了多远。",
+  "setting": "林道口进山后偏西的一条林径,顺着地势缓缓下行,单程一小时十分钟。起点在林道口 [SCN_trailhead],尽头是灰溪的渡口 [SCN_creek_ford]。蕨丛没过小腿,路面只剩一道被踩瘪的浅痕 [item.trail_creek.fern_choked_tread],一不留神就跟丢了;沿途的树枝上隔一段系着一条褪色的红胶带 [item.trail_creek.tape_blazes],有的还在,有的掉进了蕨丛里。进山不久,一棵大树上砍出的方形老刻痕还在 [item.trail_creek.survey_blaze],痕上钉着一枚锈成褐色的金属牌,号码认不出来了。走到一半,一根倒木横断整条路 [item.trail_creek.blowdown],树皮被历年翻过去的人磨得发亮。倒木过后偏出路侧几步,蕨丛里陷着一台废弃的蒸汽集材机 [item.trail_creek.donkey_engine],滚筒上还缠着锈成一坨的钢缆。快到溪谷时,一道细流从坡上淌下来横过路面 [item.trail_creek.trickle_crossing],泥里全是靴印和鹿蹄印——听见水声,渡口就不远了。相似的树干一根接一根向后退,走到一半就很难说清自己究竟走了多远。",
   "parentLocationId": "OUTDOOR",
   "travelTimeMinutes": 70,
   "references": {

@@ -53,7 +53,9 @@ function occurrence(
     ],
     participants: [{ characterId: "npc_1", role: "actor" }],
     perceivers: perceivers.map((p) =>
-      typeof p === "string" ? { characterId: p, clarity: "full" } : p
+      typeof p === "string"
+        ? { characterId: p, sight: "clear", hearing: "clear" }
+        : p
     ),
     signals: [{ factIds: ["occ_1#f0"], channel: "sound" }],
   };
@@ -226,7 +228,7 @@ describe("occurrence routing", () => {
     const h = harness({ liveActions: [liveAction("npc_3")] });
     const occ = occurrence([
       "npc_1",
-      { characterId: "npc_2", clarity: "trace" },
+      { characterId: "npc_2", sight: "none", hearing: "faint" },
     ]);
     await h.fire(makeReport({ occurrences: [occ] }));
 
@@ -360,13 +362,17 @@ describe("occurrence routing", () => {
     const perceivers = withOcc[0].occurrencesForNpc?.[0].perceivers ?? [];
     expect(perceivers).toContainEqual({
       characterId: "npc_1",
-      clarity: "full",
+      sight: "clear",
+      hearing: "clear",
     });
     expect(perceivers).toContainEqual({
       characterId: "npc_3",
-      clarity: "trace",
+      sight: "none",
+      hearing: "faint",
     });
-    // The shim has no `limited` to offer — that is the Engine's judgement.
-    expect(perceivers.some((p) => p.clarity === "limited")).toBe(false);
+    // The shim has no middle grades to offer — that is the Engine's judgement.
+    expect(
+      perceivers.some((p) => p.sight === "partial" || p.hearing === "muffled")
+    ).toBe(false);
   });
 });

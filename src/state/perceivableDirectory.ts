@@ -34,6 +34,7 @@ import {
   type NoticedThisMinute,
   charactersAtSameLocation,
   citedIds,
+  isInPlainView,
   resolvePerceivedLocation,
 } from "./perceivedLocation.js";
 import type { DynamicNPCProfile } from "./types.js";
@@ -224,16 +225,16 @@ export function buildPerceivableDirectory(
     // anywhere — the pre-§5.4 rule minus unnoticed things.
     for (const scene of dgsm.getState().scenes?.values() ?? []) {
       scenes.add(scene.id);
-      const cited = citedIds(scene.description);
+      const cited = citedIds(scene.setting);
       for (const item of scene.items ?? []) {
-        if (cited.has(item.id)) items.add(item.id);
+        if (isInPlainView(item, cited)) items.add(item.id);
       }
     }
     for (const road of dgsm.getTopology()?.roads?.values() ?? []) {
       scenes.add(road.id);
-      const cited = citedIds(road.description);
+      const cited = citedIds(road.setting);
       for (const item of road.items ?? []) {
-        if (cited.has(item.id)) items.add(item.id);
+        if (isInPlainView(item, cited)) items.add(item.id);
       }
     }
   }

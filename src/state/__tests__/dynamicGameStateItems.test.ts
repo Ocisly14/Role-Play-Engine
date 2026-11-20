@@ -18,7 +18,7 @@ function makeFixture() {
   const scene: DynamicScene = {
     id: "S_HOME",
     name: "Home",
-    description: "A parlour.",
+    setting: "A parlour.",
     parentLocationId: "LOC_TOWN",
     items: [{ id: "item_chair", name: "a chair" }],
     conditions: [],
@@ -32,7 +32,7 @@ function makeFixture() {
   const junction: DynamicScene = {
     id: "J_A",
     name: "Crossing",
-    description: "A windswept crossing.",
+    setting: "A windswept crossing.",
     items: [{ id: "item_lamppost", name: "a lamppost" }],
     conditions: [],
     connections: [
@@ -44,7 +44,7 @@ function makeFixture() {
   const junctionB: DynamicScene = {
     id: "J_B",
     name: "Far Corner",
-    description: "The far corner.",
+    setting: "The far corner.",
     items: [],
     conditions: [],
     connections: [],
@@ -53,7 +53,7 @@ function makeFixture() {
   const road: RoadNode = {
     id: "R_MAIN",
     name: "Star Avenue",
-    description: "A long avenue.",
+    setting: "A long avenue.",
     connections: [
       { id: "connection.road.a", targetId: "J_A", role: "endpointA" },
       { id: "connection.road.b", targetId: "J_B", role: "endpointB" },
@@ -334,5 +334,124 @@ describe("holder grammar hardening — no phantom inventories", () => {
     const ok = dgsm.moveItem("item_chair", "scene:S_HOME", "npc:npc_someone");
     expect(ok).toBe(false);
     expect(dgsm.getState().npcInventories["npc:npc_someone"]).toBeUndefined();
+  });
+});
+
+describe("placement and containers (schema v3)", () => {
+  function stockTill() {
+    // till ⊃ cash ⊃ coin roll, all at S_HOME.
+    scene.items.push(
+      { id: "item_till", name: "a till", placement: "on the counter" },
+      {
+        id: "item_cash",
+        name: "cash",
+        placement: "in the till drawer",
+        container: "item_till",
+      },
+      {
+        id: "item_roll",
+        name: "a coin roll",
+        placement: "in the cash tray",
+        container: "item_cash",
+      }
+    );
+  }
+  const find = (id: string) =>
+    [
+      ...scene.items,
+      ...(dgsm.getState().npcInventories.npc_ann ?? []),
+    ].find((i) => i.id === id);
+
+  it("moving a container carries its contents, nested, links kept", () => {
+    stockTill();
+    expect(dgsm.moveItem("item_till", "scene:S_HOME", "npc_ann")).toBe(true);
+    expect(dgsm.getItemHolder("item_cash")).toBe("npc_ann");
+    expect(dgsm.getItemHolder("item_roll")).toBe("npc_ann");
+    expect(find("item_cash")?.container).toBe("item_till");
+    expect(find("item_roll")?.container).toBe("item_cash");
+  });
+
+  it("moving to a character clears placement and container", () => {
+    stockTill();
+    dgsm.moveItem("item_cash", "scene:S_HOME", "npc_ann");
+    expect(find("item_cash")).not.toHaveProperty("placement");
+    expect(find("item_cash")).not.toHaveProperty("container");
+  });
+
+  it("moving to a place sets placement and container from `where`", () => {
+    stockTill();
+    dgsm.moveItem("item_coin", "npc_ann", "scene:S_HOME", {
+      placement: "in the [till] drawer",
+      container: "item_till",
+    });
+    expect(find("item_coin")).toMatchObject({
+      placement: "in the till drawer",
+      container: "item_till",
+    });
+  });
+
+  it("createItem at a place records `where`; on a person it does not", () => {
+    const loose = dgsm.createItem("a cup", "scene:S_HOME", undefined, "item_cup", {
+      placement: "by the window",
+    });
+    expect(loose?.placement).toBe("by the window");
+    const held = dgsm.createItem("a pen", "npc_ann", undefined, "item_pen", {
+      placement: "ignored",
+    });
+    expect(held).not.toHaveProperty("placement");
+  });
+
+  it("destroying a container leaves its contents loose, placement kept", () => {
+    stockTill();
+    dgsm.destroyItem("item_till");
+    expect(find("item_cash")?.container).toBeUndefined();
+    expect(find("item_cash")?.placement).toBe("in the till drawer");
+  });
+
+  it("setItem moves a thing within its place; container '' takes it out", () => {
+    stockTill();
+    dgsm.setItem("item_cash", { placement: "on the counter", container: "" });
+    expect(find("item_cash")).toMatchObject({ placement: "on the counter" });
+    expect(find("item_cash")).not.toHaveProperty("container");
+    expect(dgsm.getItemContents("item_till")).toEqual([]);
+  });
+});
+
+describe("contents never end up nowhere", () => {
+  it("contents carried by a person and set down again regain a placement", () => {
+    scene.items.push(
+      { id: "item_box", name: "工具箱", placement: "门边" },
+      { id: "item_torch", name: "手电", placement: "箱底", container: "item_box" }
+    );
+    dgsm.moveItem("item_box", "scene:S_HOME", "npc_ann");
+    dgsm.moveItem("item_box", "npc_ann", "scene:J_A", { placement: "墙角" });
+    const torch = junction.items.find((i) => i.id === "item_torch");
+    expect(torch).toMatchObject({ container: "item_box", placement: "工具箱里" });
+  });
+
+  it("a destroyed container's unplaced contents take its placement", () => {
+    scene.items.push(
+      { id: "item_box", name: "box", placement: "by the door" },
+      { id: "item_torch", name: "torch", container: "item_box" }
+    );
+    dgsm.destroyItem("item_box");
+    expect(scene.items.find((i) => i.id === "item_torch")).toMatchObject({
+      placement: "by the door",
+    });
+  });
+});
+
+describe("quantity", () => {
+  it("setItem counts a stack down; 1 clears the field", () => {
+    scene.items.push({ id: "item_tarts", name: "tarts", placement: "in the case", quantity: 18 });
+    dgsm.setItem("item_tarts", { quantity: 16 });
+    expect(scene.items.find((i) => i.id === "item_tarts")?.quantity).toBe(16);
+    dgsm.setItem("item_tarts", { quantity: 1 });
+    expect(scene.items.find((i) => i.id === "item_tarts")).not.toHaveProperty("quantity");
+  });
+
+  it("createItem records a quantity above one", () => {
+    const made = dgsm.createItem("tarts", "npc_ann", undefined, "item_two", undefined, 2);
+    expect(made?.quantity).toBe(2);
   });
 });

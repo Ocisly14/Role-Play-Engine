@@ -1,8 +1,8 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "id": "ROAD_station_approach",
   "name": "站前引道",
-  "description": "自动大门 [SCN_gate] 之后的最后一段路,十五分钟的缓坡,碎石在这里换成了平整的水泥,另一头进入铁丝网围着的站区场院 [SCN_station_yard]。这段路修得比镇里任何一条街都好,却见不到一个用它的人:路侧一条水泥明沟 [item.station_approach.roadside_ditch] 从头通到尾,沟里连一片落叶都留不住;沟外每隔百来步立着一根灯杆 [item.station_approach.lamp_standards],天一黑就自己亮起来,照着一条没有人走的路。上坡不远处横着一道减速带,旁边立着「限速 15 英里」的白牌 [item.station_approach.speed_sign];再往上,路肩上蹲着一只镀锌砂石斗 [item.station_approach.gravel_bin],盖子扣得严实。半路的右侧有一个被土埂封住的岔口 [item.station_approach.old_logging_spur],那是伐木年代留下的便道,车辙早被蕨类填平了。再上去,路边的山脊上立着一根风速风向杆 [item.station_approach.weather_mast],风杯转个不停,杆底的小铁柜锁着。快到场院时,路右一块蓝底白字的牌子连着一根混凝土界桩 [item.station_approach.boundary_marker],标出站区的边界。",
+  "setting": "自动大门 [SCN_gate] 之后的最后一段路,十五分钟的缓坡,碎石在这里换成了平整的水泥,另一头进入铁丝网围着的站区场院 [SCN_station_yard]。这段路修得比镇里任何一条街都好,却见不到一个用它的人:路侧一条水泥明沟 [item.station_approach.roadside_ditch] 从头通到尾,沟里连一片落叶都留不住;沟外每隔百来步立着一根灯杆 [item.station_approach.lamp_standards],天一黑就自己亮起来,照着一条没有人走的路。上坡不远处横着一道减速带,旁边立着「限速 15 英里」的白牌 [item.station_approach.speed_sign];再往上,路肩上蹲着一只镀锌砂石斗 [item.station_approach.gravel_bin],盖子扣得严实。半路的右侧有一个被土埂封住的岔口 [item.station_approach.old_logging_spur],那是伐木年代留下的便道,车辙早被蕨类填平了。再上去,路边的山脊上立着一根风速风向杆 [item.station_approach.weather_mast],风杯转个不停,杆底的小铁柜锁着。快到场院时,路右一块蓝底白字的牌子连着一根混凝土界桩 [item.station_approach.boundary_marker],标出站区的边界。",
   "parentLocationId": "OUTDOOR",
   "travelTimeMinutes": 15,
   "references": {

@@ -55,6 +55,10 @@ import type { TownTopology } from "../../../src/state/topologyTypes.js";
 import { WebSocketManager } from "../websocket/WebSocketManager.js";
 
 const runners = new Map<string, SimulationRunner>();
+const pendingRunnerLoads = new Map<
+  string,
+  Promise<SimulationRunner | undefined>
+>();
 const DEFAULT_WEATHER_INTENSITY = 3;
 
 async function ensureModuleIdForSimulation(
@@ -167,6 +171,23 @@ export async function getRunner(
   const existing = runners.get(sessionId);
   if (existing) return existing;
 
+  // Status, player view and controls can reach a saved session together.
+  // Share the same runner so its player operations use one tick lock.
+  const pending = pendingRunnerLoads.get(sessionId);
+  if (pending) return pending;
+  const load = restoreRunner(prisma, sessionId);
+  pendingRunnerLoads.set(sessionId, load);
+  try {
+    return await load;
+  } finally {
+    pendingRunnerLoads.delete(sessionId);
+  }
+}
+
+async function restoreRunner(
+  prisma: PrismaClient,
+  sessionId: string
+): Promise<SimulationRunner | undefined> {
   const runtime = await loadSimulationRuntime(prisma, sessionId);
   if (!runtime) return undefined;
 
@@ -455,7 +476,9 @@ export async function deleteSimulation(
   sessionId: string
 ): Promise<void> {
   // Stop the runner if it's active in memory
-  const runner = runners.get(sessionId);
+  const runner =
+    runners.get(sessionId) ??
+    (await pendingRunnerLoads.get(sessionId)?.catch(() => undefined));
   if (runner) {
     try {
       await runner.stop();

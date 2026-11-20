@@ -21,13 +21,22 @@
 // reference. They are never rendered into the prompt.
 
 import type { DynamicGameStateManager } from "../../state/DynamicGameState.js";
-import { citedIds } from "../../state/perceivedLocation.js";
-import type { RoadNode } from "../../state/topologyTypes.js";
+import {
+  citedIds,
+  isInPlainView,
+} from "../../state/perceivedLocation.js";
+import type { RoadNode, TownTopology } from "../../state/topologyTypes.js";
 import type { DynamicScene, Item, SceneConnection } from "../../state/types.js";
 import type { ActionCommand, EngineAction } from "../actions/types.js";
 import { ACTION_SCHEMA_VERSION } from "../actions/types.js";
 import type { GameTime } from "../core/types.js";
 import { catalogSkillName } from "../rules/skillCatalog.js";
+import {
+  type PlaceLookup,
+  WalkGraph,
+  pointOf,
+  straightLineMeters,
+} from "../shared/placeDistance.js";
 import type {
   BlockedEdge,
   CharacterSnapshot,
@@ -38,6 +47,7 @@ import type {
   PlaceKind,
   PlaceSnapshot,
   ResolutionTrigger,
+  Surroundings,
   WorldGraph,
   WorldInvariant,
 } from "./types.js";
@@ -226,9 +236,6 @@ export function buildEngineResolutionContext(
         id,
         kind: entry.kind,
         name: entry.place.name,
-        ...(entry.place.description
-          ? { description: entry.place.description }
-          : {}),
         ...(entry.place.parentLocationId !== undefined
           ? { parentLocationId: entry.place.parentLocationId }
           : {}),
@@ -292,10 +299,10 @@ export function buildEngineResolutionContext(
   const items: ItemSnapshot[] = [];
   for (const placeId of involvedPlaceIds) {
     const entry = placeById.get(placeId);
-    const inPlainView = citedIds(entry?.place.description);
+    const cited = citedIds(entry?.place.setting);
     for (const item of entry?.place.items ?? []) {
       items.push(
-        snapshotItem(item, `scene:${placeId}`, !inPlainView.has(item.id))
+        snapshotItem(item, `scene:${placeId}`, !isInPlainView(item, cited))
       );
     }
   }
@@ -341,6 +348,26 @@ export function buildEngineResolutionContext(
     };
   });
 
+  // ── Surroundings: settlements only — a start has no result to perceive
+  //    yet. From each place an action being settled took place in: every
+  //    living character, how far in a straight line (or, where a place has
+  //    no point, by the ways that join them), and the places they stand
+  //    in. ──
+  const settles = params.triggers.some((t) => t.reason !== "new_action");
+  const surroundings = settles
+    ? buildSurroundings(dgsm, {
+        settlingActorIds: params.activeActions
+          .filter((a) =>
+            params.triggers.some((t) => t.actionIds.includes(a.id))
+          )
+          .map((a) => a.command.actorId),
+        characters,
+        detailedPlaceIds: involvedPlaceIds,
+        placeById,
+        topology,
+      })
+    : undefined;
+
   return {
     trigger: {
       triggers: params.triggers,
@@ -373,6 +400,7 @@ export function buildEngineResolutionContext(
         position: v.position,
       })),
       characters,
+      ...(surroundings ? { surroundings } : {}),
     },
     actions: {
       newCommands: params.newCommands,
@@ -383,6 +411,83 @@ export function buildEngineResolutionContext(
       deterministicResults: params.deterministicResults ?? [],
     },
   };
+}
+
+function buildSurroundings(
+  dgsm: DynamicGameStateManager,
+  params: {
+    settlingActorIds: string[];
+    characters: CharacterSnapshot[];
+    detailedPlaceIds: ReadonlySet<string>;
+    placeById: Map<string, PlaceEntry>;
+    topology: TownTopology | null;
+  }
+): Surroundings {
+  const byId = new Map(params.characters.map((c) => [c.id, c]));
+  const originPositions = new Map<
+    string,
+    NonNullable<CharacterSnapshot["position"]>
+  >();
+  for (const actorId of params.settlingActorIds) {
+    const actor = byId.get(actorId);
+    if (actor?.position && actor.locationId) {
+      if (!originPositions.has(actor.locationId)) {
+        originPositions.set(actor.locationId, actor.position);
+      }
+    }
+  }
+  const living = params.characters.filter((c) => c.alive && c.position);
+  // Optional calls, like getTopology above: a partial manager (tests, tools)
+  // simply has no points and no ways.
+  const lookup: PlaceLookup = {
+    scene: (id) => dgsm.getScene?.(id),
+    road: (id) => dgsm.getRoad?.(id),
+    vehicleByInterior: (id) => dgsm.getVehicleByInterior?.(id),
+  };
+  let walkGraph: WalkGraph | null = null;
+  const walk = (): WalkGraph => {
+    walkGraph ??= new WalkGraph(
+      (dgsm.getAllSceneIds?.() ?? [])
+        .map((id) => lookup.scene(id))
+        .filter((s): s is NonNullable<typeof s> => !!s),
+      params.topology ? [...params.topology.roads.values()] : [],
+      lookup
+    );
+    return walkGraph;
+  };
+  const origins: Surroundings["origins"] = [];
+  for (const [placeId, from] of originPositions) {
+    const here = pointOf(from, lookup);
+    origins.push({
+      placeId,
+      characters: living.map((c) => {
+        const base = { characterId: c.id, locationId: c.locationId };
+        if (c.locationId === placeId) return { ...base, meters: 0 };
+        const there = c.position ? pointOf(c.position, lookup) : null;
+        if (here && there) {
+          return {
+            ...base,
+            meters: Math.round(straightLineMeters(here, there)),
+          };
+        }
+        const minutes = c.position ? walk().minutes(from, c.position) : null;
+        return {
+          ...base,
+          walkMinutes: minutes === null ? null : Math.round(minutes),
+        };
+      }),
+    });
+  }
+  const places: PlaceSnapshot[] = [];
+  const seen = new Set<string>();
+  for (const c of living) {
+    const id = c.locationId;
+    if (!id || seen.has(id) || params.detailedPlaceIds.has(id)) continue;
+    seen.add(id);
+    const entry = params.placeById.get(id);
+    if (entry) places.push(snapshotPlace(dgsm, id, entry));
+  }
+  return { origins, places };
 }
 
 function snapshotPlace(
@@ -401,7 +506,7 @@ function snapshotPlace(
     id: placeId,
     kind,
     name: place.name,
-    description: place.description,
+    setting: place.setting,
     ...(place.parentLocationId !== undefined
       ? { parentLocationId: place.parentLocationId }
       : {}),
@@ -441,6 +546,9 @@ function snapshotItem(
       ? { description: item.description }
       : {}),
     holder,
+    ...(item.placement !== undefined ? { placement: item.placement } : {}),
+    ...(item.container !== undefined ? { container: item.container } : {}),
+    ...(item.quantity !== undefined ? { quantity: item.quantity } : {}),
     ...(unnoticed ? { unnoticed: true } : {}),
   };
 }

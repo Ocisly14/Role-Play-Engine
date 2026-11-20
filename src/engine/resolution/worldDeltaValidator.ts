@@ -12,7 +12,7 @@
 // references, invariants, transition legality, timing ownership and
 // roll-consistency (via the deterministic adjudicator).
 
-import { MAX_SPOT_LENGTH } from "../../state/characterSpot.js";
+import { MAX_SPOT_LENGTH, normalizeSpot } from "../../state/characterSpot.js";
 import { addMinutes } from "../../state/gameClock.js";
 import { needsExplicitItemId } from "../../state/itemId.js";
 import { actionIdForCommand } from "../actions/actionStore.js";
@@ -22,15 +22,22 @@ import type {
   CharacterChange,
   EngineAction,
   EngineActionStatus,
+  HearingGrade,
   ItemChange,
   Occurrence,
-  PerceptionClarity,
   SceneChange,
   SourcedWorldDelta,
   TickResolution,
   WorldDelta,
 } from "../actions/types.js";
-import { PERCEPTION_CLARITIES } from "../actions/types.js";
+import {
+  HEARING_GRADES,
+  SIGHT_GRADES,
+  type SightGrade,
+  perceivesAnything,
+  perceivesSource,
+} from "../actions/types.js";
+import { ENDING_MODE_MEANING, TALK_DURATION_RULE } from "../rules/ruleTerms.js";
 import { SKILL_CATALOG, catalogSkillName } from "../rules/skillCatalog.js";
 import { parseJsonResponse } from "../shared/jsonParse.js";
 import type { SanityOutcome, SanityRollOptions } from "./sanityResolver.js";
@@ -191,8 +198,11 @@ export interface Lookup {
   exitsFor: (actorId: string) => Exit[] | undefined;
   vehicleIds: Set<string>;
   characterSceneIds: Map<string, string | undefined>;
-  /** Involved (Tier 2) places' prose — for the stale-citation check. */
-  placeDescriptions: Map<string, string>;
+  /** Involved (Tier 2) places' settings — for the stale-citation check. */
+  placeSettings: Map<string, string>;
+  /** Involved places' items with where they sit — for the after-submission
+   *  check that every item is still a fixture, placed, or contained. */
+  placeItems: Map<string, Array<{ id: string; placement?: string; container?: string }>>;
   /** FULL-world item→holder map (context.state.itemHolders). */
   itemHolders: Map<string, string>;
   /** All actions addressable this resolution (queued from commands + active).
@@ -361,9 +371,21 @@ export function buildLookup(context: EngineResolutionContext): Lookup {
       return [c.id, position?.sceneId];
     })
   );
-  const placeDescriptions = new Map(
-    context.state.places.map((p) => [p.id, p.description ?? ""])
+  const placeSettings = new Map(
+    context.state.places.map((p) => [p.id, p.setting ?? ""])
   );
+  const placeItems: Lookup["placeItems"] = new Map();
+  for (const item of context.state.items ?? []) {
+    if (!item.holder.startsWith("scene:")) continue;
+    const placeId = item.holder.slice("scene:".length);
+    const list = placeItems.get(placeId) ?? [];
+    list.push({
+      id: item.id,
+      ...(item.placement !== undefined ? { placement: item.placement } : {}),
+      ...(item.container !== undefined ? { container: item.container } : {}),
+    });
+    placeItems.set(placeId, list);
+  }
   const locationIds = new Set<string>(placeIds);
   for (const c of context.state.characters) {
     if (c.locationId) locationIds.add(c.locationId);
@@ -418,7 +440,8 @@ export function buildLookup(context: EngineResolutionContext): Lookup {
     exitsFor,
     vehicleIds,
     characterSceneIds,
-    placeDescriptions,
+    placeSettings,
+    placeItems,
     itemHolders,
     actionById,
     requiredActionIds: new Set([...worklist.starting, ...worklist.ending]),
@@ -609,7 +632,7 @@ export function validateStart(entry: RawActionStart, lookup: Lookup): string[] {
   } else {
     if (entry.resolvedDurationTicks === undefined) {
       errs.push(
-        `a non-travel action needs resolvedDurationTicks. "${entry.actionId}" (actor "${known.command.actorId}") has ${known.command.utterance?.trim() ? "a structured utterance, which does not replace an explicit duration" : "no structured utterance"} and this entry has no movement. Add an integer duration >= 1 to THIS entry (1 for plain talk, the assessed duration for an attempt); the command proposed ${known.command.proposedDurationTicks} tick(s), which you must assess. Words quoted only in description do not set utterance. Do not invent movement to avoid duration, and do not delete this action`
+        `a non-travel action needs resolvedDurationTicks. "${entry.actionId}" (actor "${known.command.actorId}") has ${known.command.utterance?.trim() ? "a structured utterance, which does not replace an explicit duration" : "no structured utterance"} and this entry has no movement. Add an integer duration >= 1 to THIS entry (${TALK_DURATION_RULE}); the command proposed ${known.command.proposedDurationTicks} tick(s), which you must assess. Words quoted only in description do not set utterance. Do not invent movement to avoid duration, and do not delete this action`
       );
     }
     errs.push(...validateDuration(entry.resolvedDurationTicks));
@@ -721,30 +744,36 @@ export function isSpeechRow(o: RawOccurrence | null | undefined): boolean {
   return o?.speech === true;
 }
 
-const CLARITY_SET: ReadonlySet<string> = new Set(PERCEPTION_CLARITIES);
+const SIGHT_SET: ReadonlySet<string> = new Set(SIGHT_GRADES);
+const HEARING_SET: ReadonlySet<string> = new Set(HEARING_GRADES);
 
-function isClarity(v: unknown): v is PerceptionClarity {
-  return typeof v === "string" && CLARITY_SET.has(v);
+function isSight(v: unknown): v is SightGrade {
+  return typeof v === "string" && SIGHT_SET.has(v);
 }
 
-/** The row's perceivers as `characterId → clarity`, over well-formed entries
+function isHearing(v: unknown): v is HearingGrade {
+  return typeof v === "string" && HEARING_SET.has(v);
+}
+
+/** The row's perceivers as `characterId → grades`, over well-formed entries
  *  only; malformed ones are reported by `validateOccurrence` and skipped
  *  here. On a duplicate id the first entry wins — the validator refuses the
  *  row anyway. */
 function perceiverClarities(
   o: RawOccurrence | null | undefined
-): Map<string, PerceptionClarity> {
-  const out = new Map<string, PerceptionClarity>();
+): Map<string, { sight: SightGrade; hearing: HearingGrade }> {
+  const out = new Map<string, { sight: SightGrade; hearing: HearingGrade }>();
   if (!Array.isArray(o?.perceivers)) return out;
   for (const p of o.perceivers) {
     if (
       p != null &&
       typeof p.characterId === "string" &&
       p.characterId.length > 0 &&
-      isClarity(p.clarity) &&
+      isSight(p.sight) &&
+      isHearing(p.hearing) &&
       !out.has(p.characterId)
     ) {
-      out.set(p.characterId, p.clarity);
+      out.set(p.characterId, { sight: p.sight, hearing: p.hearing });
     }
   }
   return out;
@@ -798,7 +827,7 @@ export function validateEndingTarget(
 export function validateEndOutcome(outcome: unknown): string[] {
   if (typeof outcome !== "string" || !outcome.trim()) {
     return [
-      "an outcome ending requires one objective paragraph of its new result; use no_change when an unchecked, non-speaking action has no new result",
+      `an outcome ending requires one objective paragraph of its new result; no_change is ${ENDING_MODE_MEANING.no_change}`,
     ];
   }
   return [];
@@ -988,7 +1017,7 @@ export function validateCharacterChange(
       break;
     }
     case "setAppearance": {
-      // Whole-prose replacement, like a scene's setDescription. Emptiness is
+      // Whole-prose replacement, like a scene's setSetting. Emptiness is
       // the one thing code can judge: a blank face is never the intent.
       if (typeof op.appearance !== "string" || !op.appearance.trim()) {
         errs.push(
@@ -1066,9 +1095,9 @@ export function validateSceneChange(
       }
       break;
     }
-    case "setDescription":
-      if (typeof op.description !== "string" || !op.description.trim()) {
-        errs.push("setDescription requires a non-empty description");
+    case "setSetting":
+      if (typeof op.setting !== "string" || !op.setting.trim()) {
+        errs.push("setSetting requires a non-empty setting");
       }
       break;
     case "connectionBlock":
@@ -1155,6 +1184,21 @@ export function validateItemChange(
         `create.location "${op.location}" must be "scene:<realPlaceId>" or a real character id`
       );
     }
+    if (op.quantity !== undefined) {
+      errs.push(...quantityErrors("create", op.quantity));
+    }
+    if (typeof op.location === "string") {
+      errs.push(
+        ...whereErrors(
+          "create",
+          op as { placement?: unknown; container?: unknown },
+          op.location,
+          op.id,
+          lookup,
+          createdItemIds
+        )
+      );
+    }
     if (op.id !== undefined) {
       const id = op.id;
       if (typeof id !== "string" || !id) {
@@ -1192,11 +1236,20 @@ export function validateItemChange(
           `move.to "${op.to}" is not a valid holder — write "scene:<placeId>" for a place (a vehicle interior scene included) or a bare characterId for a person`
         );
       } else if (op.to === op.from) {
-        // Applies cleanly and changes nothing: the state model has no
-        // item-level spot, so "moved within the same scene" is not a move at
-        // all. The actor perceives no consequence and tries it again.
+        // Within one place a thing moves by its placement, not its holder.
         errs.push(
-          `move.from and move.to are both "${op.to}" — there is no item-level position within a holder, so this changes nothing. Say where it came to rest in the occurrence, and rewrite the place's description only if the new resting place is a lasting, materially relevant part of it`
+          `move.from and move.to are both "${op.to}" — moving a thing within its place is item place { placement, container }, not a move`
+        );
+      } else {
+        errs.push(
+          ...whereErrors(
+            "move",
+            op as { placement?: unknown; container?: unknown },
+            op.to,
+            delta.itemId,
+            lookup,
+            createdItemIds
+          )
         );
       }
       if (movedItemIds.has(delta.itemId)) {
@@ -1205,6 +1258,37 @@ export function validateItemChange(
         );
       }
       movedItemIds.add(delta.itemId);
+      break;
+    }
+    case "place": {
+      const holder = lookup.itemHolders.get(delta.itemId) ?? "";
+      if (!holder.startsWith("scene:")) {
+        errs.push(
+          `place: "${delta.itemId}" is held by a character, and a held thing has no placement — move it to a place instead`
+        );
+        break;
+      }
+      if (typeof op.placement !== "string" || !normalizeSpot(op.placement)) {
+        errs.push(
+          "place.placement must say where in the place it now is (to put it away, give it a container as well)"
+        );
+      }
+      if (typeof op.container !== "string") {
+        errs.push(
+          'place.container is required — an item id of this place, or "" for none'
+        );
+      } else if (op.container.trim()) {
+        errs.push(
+          ...containerErrors(
+            "place",
+            op.container.trim(),
+            holder,
+            delta.itemId,
+            lookup,
+            createdItemIds
+          )
+        );
+      }
       break;
     }
     case "destroy":
@@ -1224,11 +1308,13 @@ export function validateItemChange(
       const hasLight =
         typeof op.isLightSource === "boolean" ||
         typeof op.lightLevel === "number";
-      if (!hasDescription && !hasAppend && !hasLight) {
+      const hasQuantity = op.quantity !== undefined;
+      if (!hasDescription && !hasAppend && !hasLight && !hasQuantity) {
         errs.push(
-          "set needs at least one of description, appendDescription, isLightSource, lightLevel"
+          "set needs at least one of description, appendDescription, isLightSource, lightLevel, quantity"
         );
       }
+      if (hasQuantity) errs.push(...quantityErrors("set", op.quantity));
       // Replacing and appending in the same breath does not say which text
       // wins, and the two orders give different results.
       if (hasDescription && hasAppend) {
@@ -1240,6 +1326,80 @@ export function validateItemChange(
     }
   }
   return errs;
+}
+
+/** A stack's count: a whole number of at least one — the last one used is
+ *  a destroy, not a zero. */
+function quantityErrors(verb: string, quantity: unknown): string[] {
+  if (typeof quantity !== "number" || !Number.isInteger(quantity)) {
+    return [`${verb}.quantity must be a whole number`];
+  }
+  if (quantity < 1) {
+    return [
+      `${verb}.quantity must be at least 1 — when the last of it is used up, destroy the item instead`,
+    ];
+  }
+  return [];
+}
+
+/** Where an item lands: at a place it needs a placement (and may name a
+ *  container of that place); on a person both are "" (or absent). */
+function whereErrors(
+  verb: "create" | "move",
+  op: { placement?: unknown; container?: unknown },
+  holder: string,
+  itemId: unknown,
+  lookup: Lookup,
+  createdItemIds: Set<string>
+): string[] {
+  const errs: string[] = [];
+  const given = (v: unknown) => typeof v === "string" && v.trim() !== "";
+  if (!holder.startsWith("scene:")) {
+    if (given(op.placement) || given(op.container)) {
+      errs.push(
+        `${verb} to a character carries no placement or container — write both as ""`
+      );
+    }
+    return errs;
+  }
+  if (typeof op.placement !== "string" || !normalizeSpot(op.placement)) {
+    errs.push(
+      `${verb} to "${holder}" needs a placement — where in that place it now is ("on the counter", "in the till drawer")`
+    );
+  }
+  if (op.container !== undefined && typeof op.container !== "string") {
+    errs.push(`${verb}.container must be an item id or ""`);
+  } else if (given(op.container)) {
+    errs.push(
+      ...containerErrors(
+        verb,
+        (op.container as string).trim(),
+        holder,
+        itemId,
+        lookup,
+        createdItemIds
+      )
+    );
+  }
+  return errs;
+}
+
+function containerErrors(
+  verb: string,
+  container: string,
+  holder: string,
+  itemId: unknown,
+  lookup: Lookup,
+  createdItemIds: Set<string>
+): string[] {
+  if (container === itemId) {
+    return [`${verb}.container names the item itself`];
+  }
+  if (lookup.itemHolders.get(container) === holder) return [];
+  if (createdItemIds.has(container)) return [];
+  return [
+    `${verb}.container "${container}" is not an item at "${holder}" — a container is another item of the same place`,
+  ];
 }
 
 const PERSPECTIVE_PATTERNS = [
@@ -1315,15 +1475,16 @@ export function validateSanityChecks(
       }
       // Exposure is perception: the same evidence that decided who perceived
       // this occurrence decides who can be shocked by it. A map lookup, not a
-      // judgement — except that a trace carries no source to be shocked by.
-      const clarity = perceivers.get(id);
-      if (clarity === undefined) {
+      // judgement — except that a glimpse or a faint sound carries no source
+      // to be shocked by.
+      const grades = perceivers.get(id);
+      if (grades === undefined) {
         errs.push(
           `${at}: character "${id}" is not among this occurrence's perceivers — only someone who perceived it can be shocked by it`
         );
-      } else if (clarity === "trace") {
+      } else if (!perceivesSource(grades)) {
         errs.push(
-          `${at}: character "${id}" perceives this occurrence only as a trace — a sound or movement with no source cannot be a horror exposure. Raise their clarity if they actually saw or heard the thing, or drop the check`
+          `${at}: character "${id}" only glimpses or faintly hears this occurrence — a movement or sound with no source cannot be a horror exposure. Raise their sight or hearing if they actually saw or heard the thing, or drop the check`
         );
       }
       if (seen.has(id)) {
@@ -1481,7 +1642,7 @@ export function validateOccurrence(
   }
   if (!Array.isArray(occ.perceivers) || occ.perceivers.length === 0) {
     errs.push(
-      "perceivers is required — who could perceive this, each with a clarity (full, limited or trace); an occurrence nobody perceives changes nothing"
+      "perceivers is required — who could perceive this, each with a sight and a hearing grade; an occurrence nobody perceives changes nothing"
     );
   }
   const listed = new Set<string>();
@@ -1497,14 +1658,26 @@ export function validateOccurrence(
       errs.push(`${at}: character "${id}" does not exist`);
     } else if (listed.has(id)) {
       errs.push(
-        `perceivers: character "${id}" is listed twice — one entry per character, at the single clarity they actually reach`
+        `perceivers: character "${id}" is listed twice — one entry per character, with the sight and hearing they actually reach`
       );
     } else {
       listed.add(id);
     }
-    if (!isClarity(p?.clarity)) {
+    const sightOk = isSight(p?.sight);
+    const hearingOk = isHearing(p?.hearing);
+    if (!sightOk) {
       errs.push(
-        `${at}: clarity "${String(p?.clarity)}" is not one of ${PERCEPTION_CLARITIES.join(", ")}`
+        `${at}: sight "${String(p?.sight)}" is not one of ${SIGHT_GRADES.join(", ")}`
+      );
+    }
+    if (!hearingOk) {
+      errs.push(
+        `${at}: hearing "${String(p?.hearing)}" is not one of ${HEARING_GRADES.join(", ")}`
+      );
+    }
+    if (sightOk && hearingOk && !perceivesAnything(p)) {
+      errs.push(
+        `${at}: sight and hearing are both none — someone who perceives nothing is not listed`
       );
     }
   }
@@ -1588,21 +1761,22 @@ export function notARowMessage(index: number): string {
 // settled against it. Whether a driver is in the cab is checked by the
 // movement runtime when the drive starts (`initMovementRuntime`), not here.
 
-/** An item leaving a place whose prose still points at it. */
+/** A fixture leaving a place whose setting still points at it. */
 export interface StaleCitation {
-  /** Index in the itemChanges array of the move/destroy that orphans it. */
+  /** Index in the itemChanges array of the change that orphans it. */
   itemChangeIndex: number;
-  /** The place whose description needs rewriting. */
+  /** The place whose setting needs rewriting. */
   placeId: string;
   message: string;
 }
 
 /**
- * Prose-coherence: an item CITED by its holder place's description cannot
- * leave (move/destroy) without the same resolution rewriting that prose — a
- * stale citation breaks every later render of the place. Mechanical: string
- * containment vs the Tier-2 snapshot; places outside the involved set are
- * skipped (their prose is not at hand to check).
+ * Setting coherence: a FIXTURE — an item its place's setting cites — cannot
+ * leave (move/destroy) or turn into a loose thing (set placement) without the
+ * same resolution rewriting that setting; a stale citation breaks every later
+ * render of the place. Loose things carry their own placement and are never
+ * cited, so they owe nothing. Mechanical: string containment vs the Tier-2
+ * snapshot; places outside the involved set are skipped.
  */
 export function staleCitations(
   itemChanges: readonly unknown[],
@@ -1612,30 +1786,185 @@ export function staleCitations(
   const stale: StaleCitation[] = [];
   for (const [index, d] of itemChanges.entries()) {
     if (!isRecord(d)) continue;
-    const op = d.operation as { kind?: string; from?: string };
-    if (op?.kind !== "move" && op?.kind !== "destroy") continue;
+    const op = d.operation as {
+      kind?: string;
+      from?: string;
+      placement?: unknown;
+    };
+    const loosened = op?.kind === "place";
+    if (op?.kind !== "move" && op?.kind !== "destroy" && !loosened) continue;
     const itemId = d.itemId;
     if (typeof itemId !== "string" || !itemId) continue;
     const holder =
       op.kind === "move" ? op.from : lookup.itemHolders.get(itemId);
     if (typeof holder !== "string" || !holder.startsWith("scene:")) continue;
     const placeId = holder.slice("scene:".length);
-    const prose = lookup.placeDescriptions.get(placeId);
-    if (prose === undefined || !prose.includes(`[${itemId}]`)) continue;
+    const setting = lookup.placeSettings.get(placeId);
+    if (setting === undefined || !setting.includes(`[${itemId}]`)) continue;
+    // Rewritten means a setSetting for this place that no longer cites it.
     const rewritten = sceneChanges.some(
       (sc) =>
         isRecord(sc) &&
         (sc as { sceneId?: string }).sceneId === placeId &&
-        (sc.operation as { kind?: string })?.kind === "setDescription"
+        (sc.operation as { kind?: string })?.kind === "setSetting" &&
+        !String((sc.operation as { setting?: unknown }).setting ?? "").includes(
+          `[${itemId}]`
+        )
     );
     if (rewritten) continue;
+    const verb =
+      op.kind === "move"
+        ? "moving it"
+        : op.kind === "destroy"
+          ? "destroying it"
+          : "giving it a placement (it becomes a loose thing)";
     stale.push({
       itemChangeIndex: index,
       placeId,
-      message: `"${itemId}" is cited in the description of "${placeId}" — ${op.kind === "move" ? "moving" : "destroying"} it leaves that prose pointing at nothing and breaks every later render there. Add a sceneChanges setDescription for "${placeId}" in this submission (keep still-true citations, drop this one).`,
+      message: `"${itemId}" is a fixture cited in the setting of "${placeId}" — ${verb} leaves that setting pointing at it. Add a sceneChanges setSetting for "${placeId}" in this submission (keep still-true citations, drop this one).`,
     });
   }
   return stale;
+}
+
+/** A broken item state after the whole submission is applied. */
+export interface ProjectedPlaceError {
+  at: { kind: "sceneChange" | "itemChange"; index: number };
+  message: string;
+}
+
+/**
+ * After the whole submission: every item at an involved place is still
+ * exactly one of fixture (cited by the final setting, no placement), placed,
+ * or contained — and no container chain loops. A `setSetting` that drops a
+ * fixture's citation without the item getting a placement would hide it from
+ * everyone; one that cites a loose thing makes it two things at once.
+ */
+export function projectedPlaceErrors(
+  itemChanges: readonly unknown[],
+  sceneChanges: readonly unknown[],
+  lookup: Lookup
+): ProjectedPlaceError[] {
+  const errors: ProjectedPlaceError[] = [];
+  const touched = new Set<string>();
+  const finalSetting = new Map<string, { setting: string; index: number }>();
+  for (const [index, sc] of sceneChanges.entries()) {
+    if (!isRecord(sc)) continue;
+    const op = sc.operation as { kind?: string; setting?: unknown };
+    const sceneId = (sc as { sceneId?: unknown }).sceneId;
+    if (op?.kind !== "setSetting" || typeof sceneId !== "string") continue;
+    if (typeof op.setting !== "string") continue;
+    finalSetting.set(sceneId, { setting: op.setting, index });
+    touched.add(sceneId);
+  }
+  type Where = { placement?: string; container?: string; index?: number };
+  const places = new Map<string, Map<string, Where>>();
+  const placeOf = (placeId: string) => {
+    let items = places.get(placeId);
+    if (!items) {
+      items = new Map(
+        (lookup.placeItems.get(placeId) ?? []).map((i) => [
+          i.id,
+          { placement: i.placement, container: i.container },
+        ])
+      );
+      places.set(placeId, items);
+    }
+    return items;
+  };
+  const where = (op: Record<string, unknown>, index: number): Where => {
+    const placement =
+      typeof op.placement === "string" ? normalizeSpot(op.placement) : "";
+    const container =
+      typeof op.container === "string" ? op.container.trim() : "";
+    return {
+      ...(placement ? { placement } : {}),
+      ...(container ? { container } : {}),
+      index,
+    };
+  };
+  for (const [index, d] of itemChanges.entries()) {
+    if (!isRecord(d)) continue;
+    const op = d.operation as Record<string, unknown> & { kind?: string };
+    const itemId = typeof d.itemId === "string" ? d.itemId : undefined;
+    const at = (holder: unknown) =>
+      typeof holder === "string" && holder.startsWith("scene:")
+        ? holder.slice("scene:".length)
+        : undefined;
+    if (op?.kind === "create") {
+      const placeId = at(op.location);
+      const id = typeof op.id === "string" ? op.id : undefined;
+      if (placeId && id) {
+        placeOf(placeId).set(id, where(op, index));
+        touched.add(placeId);
+      }
+    } else if (op?.kind === "move" && itemId) {
+      const from = at(op.from);
+      if (from) {
+        placeOf(from).delete(itemId);
+        touched.add(from);
+      }
+      const to = at(op.to);
+      if (to) {
+        placeOf(to).set(itemId, where(op, index));
+        touched.add(to);
+      }
+    } else if ((op?.kind === "place" || op?.kind === "destroy") && itemId) {
+      const placeId = at(lookup.itemHolders.get(itemId));
+      if (!placeId) continue;
+      const items = placeOf(placeId);
+      if (op.kind === "destroy") items.delete(itemId);
+      else items.set(itemId, where(op, index));
+      touched.add(placeId);
+    }
+  }
+  for (const placeId of touched) {
+    const items = placeOf(placeId);
+    const rewritten = finalSetting.get(placeId);
+    const setting = rewritten?.setting ?? lookup.placeSettings.get(placeId);
+    if (setting !== undefined) {
+      const cited = new Set(
+        [...setting.matchAll(/\[([^\]\n]{1,64})\]/g)].map((m) => m[1])
+      );
+      for (const [id, w] of items) {
+        const atRow = rewritten
+          ? { kind: "sceneChange" as const, index: rewritten.index }
+          : w.index !== undefined
+            ? { kind: "itemChange" as const, index: w.index }
+            : undefined;
+        if (!atRow) continue;
+        if (cited.has(id) && w.placement) {
+          errors.push({
+            at: atRow,
+            message: `"${id}" would be both cited in the setting of "${placeId}" and loose with a placement — a fixture has no placement; drop the citation or the placement`,
+          });
+        } else if (!cited.has(id) && !w.placement) {
+          errors.push({
+            at: atRow,
+            message: `"${id}" would be neither cited in the setting of "${placeId}" nor placed in it — nobody could ever see it. Keep its citation, or give it a place {placement, container}`,
+          });
+        }
+      }
+    }
+    for (const [id, w] of items) {
+      // Only a chain this submission changed can have started to loop.
+      if (w.index === undefined) continue;
+      const seen = new Set([id]);
+      let next = w.container;
+      while (next !== undefined) {
+        if (seen.has(next)) {
+          errors.push({
+            at: { kind: "itemChange", index: w.index },
+            message: `"${id}": its container chain at "${placeId}" loops back on itself`,
+          });
+          break;
+        }
+        seen.add(next);
+        next = items.get(next)?.container;
+      }
+    }
+  }
+  return errors;
 }
 
 /** A character checked for sanity in more than one occurrence. */
@@ -1822,13 +2151,20 @@ export function validateRawResolution(
   // decision that orphans the prose, and it is the row the Engine has to
   // reconsider. The scene phase runs the same check against its own accepted
   // item changes, addressed at itself, because there the fix IS a new
-  // setDescription.
+  // setSetting.
   for (const stale of staleCitations(
     raw.itemChanges ?? [],
     raw.sceneChanges ?? [],
     lookup
   )) {
     at({ kind: "itemChange", index: stale.itemChangeIndex }, [stale.message]);
+  }
+  for (const projected of projectedPlaceErrors(
+    raw.itemChanges ?? [],
+    raw.sceneChanges ?? [],
+    lookup
+  )) {
+    at(projected.at, [projected.message]);
   }
   for (const [i, o] of (raw.occurrences ?? []).entries()) {
     if (!isRecord(o)) {
@@ -2271,7 +2607,8 @@ export function finalizeResolution(
       ],
       perceivers: (o.perceivers ?? []).map((p) => ({
         characterId: p.characterId,
-        clarity: p.clarity,
+        sight: p.sight,
+        hearing: p.hearing,
       })),
       signals: [],
     });

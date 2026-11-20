@@ -23,7 +23,7 @@ export function makeOutdoorDgsm(): DynamicGameStateManager {
   const ridge: DynamicScene = {
     id: "SCN_ridge",
     name: "山脊",
-    description: "一道裸露的山脊，风从北面直灌过来。",
+    setting: "一道裸露的山脊，风从北面直灌过来。",
     items: [],
     conditions: [],
     connections: [{ id: "connection.ridge.pass", targetId: "ROAD_pass" }],
@@ -31,7 +31,7 @@ export function makeOutdoorDgsm(): DynamicGameStateManager {
   const hollow: DynamicScene = {
     id: "SCN_hollow",
     name: "谷底",
-    description: "两排石屋夹着的小巷，背风。",
+    setting: "两排石屋夹着的小巷，背风。",
     items: [],
     conditions: [],
     connections: [
@@ -42,7 +42,7 @@ export function makeOutdoorDgsm(): DynamicGameStateManager {
   const inn: DynamicScene = {
     id: "SCN_inn",
     name: "客栈",
-    description: "低矮的堂屋。",
+    setting: "低矮的堂屋。",
     parentLocationId: "B_INN",
     indoor: true,
     items: [],
@@ -52,7 +52,7 @@ export function makeOutdoorDgsm(): DynamicGameStateManager {
   const pass: RoadNode = {
     id: "ROAD_pass",
     name: "山道",
-    description: "翻过山脊的土路。",
+    setting: "翻过山脊的土路。",
     parentLocationId: "OUTDOOR",
     connections: [
       { id: "connection.pass.a", targetId: "SCN_ridge", role: "endpointA" },

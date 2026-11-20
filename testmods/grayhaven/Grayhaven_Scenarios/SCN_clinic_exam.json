@@ -1,8 +1,13 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "id": "SCN_clinic_exam",
   "name": "诊所·诊室",
-  "description": "诊室里消毒水味压过一切:正中的诊查床[item.clinic_exam.exam_table]铺着换新的白纸,床头上方吊着可以扳动的诊察灯[item.clinic_exam.exam_lamp];靠墙立着视力表[item.clinic_exam.eye_chart]和一台砝码式体重秤[item.clinic_exam.scale],秤砣被拨得发亮。窗子磨砂,雾天里透进一片均匀的灰光。玻璃门药柜[item.clinic_exam.medicine_cabinet]上着锁,药瓶按字母排列;紧挨着的换药车[item.clinic_exam.dressing_cart]上分格码着纱布、绷带和碘酒,推起来有一只轮子会卡。不锈钢器械盘[item.clinic_exam.instrument_tray]里镊子和缝合针摆得像餐具,用过的都进角落那台煮沸消毒器[item.clinic_exam.sterilizer],水开的时候整间屋子都听得见。墙上那具台式水银血压计[item.clinic_exam.bp_cuff]是坐诊专用的,袖带边缘磨白了——Ray 每次来都要跟它较一次劲。搪瓷洗手池[item.clinic_exam.sink]上方挂着毛巾和皂盒,水龙头拧到底才不滴水;里墙停着那台老 X 光机[item.clinic_exam.xray_unit],一年也开不了几回。窗前的书桌[item.clinic_exam.desk]上摊着 Weaver 的病例记录本[item.clinic_exam.case_notes],处方式的短句一行一个病人——他不声张,只是把最近的条目越写越细。桌角立着他用了二十二年没换过的听诊器架[item.clinic_exam.stethoscope]。磨砂玻璃门通回候诊室[SCN_clinic_waiting],门一关,这里说的话就只属于医生和病人。",
+  "coordinates": {
+    "x": -23,
+    "y": -374,
+    "z": 13
+  },
+  "setting": "诊室里消毒水味压过一切:正中的诊查床[item.clinic_exam.exam_table]铺着换新的白纸,床头上方吊着可以扳动的诊察灯[item.clinic_exam.exam_lamp];靠墙立着视力表[item.clinic_exam.eye_chart]和一台砝码式体重秤[item.clinic_exam.scale],秤砣被拨得发亮。窗子磨砂,雾天里透进一片均匀的灰光。玻璃门药柜[item.clinic_exam.medicine_cabinet]上着锁,药瓶按字母排列;紧挨着的换药车[item.clinic_exam.dressing_cart]上分格码着纱布、绷带和碘酒,推起来有一只轮子会卡。不锈钢器械盘[item.clinic_exam.instrument_tray]里镊子和缝合针摆得像餐具,用过的都进角落那台煮沸消毒器[item.clinic_exam.sterilizer],水开的时候整间屋子都听得见。墙上那具台式水银血压计[item.clinic_exam.bp_cuff]是坐诊专用的,袖带边缘磨白了——Ray 每次来都要跟它较一次劲。搪瓷洗手池[item.clinic_exam.sink]上方挂着毛巾和皂盒,水龙头拧到底才不滴水;里墙停着那台老 X 光机[item.clinic_exam.xray_unit],一年也开不了几回。窗前的书桌[item.clinic_exam.desk]上摊着 Weaver 的病例记录本[item.clinic_exam.case_notes],处方式的短句一行一个病人——他不声张,只是把最近的条目越写越细。桌角立着他用了二十二年没换过的听诊器架[item.clinic_exam.stethoscope]。磨砂玻璃门通回候诊室[SCN_clinic_waiting],门一关,这里说的话就只属于医生和病人。",
   "parentLocationId": "clinic",
   "indoor": true,
   "references": {

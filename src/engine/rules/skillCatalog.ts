@@ -67,10 +67,9 @@ export const SKILL_CATALOG = [
       "Find a route, endure hostile terrain, and secure necessities outdoors.",
   },
   {
-    name: "Medicine & Psychology",
+    name: "Medicine",
     base: 5,
-    description:
-      "Provide first aid, diagnose or treat illness, and understand or treat the mind.",
+    description: "Provide first aid, and diagnose or treat injury and illness.",
   },
   {
     name: "Melee Combat",

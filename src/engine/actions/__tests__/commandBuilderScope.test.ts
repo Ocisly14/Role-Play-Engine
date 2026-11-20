@@ -16,7 +16,7 @@ function makeDgsm(): DynamicGameStateManager {
       {
         id: "SCN_1",
         name: "Study",
-        description: "A desk [item.desk] and a door to [SCN_2].",
+        setting: "A desk [item.desk] and a door to [SCN_2].",
         items: [
           { id: "item.desk", name: "desk" },
           { id: "item.secret", name: "letter under the blotter" },
@@ -29,7 +29,7 @@ function makeDgsm(): DynamicGameStateManager {
       {
         id: "SCN_2",
         name: "Hall",
-        description: "Back to [SCN_1].",
+        setting: "Back to [SCN_1].",
         items: [],
         connections: [{ id: "c.2.1", targetId: "SCN_1" }],
       },
@@ -39,7 +39,7 @@ function makeDgsm(): DynamicGameStateManager {
       {
         id: "SCN_far",
         name: "Far",
-        description: "",
+        setting: "",
         items: [],
         connections: [],
       },

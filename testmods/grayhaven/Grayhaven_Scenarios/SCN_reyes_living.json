@@ -1,8 +1,13 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "id": "SCN_reyes_living",
   "name": "Reyes 家客厅",
-  "description": "客厅和厨房挤在同一间屋里。屋子当中是一张吃饭兼记账的木桌 [item.reyes_living.table],配两把不成对的椅子;桌角摊着一本用橡皮筋捆住的账本 [item.reyes_living.account_ledger],铅笔就别在封皮里——打烊后的深夜,Marisol 常坐在这儿,只开头顶那盏吊灯 [item.reyes_living.ceiling_lamp],把数字一遍遍重新加。靠墙一侧是厨房:两眼的搪瓷煤气灶 [item.reyes_living.stove] 上永远坐着一把擦得发亮的铝壶 [item.reyes_living.kettle],灶边墙钉上挂着一口铸铁锅和一把长柄木勺 [item.reyes_living.cookware],旁边圆角的旧冰箱 [item.reyes_living.refrigerator] 隔一会儿嗡一阵,门上用磁贴压着进货单和一张成绩单。窗下那只搪瓷水槽 [item.reyes_living.sink] 的龙头关不严,滴水的节奏听久了就听不见了。窗台上一台老收音机 [item.reyes_living.radio] 调在 KGRV 的频段,音量拧得很小;门边墙上装着一部黑色转盘电话 [item.reyes_living.telephone],旁边的墙皮上用铅笔写满了号码,批发商那个描得最深。墙上挂着一组渔村老照片 [item.reyes_living.family_photos],最新的一张也有七八年了;照片底下的小木架上立着一尊褪色的圣安东尼像 [item.reyes_living.saint_figure]。屋子有三扇门:一扇贴着车辙贴纸的门通向 Tommy 的房间 [SCN_reyes_tommy],另一扇虚掩的门是 Marisol 的卧室 [SCN_reyes_marisol],临后巷的小门 [SCN_reyes_gate] 出去就是自家门口的空地,门边一排挂钩 [item.reyes_living.key_hooks] 上挂着围裙、雨衣和一把总是空着的钩子。",
+  "coordinates": {
+    "x": 86,
+    "y": -332,
+    "z": 13
+  },
+  "setting": "客厅和厨房挤在同一间屋里。屋子当中是一张吃饭兼记账的木桌 [item.reyes_living.table],配两把不成对的椅子;桌角摊着一本用橡皮筋捆住的账本 [item.reyes_living.account_ledger],铅笔就别在封皮里——打烊后的深夜,Marisol 常坐在这儿,只开头顶那盏吊灯 [item.reyes_living.ceiling_lamp],把数字一遍遍重新加。靠墙一侧是厨房:两眼的搪瓷煤气灶 [item.reyes_living.stove] 上永远坐着一把擦得发亮的铝壶 [item.reyes_living.kettle],灶边墙钉上挂着一口铸铁锅和一把长柄木勺 [item.reyes_living.cookware],旁边圆角的旧冰箱 [item.reyes_living.refrigerator] 隔一会儿嗡一阵,门上用磁贴压着进货单和一张成绩单。窗下那只搪瓷水槽 [item.reyes_living.sink] 的龙头关不严,滴水的节奏听久了就听不见了。窗台上一台老收音机 [item.reyes_living.radio] 调在 KGRV 的频段,音量拧得很小;门边墙上装着一部黑色转盘电话 [item.reyes_living.telephone],旁边的墙皮上用铅笔写满了号码,批发商那个描得最深。墙上挂着一组渔村老照片 [item.reyes_living.family_photos],最新的一张也有七八年了;照片底下的小木架上立着一尊褪色的圣安东尼像 [item.reyes_living.saint_figure]。屋子有三扇门:一扇贴着车辙贴纸的门通向 Tommy 的房间 [SCN_reyes_tommy],另一扇虚掩的门是 Marisol 的卧室 [SCN_reyes_marisol],临后巷的小门 [SCN_reyes_gate] 出去就是自家门口的空地,门边一排挂钩 [item.reyes_living.key_hooks] 上挂着围裙、雨衣和一把总是空着的钩子。",
   "parentLocationId": "reyes_house",
   "indoor": true,
   "references": {

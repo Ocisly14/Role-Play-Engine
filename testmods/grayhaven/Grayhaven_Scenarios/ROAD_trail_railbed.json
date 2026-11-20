@@ -1,8 +1,8 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "id": "ROAD_trail_railbed",
   "name": "路基接径",
-  "description": "从林道口偏东走一小时,可以接上旧铁路的路基。起点在林道口 [SCN_trailhead],与路基相接的地方还留着一截烂枕木 [SCN_railbed]。这条林径本身并不好认——沿途不断有鹿径岔进岔出 [item.trail_railbed.deer_trails],每一条看上去都和正路一样理直气壮。走出二十来分钟,林子豁然稀疏,一片齐胸高的老伐木桩铺开在坡上 [item.trail_railbed.stump_field],桩面上还留着当年插跳板的方口。半途立着一棵烧焦的枯立木 [item.trail_railbed.fire_snag],根部烧出一个能蹲进去的空腔,顶上吊着一根断枝,风一来就晃。再往前,蕨丛里盘着一卷锈死的钢缆 [item.trail_railbed.cable_coil],一半已经陷进土里。快到路基前有一块孤零零的大砾石 [item.trail_railbed.boulder_marker],满身厚苔——看见它,就说明那条笔直得不像林子里该有的路基快到了。",
+  "setting": "从林道口偏东走一小时,可以接上旧铁路的路基。起点在林道口 [SCN_trailhead],与路基相接的地方还留着一截烂枕木 [SCN_railbed]。这条林径本身并不好认——沿途不断有鹿径岔进岔出 [item.trail_railbed.deer_trails],每一条看上去都和正路一样理直气壮。走出二十来分钟,林子豁然稀疏,一片齐胸高的老伐木桩铺开在坡上 [item.trail_railbed.stump_field],桩面上还留着当年插跳板的方口。半途立着一棵烧焦的枯立木 [item.trail_railbed.fire_snag],根部烧出一个能蹲进去的空腔,顶上吊着一根断枝,风一来就晃。再往前,蕨丛里盘着一卷锈死的钢缆 [item.trail_railbed.cable_coil],一半已经陷进土里。快到路基前有一块孤零零的大砾石 [item.trail_railbed.boulder_marker],满身厚苔——看见它,就说明那条笔直得不像林子里该有的路基快到了。",
   "parentLocationId": "OUTDOOR",
   "travelTimeMinutes": 60,
   "references": {

@@ -17,6 +17,14 @@ import ResetPassword from "./views/auth/ResetPassword";
 const SimulationPage = lazy(() => import("./views/SimulationPage"));
 const SimulationSelectPage = lazy(() => import("./views/SimulationSelectPage"));
 const MapEditorPage = lazy(() => import("./views/MapEditorPage"));
+const PlayPage = lazy(() => import("./views/PlayPage"));
+const PlayListPage = lazy(() => import("./views/PlayListPage"));
+
+const playFallback = (
+  <div className="flex items-center justify-center h-screen text-gray-500">
+    Loading...
+  </div>
+);
 
 function renderSimulationPage(mode: "owner" | "public") {
   return (
@@ -94,6 +102,27 @@ const AppRoutes: React.FC = () => {
           path="/simulation/:sessionId"
           element={
             <ProtectedRoute>{renderSimulationPage("owner")}</ProtectedRoute>
+          }
+        />
+        {/* Single-player play-test pages */}
+        <Route
+          path="/play"
+          element={
+            <ProtectedRoute>
+              <Suspense fallback={playFallback}>
+                <PlayListPage />
+              </Suspense>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/play/:sessionId"
+          element={
+            <ProtectedRoute>
+              <Suspense fallback={playFallback}>
+                <PlayPage />
+              </Suspense>
+            </ProtectedRoute>
           }
         />
         <Route

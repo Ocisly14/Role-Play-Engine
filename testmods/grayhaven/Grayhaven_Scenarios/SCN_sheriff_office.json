@@ -1,8 +1,13 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "id": "SCN_sheriff_office",
   "name": "警长办公室·里间",
-  "description": "里间是 Ray 的地盘:办公桌[item.sheriff_office.ray_desk]的漆面被三十六年的手肘磨出两片浅亮,桌后那把办公椅[item.sheriff_office.desk_chair]向后仰出固定的弧度,一坐就知道该仰到哪儿。窗台上摆着一座钓鱼奖杯[item.sheriff_office.fishing_trophy],墙角靠着一根钓竿[item.sheriff_office.fishing_rod],线轮上的线是上个潮期才换的;百叶窗[item.sheriff_office.blinds]把雾天的光切成一条条,叶片压下去就能看见半条主街。桌上摊着填了一半的填字游戏[item.sheriff_office.crossword],边上咖啡杯[item.sheriff_office.coffee_mug]底下的杯垫上咖啡渍叠着咖啡渍,烟灰缸[item.sheriff_office.ashtray]里是杂货店那个牌子的烟头;桌角另码着一摞待签的巡逻记录[item.sheriff_office.patrol_logs],是前厅那位每天早上搬进来的。分机电话[item.sheriff_office.telephone]搁在手边,铃声比前厅那台闷。墙上一张褪色的合影[item.sheriff_office.wall_photo]挂了很多年,门边一只上锁的证物柜[item.sheriff_office.evidence_locker]里是这些年没人来认领的零碎。墙角立着一组旧档案柜[item.sheriff_office.old_case_cabinet],柜顶落着薄灰——灰港三十多年的旧案卷宗锁在里面,钥匙就在抽屉里,Ray 从不去开。门通回前厅[SCN_sheriff_front],门轴的吱呀声足够提前两秒通报来人。",
+  "coordinates": {
+    "x": -22,
+    "y": 286,
+    "z": 17
+  },
+  "setting": "里间是 Ray 的地盘:办公桌[item.sheriff_office.ray_desk]的漆面被三十六年的手肘磨出两片浅亮,桌后那把办公椅[item.sheriff_office.desk_chair]向后仰出固定的弧度,一坐就知道该仰到哪儿。窗台上摆着一座钓鱼奖杯[item.sheriff_office.fishing_trophy],墙角靠着一根钓竿[item.sheriff_office.fishing_rod],线轮上的线是上个潮期才换的;百叶窗[item.sheriff_office.blinds]把雾天的光切成一条条,叶片压下去就能看见半条主街。桌上摊着填了一半的填字游戏[item.sheriff_office.crossword],边上咖啡杯[item.sheriff_office.coffee_mug]底下的杯垫上咖啡渍叠着咖啡渍,烟灰缸[item.sheriff_office.ashtray]里是杂货店那个牌子的烟头;桌角另码着一摞待签的巡逻记录[item.sheriff_office.patrol_logs],是前厅那位每天早上搬进来的。分机电话[item.sheriff_office.telephone]搁在手边,铃声比前厅那台闷。墙上一张褪色的合影[item.sheriff_office.wall_photo]挂了很多年,门边一只上锁的证物柜[item.sheriff_office.evidence_locker]里是这些年没人来认领的零碎。墙角立着一组旧档案柜[item.sheriff_office.old_case_cabinet],柜顶落着薄灰——灰港三十多年的旧案卷宗锁在里面,钥匙就在抽屉里,Ray 从不去开。门通回前厅[SCN_sheriff_front],门轴的吱呀声足够提前两秒通报来人。",
   "parentLocationId": "sheriff_office",
   "indoor": true,
   "references": {

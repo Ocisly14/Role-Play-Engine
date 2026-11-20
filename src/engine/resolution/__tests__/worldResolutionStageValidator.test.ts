@@ -126,7 +126,7 @@ function makeContext(
           name: "Study",
           // The prose CITES the lock, which is what makes moving it out of
           // here a stale citation unless the same resolution rewrites this.
-          description:
+          setting:
             "A cabinet stands against the far wall, its [lock_1] shut.",
           conditions: [],
           itemIds: ["lock_1"],
@@ -221,7 +221,7 @@ const ENDING_DECISIONS: EndingDecision[] = [
 const occurrence = (over: Partial<RawOccurrence> = {}): RawOccurrence => ({
   actionIds: [ENDING],
   speech: false,
-  perceivers: [{ characterId: "npc_1", clarity: "full" }],
+  perceivers: [{ characterId: "npc_1", sight: "clear", hearing: "clear" }],
   content: "the latch gives",
   ...over,
 });
@@ -230,7 +230,7 @@ const speechRow = (over: Partial<RawOccurrence> = {}): RawOccurrence => ({
   actionIds: [TALKING],
   speech: true,
   targetIds: ["npc_2"],
-  perceivers: [{ characterId: "npc_2", clarity: "full" }],
+  perceivers: [{ characterId: "npc_2", sight: "clear", hearing: "clear" }],
   ...over,
 });
 
@@ -356,7 +356,7 @@ describe("endings phase", () => {
     probed.checkOutcome = {
       actor: {
         rollId: "r1",
-        skillId: "Medicine & Psychology",
+        skillId: "Medicine",
         skillValue: 50,
         roll: 72,
         successLevel: "failure",
@@ -659,7 +659,7 @@ describe("sceneChanges phase", () => {
             {
               sourceActionId: QUEUED,
               sceneId: "SCN_1",
-              operation: { kind: "setDescription", description: "Bare wall." },
+              operation: { kind: "setSetting", setting: "Bare wall." },
             },
           ],
         },
@@ -686,7 +686,7 @@ describe("sceneChanges phase", () => {
       makeContext(),
       moved
     );
-    expect(text(errors)).toContain('is cited in the description of "SCN_1"');
+    expect(text(errors)).toContain('is a fixture cited in the setting of "SCN_1"');
 
     const rewritten = validatePhase(
       "sceneChanges",
@@ -696,8 +696,8 @@ describe("sceneChanges phase", () => {
             sourceActionId: QUEUED,
             sceneId: "SCN_1",
             operation: {
-              kind: "setDescription",
-              description: "A cabinet stands against the far wall, open.",
+              kind: "setSetting",
+              setting: "A cabinet stands against the far wall, open.",
             },
           },
         ],
@@ -820,7 +820,7 @@ describe("a payload of the wrong shape is an error, never a throw", () => {
           {
             sourceActionId: QUEUED,
             sceneId: "SCN_1",
-            operation: { kind: "setDescription", description: "Bare wall." },
+            operation: { kind: "setSetting", setting: "Bare wall." },
           },
         ]),
       },
@@ -970,7 +970,7 @@ describe("the final gate still judges the assembled draft", () => {
       assembleRawResolution(draft),
       makeContext()
     );
-    expect(text(errors)).toContain('is cited in the description of "SCN_1"');
+    expect(text(errors)).toContain('is a fixture cited in the setting of "SCN_1"');
     expect(errors.map((e) => e.target)).toContainEqual({
       kind: "itemChange",
       index: 0,
@@ -1144,13 +1144,13 @@ describe("retention and merge — the two keyed phases", () => {
       actionIds: [ENDING],
       speech: true,
       targetIds: ["npc_1"],
-      perceivers: [{ characterId: "npc_1", clarity: "full" }],
+      perceivers: [{ characterId: "npc_1", sight: "clear", hearing: "clear" }],
       ...over,
     });
     const factRow = (over: Partial<RawOccurrence> = {}): RawOccurrence => ({
       actionIds: [ENDING],
       speech: false,
-      perceivers: [{ characterId: "npc_1", clarity: "full" }],
+      perceivers: [{ characterId: "npc_1", sight: "clear", hearing: "clear" }],
       content: "the latch gives",
       ...over,
     });
@@ -1375,7 +1375,7 @@ describe("review regressions", () => {
     const first = occurrence({ content: "The shove lands in the room." });
     const second = occurrence({
       content: "He lands in the courtyard.",
-      perceivers: [{ characterId: "npc_2", clarity: "full" }],
+      perceivers: [{ characterId: "npc_2", sight: "clear", hearing: "clear" }],
     });
     expect(
       mergeRows("occurrences", [first], [second], ctx, OUTCOME_ONLY)
@@ -1387,7 +1387,7 @@ describe("review regressions", () => {
 
   it("does not clock a checked utterance at one minute when duration is missing", () => {
     const ctx = twoStarting();
-    ctx.actions.newCommands[1].declaredSkillId = "Medicine & Psychology";
+    ctx.actions.newCommands[1].declaredSkillId = "Medicine";
     const errors = validatePhase(
       "starts",
       {
@@ -1407,7 +1407,7 @@ describe("review regressions", () => {
   it("refuses a pure-speech answer to a checked attempt even before a roll is available", () => {
     const ctx = spokenOutcome();
     ctx.actions.activeActions[0].check = {
-      skillId: "Medicine & Psychology",
+      skillId: "Medicine",
       requiredLevel: "regular",
     };
     const draft: AcceptedResolutionDraft = {
@@ -1516,7 +1516,9 @@ describe("no_change closes observation without manufacturing a result", () => {
       {
         actionIds: [ENDING],
         speech: false,
-        perceivers: [{ characterId: "npc_1", clarity: "full" }],
+        perceivers: [
+          { characterId: "npc_1", sight: "clear", hearing: "clear" },
+        ],
         content: "The observer saw everyone working.",
       },
     ];
@@ -1552,7 +1554,7 @@ describe("no_change closes observation without manufacturing a result", () => {
       "sceneChanges",
       {
         sceneId: "SCN_1",
-        operation: { kind: "setDescription", description: "A searched study." },
+        operation: { kind: "setSetting", setting: "A searched study." },
       },
     ],
   ] as const)("cannot conceal a new %s behind no_change", (phase, change) => {
@@ -1586,7 +1588,9 @@ describe("no_change closes observation without manufacturing a result", () => {
           actionIds: [TALKING],
           speech: true,
           targetIds: ["npc_2"],
-          perceivers: [{ characterId: "npc_2", clarity: "full" }],
+          perceivers: [
+            { characterId: "npc_2", sight: "clear", hearing: "clear" },
+          ],
         },
       ],
     };
@@ -1605,7 +1609,8 @@ describe("no_change closes observation without manufacturing a result", () => {
     expect(result.occurrences[0].sourceActionIds).toEqual([TALKING]);
     expect(result.occurrences[0].perceivers).toContainEqual({
       characterId: "npc_2",
-      clarity: "full",
+      sight: "clear",
+      hearing: "clear",
     });
   });
 });

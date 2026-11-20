@@ -1,8 +1,13 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "id": "SCN_sheriff_front",
   "name": "警长办公室·前厅",
-  "description": "前厅一半是公务,一半是习惯:临街那面墙上钉着布告板[item.sheriff_front.bulletin_board],褪色的通缉照和渔汛节的旧海报叠在一起,谁也没心思揭;板子底下一条木长椅[item.sheriff_front.visitor_bench]是镇上来报案的人坐的位置,座面磨掉了两块漆。墙边挂钩上一件备用制服[item.sheriff_front.spare_uniform]熨出笔直的棱线——不用问也知道是谁的;旁边挂钟[item.sheriff_front.wall_clock]的秒针有点粘,交接班的时间还是从它上头看。Cole 的办公桌[item.sheriff_front.cole_desk]收拾得像检阅前的营房,笔按长短排列,桌角一台老打字机[item.sheriff_front.typewriter]压着一沓空白报案表,黑色转盘电话[item.sheriff_front.telephone]就搁在手边——全镇出了事打的是这个号码。咖啡壶[item.sheriff_front.coffee_pot]续着新一壶,他杯里三块糖正在化。桌后的调度电台[item.sheriff_front.dispatch_radio]大多数时候只应之以杂音,旁边摊开的值班记录簿[item.sheriff_front.duty_log]一栏一栏签到今天上午。靠墙立着一组档案柜[item.sheriff_front.incident_files],抽屉标签写着「事件报告」——Cole 按规程归档的每一起「怪事报案」都在里面,按日期码得整整齐齐,全镇没有第二个人翻过。另一面墙上挂着镇区巡逻地图[item.sheriff_front.town_map],主街两段被铅笔描过许多遍,林道口往北就是一片空白;地图底下是玻璃门的枪柜[item.sheriff_front.gun_cabinet],里头锁着一支署里的老霰弹枪[item.sheriff_front.shotgun],柜边钥匙板[item.sheriff_front.key_board]上每把钥匙底下都贴着标签。临街门通向主街[ROAD_main_street];里间的门后是警长办公室[SCN_sheriff_office];走廊尽头是拘留室[SCN_sheriff_cell]。",
+  "coordinates": {
+    "x": -14,
+    "y": 290,
+    "z": 17
+  },
+  "setting": "前厅一半是公务,一半是习惯:临街那面墙上钉着布告板[item.sheriff_front.bulletin_board],褪色的通缉照和渔汛节的旧海报叠在一起,谁也没心思揭;板子底下一条木长椅[item.sheriff_front.visitor_bench]是镇上来报案的人坐的位置,座面磨掉了两块漆。墙边挂钩上一件备用制服[item.sheriff_front.spare_uniform]熨出笔直的棱线——不用问也知道是谁的;旁边挂钟[item.sheriff_front.wall_clock]的秒针有点粘,交接班的时间还是从它上头看。Cole 的办公桌[item.sheriff_front.cole_desk]收拾得像检阅前的营房,笔按长短排列,桌角一台老打字机[item.sheriff_front.typewriter]压着一沓空白报案表,黑色转盘电话[item.sheriff_front.telephone]就搁在手边——全镇出了事打的是这个号码。咖啡壶[item.sheriff_front.coffee_pot]续着新一壶,他杯里三块糖正在化。桌后的调度电台[item.sheriff_front.dispatch_radio]大多数时候只应之以杂音,旁边摊开的值班记录簿[item.sheriff_front.duty_log]一栏一栏签到今天上午。靠墙立着一组档案柜[item.sheriff_front.incident_files],抽屉标签写着「事件报告」——Cole 按规程归档的每一起「怪事报案」都在里面,按日期码得整整齐齐,全镇没有第二个人翻过。另一面墙上挂着镇区巡逻地图[item.sheriff_front.town_map],主街两段被铅笔描过许多遍,林道口往北就是一片空白;地图底下是玻璃门的枪柜[item.sheriff_front.gun_cabinet],里头锁着一支署里的老霰弹枪[item.sheriff_front.shotgun],柜边钥匙板[item.sheriff_front.key_board]上每把钥匙底下都贴着标签。临街门通向主街[ROAD_main_street];里间的门后是警长办公室[SCN_sheriff_office];走廊尽头是拘留室[SCN_sheriff_cell]。",
   "parentLocationId": "sheriff_office",
   "indoor": true,
   "references": {

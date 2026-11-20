@@ -1,8 +1,13 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "id": "SCN_reyes_gate",
   "name": "雷耶斯家门口",
-  "description": "后巷尽头的一小片门前空地。木门漆成早已褪色的蓝,门楣上镶着一块蓝白瓷砖 [item.reyes_gate.azulejo_tile],上头画的那条船比这家现在活着的任何一个人都老。门边一小畦香草 [item.reyes_gate.herb_bed] 长得倒精神,墙上一只黄铜水龙头 [item.reyes_gate.spigot] 接着半截皮管,浇菜、冲车、洗手全靠它。一辆 BMX 单车 [item.reyes_gate.bmx] 斜靠在墙根,车把上缠着褪色的红胶带;单车旁的窗下摞着三只木条箱 [item.reyes_gate.crates],最上面那只箱面被踩得发亮,谁也没问过是被谁踩的。两根柱子之间拉着一条晾衣绳 [item.reyes_gate.laundry_line],风一起,店里的围裙和洗白的衬衫就一块儿摆。墙角一根钉子上挂着一只旧蟹笼 [item.reyes_gate.crab_trap],藤条早就发脆,多年没再下过水;门框上方钉着一盏铁皮罩的门廊灯 [item.reyes_gate.porch_light],从天黑亮到天亮,是这条巷子里唯一整夜不灭的灯。小门后就是母子俩的客厅兼厨房 [SCN_reyes_living]。巷子里安静,主街的声音传到这里只剩个底子。",
+  "coordinates": {
+    "x": 75,
+    "y": -330,
+    "z": 13
+  },
+  "setting": "后巷尽头的一小片门前空地。木门漆成早已褪色的蓝,门楣上镶着一块蓝白瓷砖 [item.reyes_gate.azulejo_tile],上头画的那条船比这家现在活着的任何一个人都老。门边一小畦香草 [item.reyes_gate.herb_bed] 长得倒精神,墙上一只黄铜水龙头 [item.reyes_gate.spigot] 接着半截皮管,浇菜、冲车、洗手全靠它。一辆 BMX 单车 [item.reyes_gate.bmx] 斜靠在墙根,车把上缠着褪色的红胶带;单车旁的窗下摞着三只木条箱 [item.reyes_gate.crates],最上面那只箱面被踩得发亮,谁也没问过是被谁踩的。两根柱子之间拉着一条晾衣绳 [item.reyes_gate.laundry_line],风一起,店里的围裙和洗白的衬衫就一块儿摆。墙角一根钉子上挂着一只旧蟹笼 [item.reyes_gate.crab_trap],藤条早就发脆,多年没再下过水;门框上方钉着一盏铁皮罩的门廊灯 [item.reyes_gate.porch_light],从天黑亮到天亮,是这条巷子里唯一整夜不灭的灯。小门后就是母子俩的客厅兼厨房 [SCN_reyes_living]。巷子里安静,主街的声音传到这里只剩个底子。",
   "references": {
     "items": [
       {

@@ -134,7 +134,7 @@ const WEATHER_SKILL_PENALTIES: Partial<
     { skill: "Repair & Engineering", triggerIntensity: 2, deltaPerLevel: -5 },
     { skill: "Swimming", triggerIntensity: 2, deltaPerLevel: -10 },
     { skill: "Ranged Combat", triggerIntensity: 2, deltaPerLevel: -5 },
-    { skill: "Medicine & Psychology", triggerIntensity: 3, deltaPerLevel: -5 },
+    { skill: "Medicine", triggerIntensity: 3, deltaPerLevel: -5 },
   ],
 };
 

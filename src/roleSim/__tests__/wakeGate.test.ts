@@ -8,8 +8,6 @@ import {
   buildGateRequest,
   gateSaysSkip,
   hardWakeReason,
-  noticeQuestionName,
-  noticedFrom,
 } from "../wakeGate.js";
 
 function occ(overrides: Partial<Occurrence> = {}): Occurrence {
@@ -19,7 +17,7 @@ function occ(overrides: Partial<Occurrence> = {}): Occurrence {
     sourceActionIds: ["a1"],
     facts: [{ id: "f0", type: "action_result", content: "x", entityRefs: [] }],
     participants: [{ characterId: "npc_2", role: "actor" }],
-    perceivers: [{ characterId: "npc_1", clarity: "full" }],
+    perceivers: [{ characterId: "npc_1", sight: "clear", hearing: "clear" }],
     signals: [],
     ...overrides,
   } as Occurrence;
@@ -50,7 +48,7 @@ describe("hardWakeReason", () => {
     ).not.toBeNull();
   });
 
-  it("wakes a full-clarity listener when a line is spoken to the room", () => {
+  it("wakes a listener who hears a line spoken to the room clearly", () => {
     const toRoom = occ({
       facts: [
         { id: "f0", type: "utterance", content: "Hello", entityRefs: [] },
@@ -65,7 +63,7 @@ describe("hardWakeReason", () => {
       facts: [
         { id: "f0", type: "utterance", content: "Hello", entityRefs: [] },
       ],
-      perceivers: [{ characterId: "npc_1", clarity: "trace" }],
+      perceivers: [{ characterId: "npc_1", sight: "none", hearing: "faint" }],
     });
     expect(hardWakeReason({ ...base, occurrences: [muffled] })).toBeNull();
   });
@@ -90,29 +88,6 @@ describe("reading the gate", () => {
     expect(gateSaysSkip(answers(0.1))).toBe(true);
     expect(gateSaysSkip(answers(0.11))).toBe(false);
     expect(gateSaysSkip(answers())).toBe(false);
-  });
-
-  it("noticing needs at least the threshold; unsure is not noticed", () => {
-    const c = [
-      { kind: "item" as const, id: "item.a", description: "a" },
-      { kind: "connection" as const, id: "conn.b", description: "b" },
-    ];
-    const got = noticedFrom(
-      new Map([
-        [
-          noticeQuestionName(c[0]),
-          { name: "", type: "predicate", probability: 0.6 },
-        ],
-        [
-          noticeQuestionName(c[1]),
-          { name: "", type: "predicate", probability: 0.59 },
-        ],
-      ]),
-      c
-    );
-    expect([...got.itemIds]).toEqual(["item.a"]);
-    expect([...got.connectionIds]).toEqual([]);
-    expect(noticedFrom(null, c).itemIds.size).toBe(0);
   });
 });
 
@@ -142,7 +117,6 @@ describe("buildGateRequest", () => {
         },
       ],
       bundle,
-      ask: { act: true, notice: [] },
     });
     const text = (req.input.text ?? []).join("\n");
     expect(text).toContain("## Who you are");

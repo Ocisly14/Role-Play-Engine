@@ -5,6 +5,7 @@
 // usage accounting — those are policy and live in the runner (generator.ts),
 // so they are written once instead of three times.
 
+import type { Part } from "@google/generative-ai";
 import type { TokenUsageTotals } from "../tokenUsage.js";
 import type { ModelProviderName } from "../types.js";
 
@@ -126,7 +127,12 @@ export interface ToolCallRecord {
  */
 export type ModelMessage =
   | { role: "user"; content: ContentPart[] }
-  | { role: "assistant"; toolCalls: ToolCallRecord[]; text?: string }
+  | {
+      role: "assistant";
+      toolCalls: ToolCallRecord[];
+      text?: string;
+      geminiParts?: Part[];
+    }
   /**
    * Results for every call in the preceding assistant turn — all of them,
    * always. Anthropic requires the results to arrive in ONE message (it
@@ -166,6 +172,8 @@ export interface ToolChatResponse {
   toolCalls: ToolCallRecord[];
   /** Any prose emitted alongside the calls — normally empty when forced. */
   text: string;
+  /** Preserve Gemini's signed model parts exactly on the next request. */
+  geminiParts?: Part[];
   usage: TokenUsageTotals | null;
 }
 

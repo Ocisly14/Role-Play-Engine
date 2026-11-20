@@ -877,6 +877,25 @@ function validateEffect(
       if (item.skipIfExists !== undefined && !isBoolean(item.skipIfExists)) {
         pushErr(errors, file, `${path}.skipIfExists`, "must be a boolean");
       }
+      if (!isString(item.placement) || !item.placement.trim()) {
+        pushErr(
+          errors,
+          file,
+          `${path}.placement`,
+          "required string — where in the place it appears"
+        );
+      }
+      if (item.container !== undefined && !isString(item.container)) {
+        pushErr(errors, file, `${path}.container`, "must be a string (item id)");
+      }
+      if (
+        item.quantity !== undefined &&
+        (typeof item.quantity !== "number" ||
+          !Number.isInteger(item.quantity) ||
+          item.quantity < 1)
+      ) {
+        pushErr(errors, file, `${path}.quantity`, "must be a whole number >= 1");
+      }
       if (item.skipIfExists === true && !isString(item.id)) {
         pushErr(
           errors,
@@ -896,6 +915,24 @@ function validateEffect(
       }
       if (!isString(item.to)) {
         pushErr(errors, file, `${path}.to`, "required holder string");
+      }
+      if (
+        isString(item.to) &&
+        item.to.startsWith("scene:") &&
+        (!isString(item.placement) || !item.placement.trim())
+      ) {
+        pushErr(
+          errors,
+          file,
+          `${path}.placement`,
+          "required when moving to a place — where in it the thing lands"
+        );
+      }
+      if (item.placement !== undefined && !isString(item.placement)) {
+        pushErr(errors, file, `${path}.placement`, "must be a string");
+      }
+      if (item.container !== undefined && !isString(item.container)) {
+        pushErr(errors, file, `${path}.container`, "must be a string (item id)");
       }
       return;
     }

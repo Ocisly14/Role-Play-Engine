@@ -1,8 +1,13 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "id": "SCN_sawmill",
   "name": "旧锯木厂",
-  "description": "1974 年关闭的锯木厂废墟。老远就能看见那只锥形的锈铁焚烧炉立在空地边上 [item.sawmill.wigwam_burner],炉身破了几个洞,里面积着几十年的雨水和落叶。塌了半边的主棚下,一副锈死的带锯架还立在原地 [item.sawmill.rusted_saw_frame],锯台上的苔藓厚得能按出指印;从锯台斜着爬向炉子的是一道传送带的铁架 [item.sawmill.conveyor_frame],链条锈成了一整根,推不动也拆不下来。主棚一角的管子头上还拧着那只蒸汽汽笛 [item.sawmill.steam_whistle],铜口朝天,当年一响全镇都听得见。空地边缘的锯末堆早已腐成黑土 [item.sawmill.sawdust_mound],上头长起了半人高的荨麻。棚后是一间塌了顶的办公室 [item.sawmill.office_ruin],地板龙骨朝天,一只锈死的档案抽屉半开着,泡烂的工时单和一台打卡钟压在碎瓦下面。还立着的那半间机修房,门上钉着交叉的木板 [item.sawmill.boarded_door],其中一块被人撬开过又重新钉上,钉眼比别处多出好几个。锯台后头有个角落用几块木板搭起矮座,旁边一张油布叠好压着几块石头防风——附近的孩子偷偷把这儿叫「前进营地」,聚在这儿的痕迹还没散尽 [item.sawmill.forward_camp]。空地另一边钻出一丛野黑莓,八月正是熟透的时候,枝条上坠满发亮的黑浆果,顺手一捋就是一把,指尖也染得发紫 [item.sawmill.blackberry_bramble]。林径在废墟前分岔,分别通向溪谷、旧路基、雾谷和更北面的红杉环——站在空地中央,每个方向看起来都像来时的路。",
+  "coordinates": {
+    "x": 2602,
+    "y": 6877,
+    "z": 150
+  },
+  "setting": "1974 年关闭的锯木厂废墟。老远就能看见那只锥形的锈铁焚烧炉立在空地边上 [item.sawmill.wigwam_burner],炉身破了几个洞,里面积着几十年的雨水和落叶。塌了半边的主棚下,一副锈死的带锯架还立在原地 [item.sawmill.rusted_saw_frame],锯台上的苔藓厚得能按出指印;从锯台斜着爬向炉子的是一道传送带的铁架 [item.sawmill.conveyor_frame],链条锈成了一整根,推不动也拆不下来。主棚一角的管子头上还拧着那只蒸汽汽笛 [item.sawmill.steam_whistle],铜口朝天,当年一响全镇都听得见。空地边缘的锯末堆早已腐成黑土 [item.sawmill.sawdust_mound],上头长起了半人高的荨麻。棚后是一间塌了顶的办公室 [item.sawmill.office_ruin],地板龙骨朝天,一只锈死的档案抽屉半开着,泡烂的工时单和一台打卡钟压在碎瓦下面。还立着的那半间机修房,门上钉着交叉的木板 [item.sawmill.boarded_door],其中一块被人撬开过又重新钉上,钉眼比别处多出好几个。锯台后头有个角落用几块木板搭起矮座,旁边一张油布叠好压着几块石头防风——附近的孩子偷偷把这儿叫「前进营地」,聚在这儿的痕迹还没散尽 [item.sawmill.forward_camp]。空地另一边钻出一丛野黑莓,八月正是熟透的时候,枝条上坠满发亮的黑浆果,顺手一捋就是一把,指尖也染得发紫 [item.sawmill.blackberry_bramble]。林径在废墟前分岔,分别通向溪谷、旧路基、雾谷和更北面的红杉环——站在空地中央,每个方向看起来都像来时的路。",
   "references": {
     "items": [
       {

@@ -22,6 +22,10 @@ export interface CaseActor {
   npc: string;
   /** Seeded as long_term_intent; this is what the NPC is trying to do. */
   goal: string;
+  /** Scene-name hint for this actor alone (same matching as the case's
+   *  `scene`); default the case's scene. For staging people in different
+   *  rooms — the next room, the next building. */
+  scene?: string;
   hp?: number;
   san?: number;
   /** Character conditions, e.g. "左腿动脉出血，正在快速失血". */

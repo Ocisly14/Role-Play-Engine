@@ -1,4 +1,5 @@
 import { isDeepStrictEqual } from "node:util";
+import { renderEndingModes } from "../rules/ruleTerms.js";
 // src/engine/resolution/worldResolutionStageValidator.ts
 //
 // Phase-local validation for the staged World Action Engine: one validator per
@@ -51,15 +52,14 @@ import {
   validateCharacterChange,
   validateEndOutcome,
   validateEndingTarget,
-  validateNoChangeEnding,
   validateItemChange,
+  validateNoChangeEnding,
   validateOccurrence,
   validateSceneChange,
   validateStart,
 } from "./worldDeltaValidator.js";
 import {
   type AcceptedResolutionDraft,
-  type EndingDecision,
   type EngineSessionKind,
   PHASE_FIELDS,
   PHASE_TOOL_NAMES,
@@ -202,7 +202,7 @@ function validateEndingsPhase(
     const mode = row.mode;
     if (mode !== "outcome" && mode !== "pure_speech" && mode !== "no_change") {
       at(target, [
-        `mode must be "outcome" or "pure_speech" or "no_change" — got ${JSON.stringify(mode)}. "outcome" carries an objective result; "pure_speech" delivers only the command's words; "no_change" closes an action with no new result, check or utterance`,
+        `mode must be "outcome" or "pure_speech" or "no_change" — got ${JSON.stringify(mode)}. The modes: ${renderEndingModes()}`,
       ]);
       continue;
     }
@@ -247,7 +247,7 @@ function validateEndingsPhase(
   for (const required of worklist.ending) {
     if (seen.has(required)) continue;
     at({ kind: "resolution" }, [
-      `ending action "${required}" has no decision — every id under \`ending\` takes exactly one entry: "outcome" for a new objective result, "pure_speech" for words alone, or "no_change" when there is no new result, check or utterance`,
+      `ending action "${required}" has no decision — every id under \`ending\` takes exactly one entry, in one of the modes: ${renderEndingModes()}`,
     ]);
   }
   return errors;
@@ -356,7 +356,7 @@ function validateSceneChangesPhase(
     );
   });
   // The gate addresses this at the item change that orphans the prose; here
-  // the item changes are accepted and the fix is a setDescription in THIS
+  // the item changes are accepted and the fix is a setSetting in THIS
   // array, so it is addressed at the phase.
   for (const stale of staleCitations(draft.itemChanges ?? [], rows, lookup)) {
     at({ kind: "resolution" }, [stale.message]);
